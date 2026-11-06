@@ -239,6 +239,65 @@ function Registry:GetPreset(presetId)
     return Registry.presets[presetId]
 end
 
+function Registry:ToggleWindowPreview(windowId)
+    local desc = Registry:GetDescriptor(windowId)
+    if not desc then
+        return false, "Descriptor not found"
+    end
+    if not desc.boundFrame then
+        TryBindDescriptor(desc)
+    end
+    local f = desc.boundFrame
+    if f and f.IsShown and f:IsShown() then
+        if f.Hide then
+            f:Hide()
+            return true, "hidden"
+        end
+    end
+
+    -- Known Blizzard panel toggles
+    if windowId == "CHARACTER" and _G.ToggleCharacter then
+        _G.ToggleCharacter("PaperDollFrame")
+        return true, "toggled"
+    elseif windowId == "SPELLBOOK" and _G.ToggleSpellBook then
+        _G.ToggleSpellBook(_G.BOOKTYPE_SPELL or 1)
+        return true, "toggled"
+    elseif windowId == "QUESTLOG" and _G.ToggleQuestLog then
+        _G.ToggleQuestLog()
+        return true, "toggled"
+    elseif windowId == "QUESTMAP" and _G.ToggleWorldMap then
+        _G.ToggleWorldMap()
+        return true, "toggled"
+    elseif windowId == "FRIENDS" and _G.ToggleFriendsFrame then
+        _G.ToggleFriendsFrame(1)
+        return true, "toggled"
+    elseif windowId == "GUILD" and _G.ToggleGuildFrame then
+        _G.ToggleGuildFrame()
+        return true, "toggled"
+    elseif windowId == "DRESSUP" and _G.DressUpFrame then
+        if _G.DressUpFrame:IsShown() then _G.DressUpFrame:Hide() else _G.DressUpFrame:Show() end
+        return true, "toggled"
+    elseif windowId == "LFG" and _G.ToggleLFDParentFrame then
+        _G.ToggleLFDParentFrame()
+        return true, "toggled"
+    end
+
+    if f and f.Show then
+        -- Frames requiring physical world interactables (Bank, Mail, Merchant, Gossip, Quest NPC)
+        if windowId == "BANK" or windowId == "MERCHANT" or windowId == "MAIL" or windowId == "GOSSIP" or windowId == "QUEST" then
+            if not f:IsShown() then
+                ns:Print(L["UI_ROW_TOGGLE_NPC_REQ"])
+                return false, "npc_required"
+            end
+        end
+        f:Show()
+        return true, "shown"
+    end
+
+    ns:Print(L["UI_ROW_TOGGLE_NPC_REQ"])
+    return false, "cannot_toggle"
+end
+
 function Registry:IteratePresets()
     local idx = 0
     local total = #Registry.presetOrder

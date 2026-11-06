@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.3.0 – Minimap Icon & LDB Quick Menu, Category Filter Pills & Live Window Preview
+* **Minimap Button & LDB Quick Menu:**
+  * Added a circular minimap button featuring Ella's custom obsidian/gold compass icon.
+  * Draggable anywhere around the minimap perimeter with saved angle persistence (`minimapPos`).
+  * **Left-Click:** Toggles the Ella Manager (`/ella`).
+  * **Right-Click:** Opens an elegant Quick Menu to switch Profiles, apply 1-Click Presets, or start the Picker/Tour directly.
+  * **Middle-Click:** Starts the Window Picker immediately.
+  * Built-in **LibDataBroker (LDB)** launcher for TitanPanel, ChocolateBar, and Bazooka.
+  * Added a toggle checkbox (*"Minimap-Icon anzeigen"*) in `/ella` settings.
+* **Category Filter Pills in Ella Manager:**
+  * Added interactive filter pill buttons directly above the window list: `[Alle]`, `[Offen]`, `[Charakter]`, `[Berufe]`, `[Quests & Welt]`, `[Social]`, and `[Custom]`.
+  * Instantly filters the displayed list without typing; the active filter glows in vibrant cyan.
+  * Resizes smoothly and responsively when dragging the window corner.
+* **Live Window Preview (`[👁]`-Button) per Row:**
+  * Added an eye preview toggle button to every window row in `/ella`.
+  * Clicking pops open the window immediately (or closes it if already open) so players can test and adjust size/position without walking to an NPC or hunting through submenus.
+  * Displays glowing green when the window is currently open, and neutral gray when closed.
+
 ## v1.2.1 – Tutorial Visual Polish, Layering & Smart Card Positioning
 * **Dimmer Layering Fix (Crystal Clear Ella Window):**
   * Shifted screen dimmer to strata `HIGH` so it gracefully dims the 3D game world, chat, action bars, and minimap, while leaving the Ella Manager window (strata `DIALOG`) 100% bright, vibrant, crisp, and fully readable.

@@ -17,6 +17,17 @@ local exportModal = nil
 local newProfileModal = nil
 local rowPool = {}
 local searchQuery = ""
+local activeCategoryFilter = "ALL"
+
+local FILTER_DEFS = {
+    { id = "ALL", labelKey = "FILTER_ALL" },
+    { id = "OPEN", labelKey = "FILTER_OPEN" },
+    { id = "CAT_CHARACTER", labelKey = "FILTER_CHAR" },
+    { id = "CAT_PROFESSION", labelKey = "FILTER_PROF" },
+    { id = "CAT_QUEST_WORLD", labelKey = "FILTER_QUEST" },
+    { id = "CAT_SOCIAL", labelKey = "FILTER_SOCIAL" },
+    { id = "CAT_CUSTOM", labelKey = "FILTER_CUSTOM" },
+}
 
 local MODE_CYCLE = {
     [ns.MODE_SCALE_MOVE] = ns.MODE_SCALE_ONLY,
@@ -203,7 +214,7 @@ local MIN_MANAGER_SCALE = 0.60
 local MAX_MANAGER_SCALE = 1.40
 
 local function ApplyRowResponsiveWidth(row, childW)
-    local labelW = math.max(206, childW - 408)
+    local labelW = math.max(176, childW - 440)
     row.label:SetWidth(labelW)
     row.catLabel:SetWidth(labelW)
     row.modeBtn:ClearAllPoints()
@@ -241,9 +252,26 @@ local function ApplyManagerResponsiveLayout(f)
     local innerW = w - 28
     local rightColX = math.max(336, math.floor(w * 0.486))
 
-    if f.chkBadges then f.chkBadges:SetPoint("TOPLEFT", rightColX, -40) end
-    if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", rightColX, -64) end
-    if f.chkMagneticSnap then f.chkMagneticSnap:SetPoint("TOPLEFT", rightColX, -88) end
+    if f.chkBadges then f.chkBadges:SetPoint("TOPLEFT", rightColX, -38) end
+    if f.chkMinimap then f.chkMinimap:SetPoint("TOPLEFT", rightColX, -58) end
+    if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", rightColX, -78) end
+    if f.chkMagneticSnap then f.chkMagneticSnap:SetPoint("TOPLEFT", rightColX, -98) end
+
+    if f.chkEnabled then f.chkEnabled:SetPoint("TOPLEFT", 14, -38) end
+    if f.chkCtrlWheel then f.chkCtrlWheel:SetPoint("TOPLEFT", 14, -58) end
+    if f.chkDragOpacity then f.chkDragOpacity:SetPoint("TOPLEFT", 14, -78) end
+
+    if f.filterPills then
+        local gap = 4
+        local numPills = #f.filterPills
+        local pillW = math.floor((innerW - ((numPills - 1) * gap)) / numPills)
+        for i = 1, numPills do
+            local p = f.filterPills[i]
+            p:SetSize(pillW, 20)
+            p:ClearAllPoints()
+            p:SetPoint("TOPLEFT", 14 + (i - 1) * (pillW + gap), -210)
+        end
+    end
 
     if f.presetBtns then
         local gap = 6
@@ -343,6 +371,36 @@ local function GetOrCreateRow(parent, index)
     resetBtn:SetText("100%")
     row.resetBtn = resetBtn
 
+    local eyeBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+    eyeBtn:SetSize(28, 22)
+    eyeBtn:SetPoint("LEFT", resetBtn, "RIGHT", 6, 0)
+    local eyeIcon = eyeBtn:CreateTexture(nil, "ARTWORK")
+    eyeIcon:SetSize(16, 16)
+    eyeIcon:SetPoint("CENTER", 0, 0)
+    eyeIcon:SetTexture("Interface\\Icons\\INV_Misc_Eye_01")
+    eyeIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    row.eyeBtn = eyeBtn
+    row.eyeIcon = eyeIcon
+
+    eyeBtn:SetScript("OnClick", function()
+        if row.windowId then
+            Registry:ToggleWindowPreview(row.windowId)
+            ManagerUI:RefreshList()
+        end
+    end)
+    eyeBtn:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["UI_ROW_TOGGLE_TIP"], 1, 0.82, 0)
+            GameTooltip:Show()
+        end
+    end)
+    eyeBtn:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+
     modeBtn:SetScript("OnClick", function()
         if not row.windowId then return end
         local cfg = ns:GetWindowConfig(row.windowId, true)
@@ -385,6 +443,25 @@ function ManagerUI:RefreshList()
     managerFrame.chkClamp:SetChecked(s.clampToScreen)
     managerFrame.chkDragOpacity:SetChecked(s.dragOpacity)
     managerFrame.chkMagneticSnap:SetChecked(s.magneticSnap)
+    if managerFrame.chkMinimap then
+        managerFrame.chkMinimap:SetChecked(s.showMinimapButton)
+    end
+
+    if managerFrame.filterPills then
+        for i = 1, #managerFrame.filterPills do
+            local pill = managerFrame.filterPills[i]
+            local isSel = (pill.filterId == activeCategoryFilter)
+            if isSel then
+                pill:SetBackdropBorderColor(0.0, 0.85, 1.0, 0.95)
+                pill:SetBackdropColor(0.0, 0.22, 0.36, 0.75)
+                pill.text:SetTextColor(0.0, 0.95, 1.0)
+            else
+                pill:SetBackdropBorderColor(0.28, 0.32, 0.40, 0.70)
+                pill:SetBackdropColor(0.06, 0.07, 0.10, 0.75)
+                pill.text:SetTextColor(0.72, 0.76, 0.82)
+            end
+        end
+    end
 
     local activeProf = Profiles:GetActiveProfileName()
     local isDirty = Profiles:HasUnsavedChanges()
@@ -410,9 +487,20 @@ function ManagerUI:RefreshList()
         orderIndex = orderIndex + 1
         local winTitle = Registry:GetDisplayLabel(desc)
         local catTitle = L[desc.category or "CAT_CUSTOM"]
-        if q == "" or string.find(string.lower(winTitle), q, 1, true) or string.find(string.lower(catTitle), q, 1, true) then
-            local isOpen = (desc.boundFrame and desc.boundFrame:IsShown()) and true or false
-            local isLoaded = (desc.boundFrame ~= nil)
+        local isOpen = (desc.boundFrame and desc.boundFrame:IsShown()) and true or false
+        local isLoaded = (desc.boundFrame ~= nil)
+        local cat = desc.category or "CAT_CUSTOM"
+
+        local matchFilter = true
+        if activeCategoryFilter == "OPEN" then
+            matchFilter = isOpen
+        elseif activeCategoryFilter ~= "ALL" then
+            matchFilter = (cat == activeCategoryFilter)
+        end
+
+        local matchSearch = (q == "" or string.find(string.lower(winTitle), q, 1, true) or string.find(string.lower(catTitle), q, 1, true))
+
+        if matchFilter and matchSearch then
             local rank = isOpen and 1 or (isLoaded and 2 or 3)
             items[#items + 1] = {
                 id = windowId,
@@ -462,6 +550,15 @@ function ManagerUI:RefreshList()
         row.label:SetText(item.winTitle)
         row.modeBtn:SetText(ModeLabel(mode))
         row.scaleTxt:SetText(pct .. "%")
+
+        if item.isOpen then
+            row.eyeIcon:SetVertexColor(0.0, 1.0, 0.59)
+            row.eyeBtn:SetAlpha(1.0)
+        else
+            row.eyeIcon:SetVertexColor(0.85, 0.85, 0.85)
+            row.eyeBtn:SetAlpha(0.65)
+        end
+
         row:Show()
     end
 
@@ -621,51 +718,6 @@ local function EnsureManagerFrame()
         return chk
     end
 
-    f.chkEnabled = CreateToggle(L["UI_GLOBAL_ENABLED"], 14, -40,
-        function() return ns.db.settings.enabled end,
-        function(val)
-            ns.db.settings.enabled = val
-            Engine:ReapplyAllShown()
-            BadgeUI:RefreshAll()
-        end
-    )
-
-    f.chkBadges = CreateToggle(L["UI_SHOW_BADGES"], 350, -40,
-        function() return ns.db.settings.showBadges end,
-        function(val)
-            ns.db.settings.showBadges = val
-            BadgeUI:RefreshAll()
-        end
-    )
-
-    f.chkCtrlWheel = CreateToggle(L["UI_CTRL_WHEEL"], 14, -64,
-        function() return ns.db.settings.ctrlWheelZoom end,
-        function(val) ns.db.settings.ctrlWheelZoom = val end
-    )
-
-    f.chkClamp = CreateToggle(L["UI_CLAMP_SCREEN"], 350, -64,
-        function() return ns.db.settings.clampToScreen end,
-        function(val)
-            ns.db.settings.clampToScreen = val
-            Engine:ReapplyAllShown()
-        end
-    )
-
-    f.chkDragOpacity = CreateToggle(L["UI_DRAG_OPACITY"], 14, -88,
-        function() return ns.db.settings.dragOpacity end,
-        function(val) ns.db.settings.dragOpacity = val end
-    )
-
-    f.chkMagneticSnap = CreateToggle(L["UI_MAGNETIC_SNAP"], 350, -88,
-        function() return ns.db.settings.magneticSnap end,
-        function(val) ns.db.settings.magneticSnap = val end
-    )
-
-    -- Named Profile Bar with Save Checkpoint, Revert to Saved & Undo (v1.1.2)
-    local profLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    profLabel:SetPoint("TOPLEFT", 16, -124)
-    profLabel:SetText(L["UI_PROFILE_LABEL"])
-
     local function AddBtnTooltip(btn, titleText, bodyText)
         btn:SetScript("OnEnter", function(self)
             if _G.GameTooltip then
@@ -681,6 +733,62 @@ local function EnsureManagerFrame()
             end
         end)
     end
+
+    f.chkEnabled = CreateToggle(L["UI_GLOBAL_ENABLED"], 14, -38,
+        function() return ns.db.settings.enabled end,
+        function(val)
+            ns.db.settings.enabled = val
+            Engine:ReapplyAllShown()
+            BadgeUI:RefreshAll()
+        end
+    )
+
+    f.chkBadges = CreateToggle(L["UI_SHOW_BADGES"], 350, -38,
+        function() return ns.db.settings.showBadges end,
+        function(val)
+            ns.db.settings.showBadges = val
+            BadgeUI:RefreshAll()
+        end
+    )
+
+    f.chkMinimap = CreateToggle(L["UI_SHOW_MINIMAP_BTN"], 350, -58,
+        function() return ns.db.settings.showMinimapButton end,
+        function(val)
+            ns.db.settings.showMinimapButton = val
+            if ns.MinimapButton and ns.MinimapButton.UpdateVisibility then
+                ns.MinimapButton:UpdateVisibility()
+            end
+        end
+    )
+    AddBtnTooltip(f.chkMinimap, L["UI_SHOW_MINIMAP_BTN"], L["UI_SHOW_MINIMAP_BTN_TIP"])
+
+    f.chkCtrlWheel = CreateToggle(L["UI_CTRL_WHEEL"], 14, -58,
+        function() return ns.db.settings.ctrlWheelZoom end,
+        function(val) ns.db.settings.ctrlWheelZoom = val end
+    )
+
+    f.chkClamp = CreateToggle(L["UI_CLAMP_SCREEN"], 350, -78,
+        function() return ns.db.settings.clampToScreen end,
+        function(val)
+            ns.db.settings.clampToScreen = val
+            Engine:ReapplyAllShown()
+        end
+    )
+
+    f.chkDragOpacity = CreateToggle(L["UI_DRAG_OPACITY"], 14, -78,
+        function() return ns.db.settings.dragOpacity end,
+        function(val) ns.db.settings.dragOpacity = val end
+    )
+
+    f.chkMagneticSnap = CreateToggle(L["UI_MAGNETIC_SNAP"], 350, -98,
+        function() return ns.db.settings.magneticSnap end,
+        function(val) ns.db.settings.magneticSnap = val end
+    )
+
+    -- Named Profile Bar with Save Checkpoint, Revert to Saved & Undo (v1.1.2)
+    local profLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    profLabel:SetPoint("TOPLEFT", 16, -124)
+    profLabel:SetText(L["UI_PROFILE_LABEL"])
 
     local profCycleBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     profCycleBtn:SetSize(148, 24)
@@ -860,9 +968,31 @@ local function EnsureManagerFrame()
         ManagerUI:RefreshList()
     end)
 
+    -- Category Filter Pills
+    f.filterPills = {}
+    for i = 1, #FILTER_DEFS do
+        local fd = FILTER_DEFS[i]
+        local pill = CreateFrame("Button", nil, f, BACKDROP_TEMPLATE)
+        pill:SetSize(84, 20)
+        pill.filterId = fd.id
+        StyleBox(pill, 0.06, 0.07, 0.10, 0.90, 0.28, 0.32, 0.40)
+        local pTxt = pill:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        pTxt:SetPoint("CENTER", 0, 0)
+        pTxt:SetText(L[fd.labelKey] or fd.id)
+        pill.text = pTxt
+        pill:SetScript("OnClick", function()
+            activeCategoryFilter = fd.id
+            if ns.db and ns.db.settings then
+                ns.db.settings.selectedCategoryFilter = fd.id
+            end
+            ManagerUI:RefreshList()
+        end)
+        f.filterPills[i] = pill
+    end
+
     -- Scrollable Window List
     local listBorder = CreateFrame("Frame", nil, f, BACKDROP_TEMPLATE)
-    listBorder:SetPoint("TOPLEFT", 14, -210)
+    listBorder:SetPoint("TOPLEFT", 14, -236)
     listBorder:SetPoint("BOTTOMRIGHT", -14, 18)
     StyleBox(listBorder, 0.03, 0.04, 0.06, 0.90)
 
@@ -956,6 +1086,9 @@ function ManagerUI:GetRow(index)
 end
 
 function ManagerUI:Show()
+    if ns.db and ns.db.settings and ns.db.settings.selectedCategoryFilter then
+        activeCategoryFilter = ns.db.settings.selectedCategoryFilter
+    end
     local f = EnsureManagerFrame()
     f:Show()
     ManagerUI:RefreshList()
