@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.4.0 – Per-Window Opacity & Mouseover-Fade, Character-Bound Profiles & Handheld Auto-Detection
+* **Per-Window Opacity & Mouseover-Fade (Option A):**
+  * Added a dedicated **Deckkraft (Opacity)** slider (30%–100%) to each window's quick popover badge.
+  * Added **Mouseover-Fade** toggle: windows can remain subtle and semi-transparent during combat or exploration, automatically snapping to 100% full opacity as soon as the mouse cursor enters the frame.
+  * Event-driven OnEnter/OnLeave watcher with automatic shutdown ensures **0.00 ms idle CPU** at rest and strict zero-taint compliance.
+  * Resetting scale via `[100%]` now also restores opacity to 100% and disables fade.
+  * Preserved across profile saving, checkpoints, and ASCII string exports.
+* **Character-Bound Profiles (Option B):**
+  * Added *"Profil an aktuellen Charakter binden"* checkbox in the Ella Manager (`/ella`).
+  * Automatically switches to the character's designated layout upon login (`PLAYER_LOGIN`) with chat feedback.
+  * Safe profile deletion automatically clears any character bindings pointing to deleted profiles.
+* **Handheld & Steam Deck Auto-Detection (Option B):**
+  * Automatically detects compact screen resolutions (<= 1400x800, such as Steam Deck at 1280x800, ROG Ally, or laptops).
+  * Prompts the player on first login to activate the tailored `Laptop / Deck (72%)` preset.
+  * Combat-safe prompt queuing prevents UI interruptions during encounters.
+
 ## v1.3.1 – Minimap Clipping Fix & Profession Category Mapping
 * **Minimap Button Unclipped:**
   * Fixed button parenting by anchoring to `MinimapBackdrop` / `MinimapCluster` / `UIParent` instead of `_G.Minimap` directly, completely bypassing `Minimap`'s internal circular mask which was clipping perimeter buttons.

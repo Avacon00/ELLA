@@ -60,7 +60,7 @@ local function GetOrCreatePopover()
     end
 
     local p = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    p:SetSize(268, 148)
+    p:SetSize(276, 198)
     p:SetFrameStrata("DIALOG")
     p:SetFrameLevel(200)
     p:EnableMouse(true)
@@ -91,8 +91,8 @@ local function GetOrCreatePopover()
     p.scaleLabel = scaleLabel
 
     local slider = CreateFrame("Slider", nil, p, BACKDROP_TEMPLATE)
-    slider:SetSize(242, 14)
-    slider:SetPoint("TOPLEFT", 12, -48)
+    slider:SetSize(252, 14)
+    slider:SetPoint("TOPLEFT", 12, -46)
     slider:SetOrientation("HORIZONTAL")
     slider:SetMinMaxValues(50, 150)
     slider:SetValueStep(1)
@@ -128,6 +128,48 @@ local function GetOrCreatePopover()
         p.inSliderCallback = false
     end)
 
+    local alphaLabel = p:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    alphaLabel:SetPoint("TOPLEFT", 12, -66)
+    p.alphaLabel = alphaLabel
+
+    local alphaSlider = CreateFrame("Slider", nil, p, BACKDROP_TEMPLATE)
+    alphaSlider:SetSize(252, 14)
+    alphaSlider:SetPoint("TOPLEFT", 12, -82)
+    alphaSlider:SetOrientation("HORIZONTAL")
+    alphaSlider:SetMinMaxValues(30, 100)
+    alphaSlider:SetValueStep(1)
+    if alphaSlider.SetObeyStepOnDrag then
+        alphaSlider:SetObeyStepOnDrag(true)
+    end
+    ApplyPillBackdrop(alphaSlider, 0.85, 0.45, 0.45, 0.50)
+
+    local aThumb = alphaSlider:CreateTexture(nil, "OVERLAY")
+    aThumb:SetTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+    aThumb:SetSize(24, 24)
+    alphaSlider:SetThumbTexture(aThumb)
+    alphaSlider:SetScript("OnMouseDown", function(self)
+        self.isDraggingThumb = true
+    end)
+    alphaSlider:SetScript("OnMouseUp", function(self)
+        self.isDraggingThumb = false
+    end)
+    p.alphaSlider = alphaSlider
+
+    alphaSlider:SetScript("OnValueChanged", function(_, value)
+        if p.updating or p.inAlphaCallback or not p.windowId then
+            return
+        end
+        local pct = math.floor(value + 0.5)
+        p.alphaLabel:SetText(string.format(L["POPOVER_ALPHA"], pct))
+        if p.lastAppliedAlphaPct == pct then
+            return
+        end
+        p.lastAppliedAlphaPct = pct
+        p.inAlphaCallback = true
+        Engine:SetWindowAlpha(p.windowId, pct / 100, nil)
+        p.inAlphaCallback = false
+    end)
+
     p:SetScript("OnMouseWheel", function(_, delta)
         if not p.windowId then
             return
@@ -138,7 +180,7 @@ local function GetOrCreatePopover()
     -- Scale-Only Checkbox
     local scaleOnlyChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
     scaleOnlyChk:SetSize(22, 22)
-    scaleOnlyChk:SetPoint("TOPLEFT", 10, -68)
+    scaleOnlyChk:SetPoint("TOPLEFT", 10, -104)
     local soText = scaleOnlyChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     soText:SetPoint("LEFT", scaleOnlyChk, "RIGHT", 2, 0)
     soText:SetText(L["POPOVER_SCALE_ONLY"])
@@ -152,10 +194,39 @@ local function GetOrCreatePopover()
         Engine:SetWindowMode(p.windowId, newMode)
     end)
 
+    -- Mouseover Fade Checkbox
+    local fadeChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
+    fadeChk:SetSize(22, 22)
+    fadeChk:SetPoint("TOPLEFT", 136, -104)
+    local fadeText = fadeChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    fadeText:SetPoint("LEFT", fadeChk, "RIGHT", 2, 0)
+    fadeText:SetText(L["POPOVER_MOUSEOVER_FADE"])
+    p.fadeChk = fadeChk
+
+    fadeChk:SetScript("OnClick", function(self)
+        if not p.windowId then
+            return
+        end
+        Engine:SetWindowAlpha(p.windowId, nil, self:GetChecked() and true or false)
+    end)
+    fadeChk:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["POPOVER_MOUSEOVER_FADE"], 1, 0.82, 0)
+            GameTooltip:AddLine(L["POPOVER_MOUSEOVER_FADE_TIP"], 0.9, 0.9, 0.9, true)
+            GameTooltip:Show()
+        end
+    end)
+    fadeChk:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+
     -- Lock Position Checkbox
     local lockChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
     lockChk:SetSize(22, 22)
-    lockChk:SetPoint("TOPLEFT", 10, -90)
+    lockChk:SetPoint("TOPLEFT", 10, -128)
     local lockText = lockChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     lockText:SetPoint("LEFT", lockChk, "RIGHT", 2, 0)
     lockText:SetText(L["POPOVER_LOCK_POS"])
@@ -180,8 +251,8 @@ local function GetOrCreatePopover()
     end
 
     local undoBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    undoBtn:SetSize(78, 22)
-    undoBtn:SetPoint("BOTTOMLEFT", 12, 10)
+    undoBtn:SetSize(80, 22)
+    undoBtn:SetPoint("BOTTOMLEFT", 12, 12)
     ApplySmallBtnFont(undoBtn)
     undoBtn:SetText(L["POPOVER_UNDO"])
     undoBtn:SetScript("OnClick", function()
@@ -205,19 +276,20 @@ local function GetOrCreatePopover()
     p.undoBtn = undoBtn
 
     local resetScaleBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetScaleBtn:SetSize(78, 22)
-    resetScaleBtn:SetPoint("BOTTOM", 0, 10)
+    resetScaleBtn:SetSize(80, 22)
+    resetScaleBtn:SetPoint("BOTTOM", 0, 12)
     ApplySmallBtnFont(resetScaleBtn)
     resetScaleBtn:SetText(L["POPOVER_RESET_SCALE"])
     resetScaleBtn:SetScript("OnClick", function()
         if p.windowId then
             Engine:SetWindowScale(p.windowId, 1.00, false)
+            Engine:SetWindowAlpha(p.windowId, 1.00, false)
         end
     end)
 
     local resetPosBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetPosBtn:SetSize(78, 22)
-    resetPosBtn:SetPoint("BOTTOMRIGHT", -12, 10)
+    resetPosBtn:SetSize(80, 22)
+    resetPosBtn:SetPoint("BOTTOMRIGHT", -12, 12)
     ApplySmallBtnFont(resetPosBtn)
     resetPosBtn:SetText(L["POPOVER_RESET_POS"])
     resetPosBtn:SetScript("OnClick", function()
@@ -237,16 +309,23 @@ local function RefreshPopover()
     local desc = Registry:GetDescriptor(popover.windowId)
     local cfg = ns:GetWindowConfig(popover.windowId, true)
     local pct = math.floor((cfg.scale or 1) * 100 + 0.5)
+    local aVal = (cfg.alpha ~= nil) and math.floor(cfg.alpha * 100 + 0.5) or 100
 
     popover.updating = true
     popover.lastAppliedPct = pct
+    popover.lastAppliedAlphaPct = aVal
     popover.title:SetText(Registry:GetDisplayLabel(desc))
     popover.scaleLabel:SetText(string.format(L["POPOVER_SCALE"], pct))
     -- Avoid fighting the user's mouse while the slider is actively firing OnValueChanged
     if not popover.inSliderCallback and not popover.slider.isDraggingThumb then
         popover.slider:SetValue(pct)
     end
+    popover.alphaLabel:SetText(string.format(L["POPOVER_ALPHA"], aVal))
+    if not popover.inAlphaCallback and not popover.alphaSlider.isDraggingThumb then
+        popover.alphaSlider:SetValue(aVal)
+    end
     popover.scaleOnlyChk:SetChecked(cfg.mode == ns.MODE_SCALE_ONLY)
+    popover.fadeChk:SetChecked(cfg.mouseoverFade and true or false)
     popover.lockChk:SetChecked(cfg.locked and true or false)
     popover.updating = false
 end

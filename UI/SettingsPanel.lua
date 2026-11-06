@@ -260,6 +260,7 @@ local function ApplyManagerResponsiveLayout(f)
     if f.chkEnabled then f.chkEnabled:SetPoint("TOPLEFT", 14, -38) end
     if f.chkCtrlWheel then f.chkCtrlWheel:SetPoint("TOPLEFT", 14, -58) end
     if f.chkDragOpacity then f.chkDragOpacity:SetPoint("TOPLEFT", 14, -78) end
+    if f.chkBindChar then f.chkBindChar:SetPoint("TOPLEFT", 14, -98) end
 
     if f.filterPills then
         local gap = 4
@@ -476,6 +477,9 @@ function ManagerUI:RefreshList()
         managerFrame.profUndoBtn:SetEnabled(Profiles:CanUndo())
     end
     managerFrame.profDelBtn:SetEnabled(activeProf ~= "Default")
+    if managerFrame.chkBindChar then
+        managerFrame.chkBindChar:SetChecked(Profiles:IsCharBoundToActiveProfile())
+    end
 
     local content = managerFrame.scrollChild
     local q = string.lower(searchQuery or "")
@@ -785,6 +789,14 @@ local function EnsureManagerFrame()
         function() return ns.db.settings.dragOpacity end,
         function(val) ns.db.settings.dragOpacity = val end
     )
+
+    f.chkBindChar = CreateToggle(L["UI_PROFILE_BIND_CHAR"], 14, -98,
+        function() return Profiles:IsCharBoundToActiveProfile() end,
+        function(val)
+            Profiles:SetCharProfileBinding(val)
+        end
+    )
+    AddBtnTooltip(f.chkBindChar, L["UI_PROFILE_BIND_CHAR"], L["UI_PROFILE_BIND_CHAR_TIP"])
 
     f.chkMagneticSnap = CreateToggle(L["UI_MAGNETIC_SNAP"], 350, -98,
         function() return ns.db.settings.magneticSnap end,
@@ -1125,6 +1137,7 @@ ns:On("OnManagedFrameShown", function() ManagerUI:RefreshList() end)
 ns:On("OnManagedFrameHidden", function() ManagerUI:RefreshList() end)
 ns:On("OnPresetApplied", function() ManagerUI:RefreshList() end)
 ns:On("OnProfileSwitched", function() ManagerUI:RefreshList() end)
+ns:On("OnCharProfileBindingChanged", function() ManagerUI:RefreshList() end)
 ns:On("OnProfileImported", function() ManagerUI:RefreshList() end)
 ns:On("OnResetAll", function() ManagerUI:RefreshList() end)
 

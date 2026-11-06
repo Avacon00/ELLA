@@ -123,6 +123,68 @@ local function SyncLinkedFrames(windowId, desc, targetScale)
     end
 end
 
+local function HookFrameFade(frame, windowId, desc)
+    local state = frameState[frame]
+    if not state or state.fadeHooked then
+        return
+    end
+    state.fadeHooked = true
+
+    local fadeWatcher = CreateFrame("Frame")
+    fadeWatcher:Hide()
+    fadeWatcher:SetScript("OnUpdate", function(self)
+        if not frame:IsShown() or not frame:IsMouseOver() then
+            self:Hide()
+            local cfg = ns:GetWindowConfig(windowId, false)
+            if cfg and not (activeDrag and activeDrag.frame == frame) then
+                local a = cfg.alpha or 1.0
+                if type(frame.SetAlpha) == "function" then
+                    frame:SetAlpha(a)
+                end
+            end
+        end
+    end)
+
+    if type(frame.HookScript) == "function" then
+        frame:HookScript("OnEnter", function(f)
+            local cfg = ns:GetWindowConfig(windowId, false)
+            if cfg and cfg.mouseoverFade and not (activeDrag and activeDrag.frame == f) then
+                if type(f.SetAlpha) == "function" then
+                    f:SetAlpha(1.0)
+                end
+                fadeWatcher:Show()
+            end
+        end)
+        frame:HookScript("OnHide", function()
+            fadeWatcher:Hide()
+        end)
+    end
+end
+
+function Engine:ApplyAlphaToFrame(windowId, frame, desc)
+    if not frame or Guard:IsForbidden(frame) then
+        return
+    end
+    HookFrameFade(frame, windowId, desc)
+    local cfg = ns:GetWindowConfig(windowId, false)
+    local targetAlpha = (cfg and cfg.alpha) or 1.0
+    local isMouseoverFade = (cfg and cfg.mouseoverFade) or false
+
+    if activeDrag and activeDrag.frame == frame then
+        return
+    end
+
+    if isMouseoverFade and frame:IsShown() and frame:IsMouseOver() then
+        if type(frame.SetAlpha) == "function" then
+            frame:SetAlpha(1.0)
+        end
+    else
+        if type(frame.SetAlpha) == "function" then
+            frame:SetAlpha(targetAlpha)
+        end
+    end
+end
+
 -- Applies scale and (when in SCALE_AND_MOVE mode with saved pos) scale-compensated anchor
 function Engine:ApplyToFrame(windowId, frame, desc)
     local state = frameState[frame]
@@ -168,6 +230,7 @@ function Engine:ApplyToFrame(windowId, frame, desc)
         frame:SetScale(targetScale)
     end
     SyncLinkedFrames(windowId, desc, targetScale)
+    Engine:ApplyAlphaToFrame(windowId, frame, desc)
 
     if mode == ns.MODE_SCALE_MOVE and cfg and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
         local clampedX, clampedY = Engine:ClampUipPosition(frame, targetScale, cfg.pos.uipX, cfg.pos.uipY)
@@ -262,6 +325,35 @@ function Engine:StepWindowScale(windowId, deltaTicks, isFineStep, pivotAroundCur
     local step = isFineStep and ns.STEP_FINE or ns.STEP_COARSE
     local current = cfg.scale or ns.DEFAULT_SCALE
     return Engine:SetWindowScale(windowId, current + (deltaTicks * step), pivotAroundCursor)
+end
+
+function Engine:SetWindowAlpha(windowId, requestedAlpha, mouseoverFade)
+    local desc = Registry:GetDescriptor(windowId)
+    if not desc then
+        return false
+    end
+    local cfg = ns:GetWindowConfig(windowId, true)
+    if ns.Profiles and ns.Profiles.PushUndoSnapshot then
+        ns.Profiles:PushUndoSnapshot("alpha:" .. windowId)
+    end
+
+    if requestedAlpha ~= nil then
+        local a = tonumber(requestedAlpha) or 1.0
+        if a < 0.20 then a = 0.20 elseif a > 1.0 then a = 1.0 end
+        cfg.alpha = math.floor(a * 100 + 0.5) / 100
+    end
+
+    if mouseoverFade ~= nil then
+        cfg.mouseoverFade = (mouseoverFade == true)
+    end
+
+    if desc.boundFrame then
+        Engine:ApplyAlphaToFrame(windowId, desc.boundFrame, desc)
+    end
+
+    ns.db.settings.activePreset = nil
+    ns:Fire("OnWindowConfigChanged", windowId, cfg)
+    return true
 end
 
 function Engine:SetWindowMode(windowId, newMode)
@@ -481,7 +573,9 @@ function Engine:StopActiveDrag()
     local finished = activeDrag
     activeDrag = nil
 
-    if finished.frame and finished.originalAlpha and type(finished.frame.SetAlpha) == "function" then
+    if finished.frame and finished.desc then
+        Engine:ApplyAlphaToFrame(finished.windowId, finished.frame, finished.desc)
+    elseif finished.frame and finished.originalAlpha and type(finished.frame.SetAlpha) == "function" then
         finished.frame:SetAlpha(finished.originalAlpha)
     end
 
@@ -658,9 +752,15 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         if ns.Profiles and ns.Profiles.RestoreCustomWindows then
             ns.Profiles:RestoreCustomWindows()
         end
+        if ns.Profiles and ns.Profiles.AutoLoadCharProfile then
+            ns.Profiles:AutoLoadCharProfile()
+        end
         Engine:ReapplyAllShown()
         if ns.MinimapButton and ns.MinimapButton.Init then
             ns.MinimapButton:Init()
+        end
+        if ns.HandheldDialog and ns.HandheldDialog.CheckAndPrompt then
+            ns.HandheldDialog:CheckAndPrompt()
         end
         local clientTag = ns.IsForeverClient and ns.L["PROJECT_FOREVER"] or ns.L["PROJECT_GENERIC"]
         ns:Print(string.format(ns.L["LOADED_MSG"], ns.Version, clientTag))

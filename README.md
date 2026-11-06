@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.3.1](https://img.shields.io/badge/Version-v1.3.1-ffaa00)
+![Version 1.4.0](https://img.shields.io/badge/Version-v1.4.0-ffaa00)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
@@ -19,6 +19,9 @@
 ## Deutsch (Übersicht & Bedienung)
 
 ### Highlights
+* **Fenster-Deckkraft & Mouseover-Fade (`v1.4`):** Passe die Transparenz jedes Fensters stufenlos (30%–100%) an. Mit *Mouseover-Fade* bleiben Fenster dezent durchscheinend, bis du mit der Maus darüberfährst – dann schalten sie sofort auf 100% Sichtbarkeit (0,00 ms Leerlauf-CPU).
+* **Charakter-gebundene Profile & Handheld-Erkennung (`v1.4`):** Binde Layout-Profile direkt an deine Charaktere. Auf kompakten Displays wie dem Steam Deck (<= 1400x800) schlägt Ella automatisch das handliche 72%-Preset vor.
+* **Minimap-Button & Schnellmenü (`v1.3`):** Eleganter Kompass-Button an der Minimap für schnellen Zugriff auf Profile, Presets, Fenstervorschau und Filter.
 * **Interaktives Einsteiger-Tutorial (`v1.2`):** Fragt beim ersten Aufruf von `/ella` freundlich nach (*„Kleines Tutorial gefällig?“*) und führt in einer 8-Schritte-Tour mit abgedunkeltem Hintergrund und leuchtenden Scheinwerfer-Rahmen durch alle Kernfunktionen (jederzeit über `[?]` oder `/ella tour` wiederholbar).
 * **Einzel-Fenster-Skalierung (`50 %` – `150 %`):** Skaliere jedes Blizzard- und *WoW: Forever*-Fenster individuell über das dezente `%`-Badge in der Titelleiste, per `Strg + Mausrad` oder im `/ella`-Manager.
 * **Benannte Layout-Profile (`v1.1`):** Wechsle per Klick im `/ella`-Manager oder per `/ella profile <Name>` blitzschnell zwischen verschiedenen Setups (z. B. `Default`, `Laptop / Deck`, `Raid`, `Twink`).
@@ -47,6 +50,9 @@
 ## English (Overview & Usage)
 
 ### Key Features
+* **Per-Window Opacity & Mouseover Fade (`v1.4`):** Customize panel transparency (30%–100%) with smart mouseover fade-in for distraction-free gameplay and 0.00 ms idle CPU.
+* **Character-Bound Profiles & Handheld Auto-Detection (`v1.4`):** Bind profiles per character and enjoy automatic Steam Deck (<= 1400x800) detection with tailored 72% handheld presets.
+* **Minimap Button & LDB Quick Menu (`v1.3`):** Circular compass launcher with profile cycling, 1-click presets, and live window preview toggles.
 * **Individual Window Scaling (`50%` – `150%`):** Resize any Blizzard or *WoW: Forever* panel independently via the optional titlebar `%` pill badge, `Ctrl + Mouse Wheel`, or `/ella`.
 * **Named Layout Profiles (`v1.1`):** Create, copy, delete, and switch between multiple named window layouts (`Default`, `Laptop / Deck`, custom profiles) via `/ella` or `/ella profile <Name>`.
 * **Magnetic Edge Snapping & Drag Opacity (`v1.1`):** Live cyan alignment guides snap windows cleanly to screen center, top edges, or side-by-side docking (`Shift` = `10px` grid), with optional semi-transparency while dragging.

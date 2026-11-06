@@ -67,6 +67,10 @@ function API:SetWindowScale(windowId, scale)
     return Engine:SetWindowScale(windowId, scale, false)
 end
 
+function API:SetWindowAlpha(windowId, alpha, mouseoverFade)
+    return Engine:SetWindowAlpha(windowId, alpha, mouseoverFade)
+end
+
 function API:GetWindowConfig(windowId)
     local cfg = ns:GetWindowConfig(windowId, false)
     if not cfg then
@@ -77,6 +81,8 @@ function API:GetWindowConfig(windowId)
         scale = cfg.scale,
         mode = cfg.mode,
         locked = cfg.locked,
+        alpha = cfg.alpha or 1.0,
+        mouseoverFade = cfg.mouseoverFade and true or false,
         uipX = cfg.pos and cfg.pos.uipX or nil,
         uipY = cfg.pos and cfg.pos.uipY or nil,
     }
@@ -91,6 +97,7 @@ local ALLOWED_PUBLIC_EVENTS = {
     OnProfileSwitched = true,
     OnProfileImported = true,
     OnResetAll = true,
+    OnCharProfileBindingChanged = true,
 }
 
 function API:RegisterCallback(eventName, callback)

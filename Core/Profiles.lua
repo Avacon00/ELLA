@@ -23,6 +23,8 @@ local function DeepCopyWindows(src)
                 scale = cfg.scale,
                 mode = cfg.mode,
                 locked = cfg.locked,
+                alpha = cfg.alpha,
+                mouseoverFade = cfg.mouseoverFade,
                 pos = (type(cfg.pos) == "table" and cfg.pos.uipX and cfg.pos.uipY)
                     and { uipX = cfg.pos.uipX, uipY = cfg.pos.uipY }
                     or nil,
@@ -44,6 +46,16 @@ local function WindowConfigsEqual(a, b)
     local sA = math.floor(((a and a.scale) or 1.00) * 100 + 0.5)
     local sB = math.floor(((b and b.scale) or 1.00) * 100 + 0.5)
     if sA ~= sB then
+        return false
+    end
+    local alA = math.floor(((a and a.alpha) or 1.00) * 100 + 0.5)
+    local alB = math.floor(((b and b.alpha) or 1.00) * 100 + 0.5)
+    if alA ~= alB then
+        return false
+    end
+    local fA = (a and a.mouseoverFade) and true or false
+    local fB = (b and b.mouseoverFade) and true or false
+    if fA ~= fB then
         return false
     end
     local defMode = (ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly) and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
@@ -394,12 +406,79 @@ function Profiles:DeleteProfile(profileName)
     end
 
     ns.db.profiles[target] = nil
+    if type(ns.db.charProfiles) == "table" then
+        for cKey, pName in pairs(ns.db.charProfiles) do
+            if pName == target then
+                ns.db.charProfiles[cKey] = nil
+            end
+        end
+    end
     if ns.db.activeProfile == target then
         Profiles:SwitchProfile("Default", true)
     end
     ns:Print(string.format(L["UI_PROFILE_DELETED"], target))
     ns:Fire("OnProfileSwitched", ns.db.activeProfile)
     return true
+end
+
+-- ============================================================================
+-- Character-Bound Profiles (v1.4.0)
+-- ============================================================================
+function Profiles:GetCharKey()
+    local name = _G.UnitName and _G.UnitName("player")
+    local realm = _G.GetRealmName and _G.GetRealmName()
+    if name and realm and name ~= "" and realm ~= "" then
+        return name .. " - " .. realm
+    elseif name and name ~= "" then
+        return name
+    end
+    return "Unknown"
+end
+
+function Profiles:IsCharBoundToActiveProfile()
+    if not ns.db or type(ns.db.charProfiles) ~= "table" then
+        return false
+    end
+    local charKey = Profiles:GetCharKey()
+    local boundProfile = ns.db.charProfiles[charKey]
+    local currentProfile = Profiles:GetActiveProfileName()
+    return boundProfile ~= nil and boundProfile == currentProfile
+end
+
+function Profiles:SetCharProfileBinding(enabled)
+    if not ns.db then
+        ns:InitDatabase()
+    end
+    if type(ns.db.charProfiles) ~= "table" then
+        ns.db.charProfiles = {}
+    end
+    local charKey = Profiles:GetCharKey()
+    local currentProfile = Profiles:GetActiveProfileName()
+    if enabled then
+        ns.db.charProfiles[charKey] = currentProfile
+    else
+        if ns.db.charProfiles[charKey] == currentProfile then
+            ns.db.charProfiles[charKey] = nil
+        end
+    end
+    ns:Fire("OnCharProfileBindingChanged", charKey, enabled and currentProfile or nil)
+end
+
+function Profiles:AutoLoadCharProfile()
+    if not ns.db or type(ns.db.charProfiles) ~= "table" then
+        return false
+    end
+    local charKey = Profiles:GetCharKey()
+    local targetProfile = ns.db.charProfiles[charKey]
+    if targetProfile and ns.db.profiles and ns.db.profiles[targetProfile] then
+        if ns.db.activeProfile ~= targetProfile then
+            Profiles:SwitchProfile(targetProfile, true)
+            local charName = _G.UnitName and _G.UnitName("player") or charKey
+            ns:Print(string.format(L["UI_PROFILE_AUTOLOADED"], targetProfile, charName))
+            return true
+        end
+    end
+    return false
 end
 
 -- ============================================================================
@@ -504,7 +583,9 @@ function Profiles:ExportString()
             local l = cfg.locked and "1" or "0"
             local px = (cfg.pos and cfg.pos.uipX) and tostring(math.floor(cfg.pos.uipX + 0.5)) or ""
             local py = (cfg.pos and cfg.pos.uipY) and tostring(math.floor(cfg.pos.uipY + 0.5)) or ""
-            parts[#parts + 1] = string.format("%s=%d,%s,%s,%s,%s", windowId, s, m, l, px, py)
+            local a = math.floor(((cfg.alpha ~= nil and cfg.alpha) or 1) * 100 + 0.5)
+            local f = cfg.mouseoverFade and "1" or "0"
+            parts[#parts + 1] = string.format("%s=%d,%s,%s,%s,%s,%d,%s", windowId, s, m, l, px, py, a, f)
         end
     end
     return table.concat(parts, ";")
@@ -524,7 +605,7 @@ function Profiles:ImportString(raw)
         if token ~= "ELLA1" and token ~= "FSCALE1" then
             local winId, payload = string.match(token, "^([%w_%-]+)=(.+)$")
             if winId and payload and Registry:GetDescriptor(winId) then
-                local sStr, mStr, lStr, xStr, yStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*)$")
+                local sStr, mStr, lStr, xStr, yStr, aStr, fStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?)$")
                 if sStr and mStr then
                     local cfg = ns:GetWindowConfig(winId, true)
                     cfg.scale = Engine:ClampScale((tonumber(sStr) or 100) / 100)
@@ -535,6 +616,15 @@ function Profiles:ImportString(raw)
                         cfg.pos = { uipX = nx, uipY = ny }
                     else
                         cfg.pos = nil
+                    end
+                    if aStr and aStr ~= "" then
+                        local numA = tonumber(aStr)
+                        if numA then
+                            cfg.alpha = math.min(1.0, math.max(0.2, numA / 100))
+                        end
+                    end
+                    if fStr and fStr ~= "" then
+                        cfg.mouseoverFade = (fStr == "1")
                     end
                     importedCount = importedCount + 1
                 end

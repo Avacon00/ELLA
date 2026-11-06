@@ -1,7 +1,7 @@
 local AddonName, ns = ...
 
 ns.AddonName = AddonName
-ns.Version = "1.3.1"
+ns.Version = "1.4.0"
 
 -- Internal Project Camelot (WoW: Forever) constant is 18
 ns.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
@@ -73,6 +73,7 @@ local DEFAULT_SETTINGS = {
     showMinimapButton = true,
     minimapPos = 220,
     selectedCategoryFilter = "ALL",
+    handheldPromptShown = false,
 }
 
 function ns:InitDatabase()
@@ -119,6 +120,10 @@ function ns:InitDatabase()
         db.customWindows = {}
     end
 
+    if type(db.charProfiles) ~= "table" then
+        db.charProfiles = {}
+    end
+
     ns.db = db
     return db
 end
@@ -135,6 +140,8 @@ function ns:GetWindowConfig(windowId, createIfMissing)
             mode = defaultMode,
             locked = false,
             pos = nil,
+            alpha = 1.00,
+            mouseoverFade = false,
         }
         ns.db.windows[windowId] = winTbl
     end
