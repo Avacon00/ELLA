@@ -95,7 +95,6 @@ function Profiles:Init()
         fallbackScale = 0.80,
         scales = {
             CHARACTER = 0.85,
-            REPUTATION = 0.82,
             SPELLBOOK = 0.80,
             TALENTS = 0.78,
             QUESTLOG = 0.82,

@@ -14,14 +14,7 @@ Registry:RegisterBatch(nil, {
         category = "CAT_CHARACTER",
         defaultCompactScale = 0.85,
         protected = true,
-        linkedFrames = { "TokenFramePopup", "GearManagerDialogPopup" },
-    },
-    REPUTATION = {
-        candidates = { "ReputationFrame" },
-        labelKey = "WIN_REPUTATION",
-        category = "CAT_QUEST_WORLD",
-        defaultCompactScale = 0.82,
-        defaultMode = ns.MODE_SCALE_ONLY,
+        linkedFrames = { "TokenFramePopup", "GearManagerDialogPopup", "ReputationDetailFrame" },
     },
     QUESTLOG = {
         candidates = { "QuestLogFrame", "QuestLogPopupDetailFrame" },

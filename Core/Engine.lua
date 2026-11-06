@@ -896,8 +896,8 @@ function ns:RunSelfTest()
     local total = 6
 
     -- Test 1: Version & DB Schema
-    if ns.Version == "1.6.0" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
-        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.6.0 & Datenbank-Schema v2 OK")
+    if ns.Version == "1.6.1" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
+        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.6.1 & Datenbank-Schema v2 OK")
         passed = passed + 1
     else
         ns:Print("|cffff3333[1/6 FAIL]|r Datenbank-Schema oder Version fehlerhaft")

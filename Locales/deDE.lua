@@ -27,7 +27,7 @@ L["CAT_FOREVER"] = "WoW: Forever Systeme"
 L["CAT_CUSTOM"] = "Eigene & Drittanbieter-Fenster"
 
 -- Built-in Window Labels
-L["WIN_CHARACTER"] = "Charakterinfo & Ausrüstung"
+L["WIN_CHARACTER"] = "Charakterinfo, Ausrüstung & Ruf"
 L["WIN_REPUTATION"] = "Ruf-Übersicht"
 L["WIN_SPELLBOOK"] = "Zauberbuch & Fähigkeiten"
 L["WIN_TALENTS"] = "Talente & Spezialisierungen"

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.1 – Fix: Konsolidierung von Charakterinfo, Ausrüstung & Ruf
+* **Verschachtelungs- und Überlappungs-Fix (`CharacterFrame` vs. `ReputationFrame`):**
+  * `ReputationFrame` ist in Blizzards Interface kein eigenständiges Fenster, sondern Reiter 3 innerhalb des `CharacterFrame`.
+  * Die separate Registrierung von `REPUTATION` führte bei Vorschauen und Skalierungen dazu, dass Blizzards Tab-System umgangen wurde und sowohl `PaperDollFrame` (3D-Charaktermodell & Attribute) als auch `ReputationFrame` gleichzeitig übereinander gezeichnet wurden.
+  * `ReputationFrame` wurde aus der separaten Fenster-Registrierung entfernt und als nativer Bestandteil von `CharacterFrame` konsolidiert.
+  * Das ausklappbare Fraktions-Detailfenster (`ReputationDetailFrame`) wurde als `linkedFrame` an `CharacterFrame` gebunden und übernimmt nun exakt dessen Skalierung.
+  * Titelleiste und Manager führen das Fenster nun einheitlich als **Charakterinfo, Ausrüstung & Ruf** – 100 % frei von doppelten Badges oder Frame-Überlagerungen.
+
 ## v1.6.0 – Kampf-Schutz, Synchrones Fenster-Docking & Community-AddOns
 * **Option 1: Instanz- & Kampf-Schutz (Auto-Close & Kompaktmodus):**
   * **Kampf-Schutz (`combatAutoClose`):** Schließt ungeschützte Menüs, Zauberbuch, Questlog und Handwerksfenster sofort und automatisch beim Eintritt in den Kampf (`PLAYER_REGEN_DISABLED`), um das Sichtfeld sofort freizugeben.
