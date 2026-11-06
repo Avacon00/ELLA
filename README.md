@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.1.1](https://img.shields.io/badge/Version-v1.1.1-ffaa00)
+![Version 1.1.2](https://img.shields.io/badge/Version-v1.1.2-ffaa00)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)

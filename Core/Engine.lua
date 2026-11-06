@@ -197,6 +197,9 @@ function Engine:SetWindowScale(windowId, requestedScale, pivotAroundCursor)
     end
 
     local cfg = ns:GetWindowConfig(windowId, true)
+    if ns.Profiles and ns.Profiles.PushUndoSnapshot then
+        ns.Profiles:PushUndoSnapshot("scale:" .. windowId)
+    end
     if cfg.mode == ns.MODE_DISABLED then
         cfg.mode = ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
     end
@@ -279,6 +282,9 @@ function Engine:ResetWindow(windowId, resetPositionOnly)
     local cfg = ns:GetWindowConfig(windowId, false)
     if not cfg then
         return
+    end
+    if ns.Profiles and ns.Profiles.PushUndoSnapshot then
+        ns.Profiles:PushUndoSnapshot("reset:" .. windowId)
     end
     cfg.pos = nil
     if not resetPositionOnly then
@@ -422,6 +428,10 @@ function Engine:StartWindowDrag(windowId, frame, desc)
     local uipX, uipY = Engine:ReadUipTopLeft(frame)
     if not uipX or not uipY then
         return
+    end
+
+    if ns.Profiles and ns.Profiles.PushUndoSnapshot then
+        ns.Profiles:PushUndoSnapshot("drag:" .. windowId)
     end
 
     local state = frameState[frame]

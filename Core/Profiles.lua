@@ -7,6 +7,11 @@ local Engine = ns.Engine
 local Profiles = {}
 ns.Profiles = Profiles
 
+local undoStack = {}
+local MAX_UNDO_STEPS = 25
+local lastUndoTag = nil
+local lastUndoTime = 0
+
 local function DeepCopyWindows(src)
     local out = {}
     if type(src) ~= "table" then
@@ -25,6 +30,41 @@ local function DeepCopyWindows(src)
         end
     end
     return out
+end
+
+local function ReplaceWindowsInPlace(dest, src)
+    wipe(dest)
+    local copy = DeepCopyWindows(src)
+    for k, v in pairs(copy) do
+        dest[k] = v
+    end
+end
+
+local function WindowConfigsEqual(a, b)
+    local sA = math.floor(((a and a.scale) or 1.00) * 100 + 0.5)
+    local sB = math.floor(((b and b.scale) or 1.00) * 100 + 0.5)
+    if sA ~= sB then
+        return false
+    end
+    local defMode = (ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly) and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
+    local mA = (a and a.mode) or defMode
+    local mB = (b and b.mode) or defMode
+    if mA ~= mB then
+        return false
+    end
+    local pA = a and a.pos
+    local pB = b and b.pos
+    local hasPA = (type(pA) == "table" and pA.uipX ~= nil and pA.uipY ~= nil)
+    local hasPB = (type(pB) == "table" and pB.uipX ~= nil and pB.uipY ~= nil)
+    if hasPA ~= hasPB then
+        return false
+    end
+    if hasPA and hasPB then
+        if math.abs(pA.uipX - pB.uipX) > 1.0 or math.abs(pA.uipY - pB.uipY) > 1.0 then
+            return false
+        end
+    end
+    return true
 end
 
 function Profiles:Init()
@@ -98,6 +138,152 @@ function Profiles:Init()
             GOSSIP = 0.76,
         },
     })
+
+    Profiles:EnsureProfileSnapshots()
+end
+
+-- ============================================================================
+-- Saved Profile Checkpoints & Undo History (v1.1.2)
+-- ============================================================================
+function Profiles:EnsureProfileSnapshots()
+    if not ns.db or type(ns.db.profiles) ~= "table" then
+        return
+    end
+    for _, prof in pairs(ns.db.profiles) do
+        if type(prof) == "table" then
+            if type(prof.windows) ~= "table" then
+                prof.windows = {}
+            end
+            if type(prof.savedSnapshot) ~= "table" then
+                prof.savedSnapshot = DeepCopyWindows(prof.windows)
+            end
+        end
+    end
+end
+
+function Profiles:PushUndoSnapshot(tag)
+    if not ns.db or type(ns.db.windows) ~= "table" then
+        return
+    end
+    local now = (type(_G.GetTime) == "function" and _G.GetTime()) or 0
+    if tag and tag == lastUndoTag and (now - lastUndoTime) < 1.5 then
+        lastUndoTime = now
+        return
+    end
+    lastUndoTag = tag
+    lastUndoTime = now
+
+    undoStack[#undoStack + 1] = {
+        tag = tag,
+        windows = DeepCopyWindows(ns.db.windows),
+    }
+    if #undoStack > MAX_UNDO_STEPS then
+        table.remove(undoStack, 1)
+    end
+end
+
+function Profiles:CanUndo()
+    return #undoStack > 0
+end
+
+function Profiles:UndoLastChange()
+    if not ns.db or #undoStack == 0 then
+        ns:Print(L["UI_UNDO_EMPTY"])
+        return false
+    end
+    local entry = table.remove(undoStack)
+    lastUndoTag = nil
+    ReplaceWindowsInPlace(ns.db.windows, entry.windows)
+    Engine:ReapplyAllShown()
+    ns:Print(L["UI_UNDO_APPLIED"])
+    ns:Fire("OnProfileSwitched", ns.db.activeProfile)
+    return true
+end
+
+function Profiles:HasUnsavedChanges()
+    if not ns.db or not ns.db.activeProfile or not ns.db.profiles[ns.db.activeProfile] then
+        return false
+    end
+    local prof = ns.db.profiles[ns.db.activeProfile]
+    local saved = prof.savedSnapshot or {}
+    local live = ns.db.windows or {}
+
+    for winId, cfg in pairs(live) do
+        if not WindowConfigsEqual(cfg, saved[winId]) then
+            return true
+        end
+    end
+    for winId, cfg in pairs(saved) do
+        if not WindowConfigsEqual(live[winId], cfg) then
+            return true
+        end
+    end
+    return false
+end
+
+function Profiles:SaveActiveProfileSnapshot(silent)
+    if not ns.db then
+        ns:InitDatabase()
+    end
+    local active = ns.db.activeProfile or "Default"
+    local prof = ns.db.profiles[active]
+    if not prof then
+        return false
+    end
+    prof.savedSnapshot = DeepCopyWindows(ns.db.windows)
+    if not silent then
+        ns:Print(string.format(L["UI_PROFILE_SAVED"], active))
+    end
+    ns:Fire("OnProfileSwitched", active)
+    return true
+end
+
+function Profiles:RevertToSavedProfile()
+    if not ns.db then
+        ns:InitDatabase()
+    end
+    local active = ns.db.activeProfile or "Default"
+    local prof = ns.db.profiles[active]
+    if not prof or type(prof.savedSnapshot) ~= "table" then
+        return false
+    end
+    Profiles:PushUndoSnapshot("revert_profile:" .. active)
+    lastUndoTag = nil
+    ReplaceWindowsInPlace(ns.db.windows, prof.savedSnapshot)
+    Engine:ReapplyAllShown()
+    ns:Print(string.format(L["UI_PROFILE_REVERTED"], active))
+    ns:Fire("OnProfileSwitched", active)
+    return true
+end
+
+-- Restores a single window to its saved profile checkpoint (or last undo state if unchanged in profile)
+function Profiles:RestoreWindowToSavedOrUndo(windowId)
+    if not ns.db or not windowId then
+        return false
+    end
+    local active = ns.db.activeProfile or "Default"
+    local prof = ns.db.profiles[active]
+    local savedCfg = prof and prof.savedSnapshot and prof.savedSnapshot[windowId] or nil
+    local liveCfg = ns.db.windows[windowId]
+
+    if not WindowConfigsEqual(liveCfg, savedCfg) then
+        Profiles:PushUndoSnapshot("restore_win:" .. windowId)
+        lastUndoTag = nil
+        if savedCfg then
+            ns.db.windows[windowId] = DeepCopyWindows({ [windowId] = savedCfg })[windowId]
+        else
+            ns.db.windows[windowId] = nil
+        end
+        local desc = Registry:GetDescriptor(windowId)
+        if desc and desc.boundFrame then
+            Engine:ApplyToFrame(windowId, desc.boundFrame, desc)
+        end
+        ns:Fire("OnWindowConfigChanged", windowId, ns.db.windows[windowId])
+        return true
+    elseif #undoStack > 0 then
+        return Profiles:UndoLastChange()
+    end
+    return false
 end
 
 -- ============================================================================
@@ -138,13 +324,18 @@ function Profiles:SwitchProfile(profileName, silent)
     end
 
     if not ns.db.profiles[clean] then
-        ns.db.profiles[clean] = { windows = {} }
+        ns.db.profiles[clean] = { windows = {}, savedSnapshot = {} }
     elseif type(ns.db.profiles[clean].windows) ~= "table" then
         ns.db.profiles[clean].windows = {}
+    end
+    if type(ns.db.profiles[clean].savedSnapshot) ~= "table" then
+        ns.db.profiles[clean].savedSnapshot = DeepCopyWindows(ns.db.profiles[clean].windows)
     end
 
     ns.db.activeProfile = clean
     ns.db.windows = ns.db.profiles[clean].windows
+    wipe(undoStack)
+    lastUndoTag = nil
 
     Engine:ReapplyAllShown()
     if not silent then
@@ -182,6 +373,7 @@ function Profiles:CreateOrCopyProfile(newName, copyFromCurrent)
     local sourceWindows = copyFromCurrent and ns.db.windows or nil
     ns.db.profiles[clean] = {
         windows = DeepCopyWindows(sourceWindows),
+        savedSnapshot = DeepCopyWindows(sourceWindows),
     }
     Profiles:SwitchProfile(clean, true)
     ns:Print(string.format(L["UI_PROFILE_CREATED"], clean))
@@ -219,6 +411,9 @@ function Profiles:ApplyPreset(presetId)
         return false
     end
 
+    Profiles:PushUndoSnapshot("preset:" .. tostring(presetId))
+    lastUndoTag = nil
+
     for windowId, desc in Registry:IterateWindows() do
         local cfg = ns:GetWindowConfig(windowId, true)
         local targetScale = (preset.scales and preset.scales[windowId])
@@ -245,6 +440,8 @@ function Profiles:ResetAll()
     if not ns.db then
         return
     end
+    Profiles:PushUndoSnapshot("reset_all")
+    lastUndoTag = nil
     wipe(ns.db.windows)
     ns.db.settings.activePreset = "DEFAULT_100"
 

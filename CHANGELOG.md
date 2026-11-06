@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.1.2 – Profile Checkpoints (`Speichern` / `Auf Profil-Stand`) & Multi-Step `Rückgängig` (`Undo`)
+* **Protected Profile Checkpoints (`savedSnapshot`):**
+  * Experimenting with window sizes or dragging windows no longer silently destroys your saved profile layout.
+  * Added **`Profil speichern` (`Speichern *`)** to explicitly save your current layout into the active profile's checkpoint, and **`Auf Profil-Stand` (`Revert Profile`)** to immediately restore all windows to the exact sizes and positions of your last saved profile checkpoint.
+* **Multi-Step `Rückgängig` (`Undo`) & Per-Window `Zurück` in the `%`-Badge Popover:**
+  * Automatically records up to 25 undo checkpoints before dragging, scaling, or applying presets (intelligently grouping continuous slider drags / wheel scrolls into a single step).
+  * Added a **`Zurück` (`Undo`)** button directly inside every window's `%`-Badge Popover as well as **`Rückgängig`** in `/ella` (and `/ella undo`, `/ella revert`, `/ella save`).
+* **Popover Slider Stability Fix:**
+  * Anchored the `%`-Badge Popover to fixed `UIParent` screen coordinates while open so resizing a window never shifts the slider bar underneath your mouse cursor.
+
 ## v1.1.1 – Resizable & Scalable Ella Manager + Picker UX Polish
 * **Resizable & Self-Scalable Ella Manager Window (`/ella`):**
   * Added a **bottom-right resize grip** (`680×440` up to `1080×860` with dynamic responsive row & button stretching; Right-Click resets to `720×580`).

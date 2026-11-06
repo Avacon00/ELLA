@@ -170,10 +170,44 @@ local function GetOrCreatePopover()
         ns:Fire("OnWindowConfigChanged", p.windowId, cfg)
     end)
 
-    -- Bottom Reset Buttons
+    -- Bottom Action Buttons: [Zurück / Undo] [100% Reset] [Pos. Reset]
+    local function ApplySmallBtnFont(btn)
+        if btn.SetNormalFontObject then
+            btn:SetNormalFontObject("GameFontNormalSmall")
+            btn:SetHighlightFontObject("GameFontHighlightSmall")
+            btn:SetDisabledFontObject("GameFontDisableSmall")
+        end
+    end
+
+    local undoBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
+    undoBtn:SetSize(78, 22)
+    undoBtn:SetPoint("BOTTOMLEFT", 12, 10)
+    ApplySmallBtnFont(undoBtn)
+    undoBtn:SetText(L["POPOVER_UNDO"])
+    undoBtn:SetScript("OnClick", function()
+        if p.windowId and ns.Profiles and ns.Profiles.RestoreWindowToSavedOrUndo then
+            ns.Profiles:RestoreWindowToSavedOrUndo(p.windowId)
+        end
+    end)
+    undoBtn:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["POPOVER_UNDO"], 1, 0.82, 0)
+            GameTooltip:AddLine(L["POPOVER_UNDO_TIP"], 0.9, 0.9, 0.9, true)
+            GameTooltip:Show()
+        end
+    end)
+    undoBtn:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+    p.undoBtn = undoBtn
+
     local resetScaleBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetScaleBtn:SetSize(116, 22)
-    resetScaleBtn:SetPoint("BOTTOMLEFT", 12, 10)
+    resetScaleBtn:SetSize(78, 22)
+    resetScaleBtn:SetPoint("BOTTOM", 0, 10)
+    ApplySmallBtnFont(resetScaleBtn)
     resetScaleBtn:SetText(L["POPOVER_RESET_SCALE"])
     resetScaleBtn:SetScript("OnClick", function()
         if p.windowId then
@@ -182,8 +216,9 @@ local function GetOrCreatePopover()
     end)
 
     local resetPosBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetPosBtn:SetSize(116, 22)
+    resetPosBtn:SetSize(78, 22)
     resetPosBtn:SetPoint("BOTTOMRIGHT", -12, 10)
+    ApplySmallBtnFont(resetPosBtn)
     resetPosBtn:SetText(L["POPOVER_RESET_POS"])
     resetPosBtn:SetScript("OnClick", function()
         if p.windowId then

@@ -387,7 +387,17 @@ function ManagerUI:RefreshList()
     managerFrame.chkMagneticSnap:SetChecked(s.magneticSnap)
 
     local activeProf = Profiles:GetActiveProfileName()
+    local isDirty = Profiles:HasUnsavedChanges()
     managerFrame.profCycleBtn:SetText("» " .. activeProf .. " «")
+    if managerFrame.profSaveBtn then
+        managerFrame.profSaveBtn:SetText(isDirty and L["UI_PROFILE_SAVE_DIRTY"] or L["UI_PROFILE_SAVE"])
+    end
+    if managerFrame.profRevertBtn then
+        managerFrame.profRevertBtn:SetEnabled(isDirty)
+    end
+    if managerFrame.profUndoBtn then
+        managerFrame.profUndoBtn:SetEnabled(Profiles:CanUndo())
+    end
     managerFrame.profDelBtn:SetEnabled(activeProf ~= "Default")
 
     local content = managerFrame.scrollChild
@@ -622,14 +632,30 @@ local function EnsureManagerFrame()
         function(val) ns.db.settings.magneticSnap = val end
     )
 
-    -- Named Profile Bar (v1.1)
+    -- Named Profile Bar with Save Checkpoint, Revert to Saved & Undo (v1.1.2)
     local profLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     profLabel:SetPoint("TOPLEFT", 16, -124)
     profLabel:SetText(L["UI_PROFILE_LABEL"])
 
+    local function AddBtnTooltip(btn, titleText, bodyText)
+        btn:SetScript("OnEnter", function(self)
+            if _G.GameTooltip then
+                GameTooltip:SetOwner(self, "ANCHOR_TOP")
+                GameTooltip:AddLine(titleText, 1, 0.82, 0)
+                GameTooltip:AddLine(bodyText, 0.9, 0.9, 0.9, true)
+                GameTooltip:Show()
+            end
+        end)
+        btn:SetScript("OnLeave", function()
+            if _G.GameTooltip then
+                GameTooltip:Hide()
+            end
+        end)
+    end
+
     local profCycleBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profCycleBtn:SetSize(196, 24)
-    profCycleBtn:SetPoint("TOPLEFT", 68, -118)
+    profCycleBtn:SetSize(148, 24)
+    profCycleBtn:SetPoint("TOPLEFT", 60, -118)
     ApplyCompactButtonFont(profCycleBtn)
     profCycleBtn:SetScript("OnClick", function()
         Profiles:CycleNextProfile()
@@ -659,19 +685,56 @@ local function EnsureManagerFrame()
     end)
     f.profCycleBtn = profCycleBtn
 
+    local profSaveBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    profSaveBtn:SetSize(118, 24)
+    profSaveBtn:SetPoint("LEFT", profCycleBtn, "RIGHT", 4, 0)
+    ApplyCompactButtonFont(profSaveBtn)
+    profSaveBtn:SetText(L["UI_PROFILE_SAVE"])
+    profSaveBtn:SetScript("OnClick", function()
+        Profiles:SaveActiveProfileSnapshot(false)
+        ManagerUI:RefreshList()
+    end)
+    AddBtnTooltip(profSaveBtn, L["UI_PROFILE_SAVE"], L["UI_PROFILE_SAVE_TIP"])
+    f.profSaveBtn = profSaveBtn
+
+    local profRevertBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    profRevertBtn:SetSize(126, 24)
+    profRevertBtn:SetPoint("LEFT", profSaveBtn, "RIGHT", 4, 0)
+    ApplyCompactButtonFont(profRevertBtn)
+    profRevertBtn:SetText(L["UI_PROFILE_REVERT"])
+    profRevertBtn:SetScript("OnClick", function()
+        Profiles:RevertToSavedProfile()
+        ManagerUI:RefreshList()
+    end)
+    AddBtnTooltip(profRevertBtn, L["UI_PROFILE_REVERT"], L["UI_PROFILE_REVERT_TIP"])
+    f.profRevertBtn = profRevertBtn
+
+    local profUndoBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    profUndoBtn:SetSize(92, 24)
+    profUndoBtn:SetPoint("LEFT", profRevertBtn, "RIGHT", 4, 0)
+    ApplyCompactButtonFont(profUndoBtn)
+    profUndoBtn:SetText(L["UI_BTN_UNDO"])
+    profUndoBtn:SetScript("OnClick", function()
+        Profiles:UndoLastChange()
+        ManagerUI:RefreshList()
+    end)
+    AddBtnTooltip(profUndoBtn, L["UI_BTN_UNDO"], L["UI_BTN_UNDO_TIP"])
+    f.profUndoBtn = profUndoBtn
+
     local profNewBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profNewBtn:SetSize(214, 24)
-    profNewBtn:SetPoint("LEFT", profCycleBtn, "RIGHT", 8, 0)
+    profNewBtn:SetSize(82, 24)
+    profNewBtn:SetPoint("LEFT", profUndoBtn, "RIGHT", 4, 0)
     ApplyCompactButtonFont(profNewBtn)
     profNewBtn:SetText(L["UI_PROFILE_NEW"])
     profNewBtn:SetScript("OnClick", function()
         OpenNewProfileModal()
     end)
+    AddBtnTooltip(profNewBtn, L["UI_PROFILE_NEW"], L["UI_PROFILE_NEW_TIP"])
     f.profNewBtn = profNewBtn
 
     local profDelBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profDelBtn:SetSize(106, 24)
-    profDelBtn:SetPoint("LEFT", profNewBtn, "RIGHT", 8, 0)
+    profDelBtn:SetSize(72, 24)
+    profDelBtn:SetPoint("LEFT", profNewBtn, "RIGHT", 4, 0)
     ApplyCompactButtonFont(profDelBtn)
     profDelBtn:SetText(L["UI_PROFILE_DELETE"])
     profDelBtn:SetScript("OnClick", function()
@@ -1000,6 +1063,12 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         else
             Profiles:CycleNextProfile()
         end
+    elseif cmd == "undo" or cmd == "z" then
+        Profiles:UndoLastChange()
+    elseif cmd == "revert" then
+        Profiles:RevertToSavedProfile()
+    elseif cmd == "save" then
+        Profiles:SaveActiveProfileSnapshot(false)
     elseif cmd == "reset" then
         Profiles:ResetAll()
     elseif cmd == "help" or cmd == "?" then
