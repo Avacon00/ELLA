@@ -116,43 +116,107 @@ end
 -- ============================================================================
 -- 2. Spotlight Dimmer & Callout Card
 -- ============================================================================
+local userMovedCard = false
+
+local function PositionCard(target)
+    if not cardFrame then
+        return
+    end
+
+    cardFrame:ClearAllPoints()
+    local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+    if not mf or not mf:IsShown() then
+        cardFrame:SetPoint("CENTER", UIParent, "CENTER", 0, -20)
+        return
+    end
+
+    local uipScale = UIParent:GetEffectiveScale() or 1.0
+    local mfScale = mf:GetEffectiveScale() or 1.0
+    local scaleRatio = mfScale / uipScale
+
+    local uipW = UIParent:GetWidth() or 1920
+    local mfRightUIP = (mf:GetRight() or 0) * scaleRatio
+    local mfLeftUIP = (mf:GetLeft() or 0) * scaleRatio
+    local cardW = cardFrame:GetWidth() or 390
+
+    -- 1) Prefer side-docking when screen space allows (1080p, 1440p, 4K)
+    if (uipW - mfRightUIP) >= (cardW + 20) then
+        cardFrame:SetPoint("LEFT", mf, "RIGHT", 14, 0)
+        return
+    end
+
+    if mfLeftUIP >= (cardW + 20) then
+        cardFrame:SetPoint("RIGHT", mf, "LEFT", -14, 0)
+        return
+    end
+
+    -- 2) Narrow screen fallback (e.g. 1024x576 or 1280x720)
+    -- Position card opposite to the highlighted target so it NEVER covers it
+    if target then
+        local tFrame = target.tl or target
+        local tTop = (tFrame.GetTop and tFrame:GetTop()) or 0
+        local mfTop = (mf.GetTop and mf:GetTop()) or 0
+        local mfHeight = (mf.GetHeight and mf:GetHeight()) or 520
+        local relY = mfTop - tTop
+        -- If target is in the upper 45% of manager, dock card to BOTTOM
+        if relY < (mfHeight * 0.45) then
+            cardFrame:SetPoint("BOTTOM", mf, "BOTTOM", 0, 14)
+            return
+        else
+            -- Target is in the lower half, dock card near TOP
+            cardFrame:SetPoint("TOP", mf, "TOP", 0, -32)
+            return
+        end
+    end
+
+    cardFrame:SetPoint("BOTTOM", mf, "BOTTOM", 0, 14)
+end
+
 local function EnsureTutorialFrames()
     if cardFrame then
         return
     end
 
-    -- Semi-transparent screen dimmer
-    dimmerFrame = CreateFrame("Frame", nil, UIParent)
+    -- Semi-transparent screen dimmer on strata "HIGH"
+    -- This dims the 3D world, chat, actionbars and minimap,
+    -- but leaves Ella Manager (strata "DIALOG") 100% bright, crisp and vibrant!
+    dimmerFrame = CreateFrame("Frame", "EllaTutorialDimmer", UIParent)
     dimmerFrame:SetAllPoints(UIParent)
-    dimmerFrame:SetFrameStrata("DIALOG")
-    dimmerFrame:SetFrameLevel(150)
+    dimmerFrame:SetFrameStrata("HIGH")
+    dimmerFrame:SetFrameLevel(50)
     dimmerFrame:EnableMouse(true)
+    dimmerFrame:SetScript("OnMouseDown", function()
+        -- Absorb background clicks so user doesn't accidentally click the 3D world during the tour
+    end)
     dimmerFrame:Hide()
 
     local dimTex = dimmerFrame:CreateTexture(nil, "BACKGROUND")
     dimTex:SetAllPoints(dimmerFrame)
-    dimTex:SetColorTexture(0.02, 0.03, 0.06, 0.55)
+    dimTex:SetColorTexture(0.01, 0.02, 0.04, 0.50)
 
     -- Glowing spotlight border around highlighted elements
-    spotlightBox = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
+    local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+    spotlightBox = CreateFrame("Frame", "EllaTutorialSpotlight", mf or UIParent, BACKDROP_TEMPLATE)
     spotlightBox:SetFrameStrata("DIALOG")
-    spotlightBox:SetFrameLevel(160)
+    spotlightBox:SetFrameLevel(250)
     spotlightBox:EnableMouse(false)
     if spotlightBox.SetBackdrop then
         spotlightBox:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
             tile = true,
             tileSize = 8,
             edgeSize = 14,
             insets = { left = 3, right = 3, top = 3, bottom = 3 },
         })
-        spotlightBox:SetBackdropBorderColor(0.0, 0.85, 1.0, 0.95)
+        spotlightBox:SetBackdropColor(0.0, 0.85, 1.0, 0.08)
+        spotlightBox:SetBackdropBorderColor(0.0, 0.90, 1.0, 0.95)
     end
     spotlightBox:Hide()
 
     -- Interactive Tutorial Card (Draggable Callout)
-    local c = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    c:SetSize(430, 230)
+    local c = CreateFrame("Frame", "EllaTutorialCard", UIParent, BACKDROP_TEMPLATE)
+    c:SetSize(390, 185)
     c:SetPoint("CENTER", 0, -40)
     c:SetFrameStrata("FULLSCREEN_DIALOG")
     c:SetFrameLevel(200)
@@ -162,40 +226,53 @@ local function EnsureTutorialFrames()
     c:SetClampedToScreen(true)
     StyleBox(c, 0.05, 0.06, 0.09, 0.98, 0.90, 0.74, 0.28)
     c:SetScript("OnDragStart", c.StartMoving)
-    c:SetScript("OnDragStop", c.StopMovingOrSizing)
+    c:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        userMovedCard = true
+    end)
+    c:SetScript("OnHide", function()
+        if Tutorial.active then
+            Tutorial:Stop()
+        end
+    end)
     c:Hide()
 
+    if _G.UISpecialFrames then
+        table.insert(_G.UISpecialFrames, "EllaTutorialCard")
+    end
+
     local icon = c:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(24, 24)
-    icon:SetPoint("TOPLEFT", 14, -12)
+    icon:SetSize(22, 22)
+    icon:SetPoint("TOPLEFT", 12, -10)
     icon:SetTexture(ICON_PATH)
 
-    local title = c:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local title = c:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("LEFT", icon, "RIGHT", 8, 0)
     c.title = title
 
     local stepCounter = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    stepCounter:SetPoint("TOPRIGHT", -36, -14)
+    stepCounter:SetPoint("TOPRIGHT", -32, -12)
     stepCounter:SetTextColor(0.0, 0.85, 1.0)
     c.stepCounter = stepCounter
 
     local closeBtn = CreateFrame("Button", nil, c, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", -4, -4)
+    closeBtn:SetSize(24, 24)
+    closeBtn:SetPoint("TOPRIGHT", -2, -2)
     closeBtn:SetScript("OnClick", function()
         Tutorial:Stop()
     end)
 
     local body = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    body:SetPoint("TOPLEFT", 14, -44)
-    body:SetPoint("TOPRIGHT", -14, -44)
+    body:SetPoint("TOPLEFT", 12, -38)
+    body:SetPoint("TOPRIGHT", -12, -38)
     body:SetJustifyH("LEFT")
     body:SetSpacing(3)
     c.body = body
 
     -- Navigation Buttons
     local btnPrev = CreateFrame("Button", nil, c, "UIPanelButtonTemplate")
-    btnPrev:SetSize(88, 24)
-    btnPrev:SetPoint("BOTTOMLEFT", 14, 12)
+    btnPrev:SetSize(84, 22)
+    btnPrev:SetPoint("BOTTOMLEFT", 12, 10)
     ApplyCompactButtonFont(btnPrev)
     btnPrev:SetText(L["TUTORIAL_BTN_PREV"])
     btnPrev:SetScript("OnClick", function()
@@ -204,7 +281,7 @@ local function EnsureTutorialFrames()
     c.btnPrev = btnPrev
 
     local btnExit = CreateFrame("Button", nil, c, "UIPanelButtonTemplate")
-    btnExit:SetSize(126, 24)
+    btnExit:SetSize(130, 22)
     btnExit:SetPoint("LEFT", btnPrev, "RIGHT", 6, 0)
     ApplyCompactButtonFont(btnExit)
     btnExit:SetText(L["TUTORIAL_BTN_EXIT"])
@@ -214,8 +291,8 @@ local function EnsureTutorialFrames()
     c.btnExit = btnExit
 
     local btnNext = CreateFrame("Button", nil, c, "UIPanelButtonTemplate")
-    btnNext:SetSize(116, 24)
-    btnNext:SetPoint("BOTTOMRIGHT", -14, 12)
+    btnNext:SetSize(110, 22)
+    btnNext:SetPoint("BOTTOMRIGHT", -12, 10)
     ApplyCompactButtonFont(btnNext)
     btnNext:SetText(L["TUTORIAL_BTN_NEXT"])
     btnNext:SetScript("OnClick", function()
@@ -240,68 +317,78 @@ local STEPS = {
         getTarget = function()
             return ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
         end,
-        cardPosition = "BELOW",
     },
     [2] = {
         titleKey = "TUTORIAL_STEP2_TITLE",
         bodyKey = "TUTORIAL_STEP2_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            return mf and mf.presetBtns and mf.presetBtns[1]
+            if mf and mf.presetBtns and #mf.presetBtns > 0 then
+                return { tl = mf.presetBtns[1], br = mf.presetBtns[#mf.presetBtns] }
+            end
+            return nil
         end,
-        cardPosition = "CENTER",
     },
     [3] = {
         titleKey = "TUTORIAL_STEP3_TITLE",
         bodyKey = "TUTORIAL_STEP3_BODY",
         getTarget = function()
+            local row = ns.ManagerUI and ns.ManagerUI.GetRow and ns.ManagerUI:GetRow(1)
+            if row and row.minusBtn and row.resetBtn then
+                return { tl = row.minusBtn, br = row.resetBtn }
+            end
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
             return mf and mf.scrollFrame
         end,
-        cardPosition = "CENTER",
     },
     [4] = {
         titleKey = "TUTORIAL_STEP4_TITLE",
         bodyKey = "TUTORIAL_STEP4_BODY",
         getTarget = function()
-            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            return mf and mf.scrollFrame
+            local row = ns.ManagerUI and ns.ManagerUI.GetRow and ns.ManagerUI:GetRow(1)
+            return row and row.modeBtn
         end,
-        cardPosition = "CENTER",
     },
     [5] = {
         titleKey = "TUTORIAL_STEP5_TITLE",
         bodyKey = "TUTORIAL_STEP5_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            if mf and mf.profCycleBtn and mf.profDelBtn then
+                return { tl = mf.profCycleBtn, br = mf.profDelBtn }
+            end
             return mf and mf.profCycleBtn
         end,
-        cardPosition = "CENTER",
     },
     [6] = {
         titleKey = "TUTORIAL_STEP6_TITLE",
         bodyKey = "TUTORIAL_STEP6_BODY",
         getTarget = function()
-            return nil
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            if mf and mf.chkDragOpacity and mf.chkMagneticSnap then
+                return { tl = mf.chkDragOpacity, br = mf.chkMagneticSnap }
+            end
+            return mf and mf.chkMagneticSnap
         end,
-        cardPosition = "CENTER",
     },
     [7] = {
         titleKey = "TUTORIAL_STEP7_TITLE",
         bodyKey = "TUTORIAL_STEP7_BODY",
         getTarget = function()
-            return nil
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            return mf and mf.chkBadges
         end,
-        cardPosition = "CENTER",
     },
     [8] = {
         titleKey = "TUTORIAL_STEP8_TITLE",
         bodyKey = "TUTORIAL_STEP8_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            return mf and mf.selfScaleBtn
+            if mf and mf.helpBtn and mf.selfScaleBtn then
+                return { tl = mf.helpBtn, br = mf.selfScaleBtn }
+            end
+            return mf and mf.helpBtn
         end,
-        cardPosition = "CENTER",
     },
 }
 
@@ -329,13 +416,28 @@ function Tutorial:ShowStep(index)
     end
 
     local target = s.getTarget and s.getTarget()
-    if target and target:IsShown() then
-        spotlightBox:ClearAllPoints()
-        spotlightBox:SetPoint("TOPLEFT", target, "TOPLEFT", -6, 6)
-        spotlightBox:SetPoint("BOTTOMRIGHT", target, "BOTTOMRIGHT", 6, -6)
-        spotlightBox:Show()
+    local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+    if mf and spotlightBox:GetParent() ~= mf then
+        spotlightBox:SetParent(mf)
+    end
+
+    if target then
+        local tl = target.tl or target
+        local br = target.br or target
+        if tl and tl:IsShown() and br and br:IsShown() then
+            spotlightBox:ClearAllPoints()
+            spotlightBox:SetPoint("TOPLEFT", tl, "TOPLEFT", -6, 6)
+            spotlightBox:SetPoint("BOTTOMRIGHT", br, "BOTTOMRIGHT", 6, -6)
+            spotlightBox:Show()
+        else
+            spotlightBox:Hide()
+        end
     else
         spotlightBox:Hide()
+    end
+
+    if not userMovedCard then
+        PositionCard(target)
     end
 
     dimmerFrame:Show()
@@ -359,6 +461,13 @@ function Tutorial:Start(stepIndex)
         ns.ManagerUI:Show()
     end
 
+    local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+    if mf then
+        mf:SetFrameStrata("DIALOG")
+        mf:SetFrameLevel(100)
+    end
+
+    userMovedCard = false
     Tutorial.active = true
     Tutorial:ShowStep(stepIndex or 1)
 end

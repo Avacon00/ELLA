@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.2.1 – Tutorial Visual Polish, Layering & Smart Card Positioning
+* **Dimmer Layering Fix (Crystal Clear Ella Window):**
+  * Shifted screen dimmer to strata `HIGH` so it gracefully dims the 3D game world, chat, action bars, and minimap, while leaving the Ella Manager window (strata `DIALOG`) 100% bright, vibrant, crisp, and fully readable.
+* **Smart Non-Obtrusive Card Positioning:**
+  * The tutorial callout card now dynamically inspects screen boundaries. On wide monitors (1080p, 1440p, 4K), it automatically docks to the side of Ella Manager (`LEFT` or `RIGHT`). On compact screens (1024×576, 1280×720, laptops & Steam Deck), it intelligently anchors opposite the active spotlight (`BOTTOM` or `TOP`), ensuring highlighted controls and window rows are never blocked.
+  * Slimmed callout card dimensions to a sleek `390×185` with zero wasted vertical space.
+* **Refined Spotlight Multi-Element Highlights:**
+  * Step 2 now encompasses the entire 4-preset button bar in a single glowing cyan spotlight frame.
+  * Step 3 highlights row 1's scaling controls (`-`, `+`, `100%`), Step 4 highlights the 3-state window mode button, Step 5 encompasses the full profile toolbar, and Step 6 highlights the movement & magnetic snapping controls.
+* **Instant ESC Tour Exit:**
+  * Registered the tutorial card with `UISpecialFrames` so pressing `ESC` instantly exits the tour cleanly.
+
 ## v1.2.0 – Interactive In-Game Tutorial Tour & Onboarding
 * **First-Run Tutorial Opt-In Prompt:**
   * When opening `/ella` for the first time, players are politely asked (*"Kleines Tutorial gefällig?"*) with options to start right away (`Ja, gerne!`) or postpone (`Später vielleicht`), never getting in the way of experienced users.

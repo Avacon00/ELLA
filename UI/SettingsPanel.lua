@@ -487,6 +487,7 @@ local function EnsureManagerFrame()
     f:SetSize(initW, initH)
     f:SetPoint("CENTER", 0, 20)
     f:SetFrameStrata("DIALOG")
+    f:SetFrameLevel(100)
     f:EnableMouse(true)
     f:EnableMouseWheel(true)
     f:SetMovable(true)
@@ -928,9 +929,16 @@ local function EnsureManagerFrame()
             GameTooltip:Hide()
         end
     end)
+    f.resizeGrip = resizeGrip
 
     f:SetScript("OnSizeChanged", function(self)
         ApplyManagerResponsiveLayout(self)
+    end)
+
+    f:SetScript("OnHide", function()
+        if ns.Tutorial and ns.Tutorial.active then
+            ns.Tutorial:Stop()
+        end
     end)
 
     managerFrame = f
@@ -941,6 +949,10 @@ end
 
 function ManagerUI:GetFrame()
     return managerFrame
+end
+
+function ManagerUI:GetRow(index)
+    return rowPool and rowPool[index]
 end
 
 function ManagerUI:Show()
