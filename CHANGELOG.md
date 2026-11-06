@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.7.0 – Screen-Grid Overlay, Profil-Sharing 2.0 & Boss-Key
+* **Option A: Visuelles UI-Ausrichtungs-Gitter (Screen-Grid Overlay):**
+  * Neues dezent transparentes Vollbild-Raster zur millimetergenauen Fenster-Ausrichtung.
+  * **Zentrum-Kreuz:** Cyan-leuchtende Leitlinien durch den exakten Bildschirmmittelpunkt (`UIParent`).
+  * **Drittel-Achsen:** Goldene Hilfslinien bei 33,3 % und 66,6 % für ästhetische Menüplatzierung.
+  * **32px-Raster:** Subtile Feinausrichtungs-Linien über den gesamten Bildschirm.
+  * Ein-/Ausschaltbar über den neuen Button `[# Gitter]` im Manager oder per `/ella grid`.
+  * Schaltet sich beim Verlassen des Managers automatisch ab; 0,00 ms Leerlauf-CPU im Ruhezustand.
+* **Option B: Profil-Sharing 2.0 (1-Klick Import / Export mit Live-Vorschau):**
+  * Modernisierter Import/Export-Dialog mit `!ELLA:v2:`-Format und automatischer Validierung.
+  * **Live-Vorschau:** Erkennt beim Einfügen sofort den Profilnamen, die Anzahl der Fenster und zeigt eine lesbare Zusammenfassung an, bevor das Profil angewendet wird.
+  * Neuer `[Alles kopieren]`-Button zum bequemen Teilen mit Freunden oder Gildenmitgliedern.
+* **Option C: „Boss-Key“ & Globale Panik-Aktionen:**
+  * **Panik-Schließen:** Schließt alle aktuell geöffneten ungeschützten EĹLA-Fenster blitzschnell mit einem Tastendruck.
+  * **Intelligente Wiederherstellung:** Ein zweiter Tastendruck stellt exakt die zuvor geschlossenen Fenster wieder her.
+  * **Blizzard-Tastenbelegung:** Volle Integration in Blizzards Tastenbelegungs-Menü (`Optionen` -> `Tastenbelegung` -> `Ella`).
+  * Schnellausführung via `/ella panic` oder `/ella boss`.
+
 ## v1.6.1 – Fix: Konsolidierung von Charakterinfo, Ausrüstung & Ruf
 * **Verschachtelungs- und Überlappungs-Fix (`CharacterFrame` vs. `ReputationFrame`):**
   * `ReputationFrame` ist in Blizzards Interface kein eigenständiges Fenster, sondern Reiter 3 innerhalb des `CharacterFrame`.

@@ -73,7 +73,7 @@ end
 local function OpenExportImportModal()
     if not exportModal then
         local m = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-        m:SetSize(500, 250)
+        m:SetSize(520, 290)
         m:SetPoint("CENTER", 0, 30)
         m:SetFrameStrata("FULLSCREEN_DIALOG")
         m:EnableMouse(true)
@@ -87,8 +87,8 @@ local function OpenExportImportModal()
         title:SetText(L["UI_EXPORT_TITLE"])
 
         local boxBorder = CreateFrame("Frame", nil, m, BACKDROP_TEMPLATE)
-        boxBorder:SetPoint("TOPLEFT", 14, -38)
-        boxBorder:SetPoint("BOTTOMRIGHT", -14, 46)
+        boxBorder:SetPoint("TOPLEFT", 14, -36)
+        boxBorder:SetPoint("BOTTOMRIGHT", -14, 76)
         StyleBox(boxBorder, 0.02, 0.02, 0.03, 0.95)
 
         local scroll = CreateFrame("ScrollFrame", nil, boxBorder, "UIPanelScrollFrameTemplate")
@@ -99,7 +99,7 @@ local function OpenExportImportModal()
         editBox:SetMultiLine(true)
         editBox:SetAutoFocus(false)
         editBox:SetFontObject("ChatFontNormal")
-        editBox:SetWidth(428)
+        editBox:SetWidth(448)
         editBox:SetScript("OnEscapePressed", function(self)
             self:ClearFocus()
             m:Hide()
@@ -107,9 +107,28 @@ local function OpenExportImportModal()
         scroll:SetScrollChild(editBox)
         m.editBox = editBox
 
+        local summaryText = m:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        summaryText:SetPoint("TOPLEFT", 14, -220)
+        summaryText:SetPoint("BOTTOMRIGHT", -14, 42)
+        summaryText:SetJustifyH("LEFT")
+        summaryText:SetJustifyV("TOP")
+        m.summaryText = summaryText
+
+        local copyBtn = CreateFrame("Button", nil, m, "UIPanelButtonTemplate")
+        copyBtn:SetSize(130, 24)
+        copyBtn:SetPoint("BOTTOMLEFT", 14, 12)
+        ApplyCompactButtonFont(copyBtn)
+        copyBtn:SetText(L["UI_BTN_COPY_ALL"])
+        copyBtn:SetScript("OnClick", function()
+            editBox:HighlightText()
+            editBox:SetFocus()
+            ns:Print(L["UI_EXPORT_COPY_DONE"])
+        end)
+
         local importBtn = CreateFrame("Button", nil, m, "UIPanelButtonTemplate")
-        importBtn:SetSize(140, 24)
-        importBtn:SetPoint("BOTTOMLEFT", 14, 12)
+        importBtn:SetSize(180, 24)
+        importBtn:SetPoint("LEFT", copyBtn, "RIGHT", 8, 0)
+        ApplyCompactButtonFont(importBtn)
         importBtn:SetText(L["UI_BTN_IMPORT"])
         importBtn:SetScript("OnClick", function()
             local ok, msg = Profiles:ImportString(m.editBox:GetText())
@@ -119,19 +138,41 @@ local function OpenExportImportModal()
                 ManagerUI:RefreshList()
             end
         end)
+        m.importBtn = importBtn
 
         local closeBtn = CreateFrame("Button", nil, m, "UIPanelButtonTemplate")
-        closeBtn:SetSize(120, 24)
+        closeBtn:SetSize(100, 24)
         closeBtn:SetPoint("BOTTOMRIGHT", -14, 12)
+        ApplyCompactButtonFont(closeBtn)
         closeBtn:SetText(L["UI_BTN_CLOSE"])
         closeBtn:SetScript("OnClick", function()
             m:Hide()
         end)
 
+        editBox:SetScript("OnTextChanged", function(self)
+            local txt = self:GetText() or ""
+            local isValid, count, names, pName = Profiles:InspectImportString(txt)
+            if isValid then
+                local pInfo = pName and ("Profil: |cffffd100" .. pName .. "|r • ") or ""
+                m.summaryText:SetText("|cff00ff96" .. L["UI_EXPORT_SUMMARY_DETECTED"] .. "|r\n" .. pInfo .. count .. " Fenster (" .. names .. ")")
+                m.importBtn:Enable()
+                m.importBtn:SetText(string.format(L["UI_IMPORT_CONFIRM_BTN"], count))
+            elseif string.len(txt) < 8 then
+                m.summaryText:SetText(L["UI_EXPORT_SUMMARY_INVALID"])
+                m.importBtn:Disable()
+                m.importBtn:SetText(L["UI_BTN_IMPORT"])
+            else
+                m.summaryText:SetText("|cffff5555" .. L["UI_EXPORT_SUMMARY_INVALID"] .. "|r")
+                m.importBtn:Disable()
+                m.importBtn:SetText(L["UI_BTN_IMPORT"])
+            end
+        end)
+
         exportModal = m
     end
 
-    exportModal.editBox:SetText(Profiles:ExportString())
+    local exportStr = Profiles:ExportString()
+    exportModal.editBox:SetText(exportStr)
     exportModal:Show()
     exportModal.editBox:HighlightText()
     exportModal.editBox:SetFocus()
@@ -280,8 +321,8 @@ local function ApplyManagerResponsiveLayout(f)
     end
 
     if f.searchBox then
-        -- 152 (pick) + 148 (export) + 136 (reset) + 24 (3x8px gaps) = 460
-        f.searchBox:SetWidth(math.max(190, innerW - 460))
+        -- 126 (pick) + 84 (grid) + 130 (export) + 120 (reset) + 32 (4x8px gaps) = 492
+        f.searchBox:SetWidth(math.max(180, innerW - 492))
         f.searchBox:SetPoint("TOPLEFT", 14, -218)
     end
 
@@ -986,7 +1027,7 @@ local function EnsureManagerFrame()
     end)
 
     local pickBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    pickBtn:SetSize(152, 24)
+    pickBtn:SetSize(126, 24)
     pickBtn:SetPoint("LEFT", searchBox, "RIGHT", 8, 0)
     ApplyCompactButtonFont(pickBtn)
     pickBtn:SetText(L["UI_START_PICKER"])
@@ -996,17 +1037,32 @@ local function EnsureManagerFrame()
     end)
     f.pickBtn = pickBtn
 
+    local gridBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    gridBtn:SetSize(84, 24)
+    gridBtn:SetPoint("LEFT", pickBtn, "RIGHT", 8, 0)
+    ApplyCompactButtonFont(gridBtn)
+    gridBtn:SetText(L["UI_BTN_GRID"])
+    gridBtn:SetScript("OnClick", function()
+        if ns.GridOverlay then
+            local state = ns.GridOverlay:Toggle()
+            ns:Print(state and L["MSG_GRID_ENABLED"] or L["MSG_GRID_DISABLED"])
+        end
+    end)
+    AddBtnTooltip(gridBtn, L["UI_BTN_GRID"], L["UI_BTN_GRID_TIP"])
+    f.gridBtn = gridBtn
+
     local expBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    expBtn:SetSize(148, 24)
-    expBtn:SetPoint("LEFT", pickBtn, "RIGHT", 8, 0)
+    expBtn:SetSize(130, 24)
+    expBtn:SetPoint("LEFT", gridBtn, "RIGHT", 8, 0)
     ApplyCompactButtonFont(expBtn)
     expBtn:SetText(L["UI_EXPORT_IMPORT"])
     expBtn:SetScript("OnClick", function()
         OpenExportImportModal()
     end)
+    f.expBtn = expBtn
 
     local rstBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    rstBtn:SetSize(136, 24)
+    rstBtn:SetSize(120, 24)
     rstBtn:SetPoint("LEFT", expBtn, "RIGHT", 8, 0)
     ApplyCompactButtonFont(rstBtn)
     rstBtn:SetText(L["UI_RESET_ALL"])
@@ -1014,6 +1070,7 @@ local function EnsureManagerFrame()
         Profiles:ResetAll()
         ManagerUI:RefreshList()
     end)
+    f.rstBtn = rstBtn
 
     -- Category Filter Pills
     f.filterPills = {}
@@ -1121,6 +1178,9 @@ local function EnsureManagerFrame()
     f:SetScript("OnHide", function()
         if ns.Tutorial and ns.Tutorial.active then
             ns.Tutorial:Stop()
+        end
+        if ns.GridOverlay and ns.GridOverlay:IsShown() then
+            ns.GridOverlay:Hide()
         end
     end)
 
@@ -1292,6 +1352,13 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         end
     elseif cmd == "pick" or cmd == "inspect" then
         Picker:Start()
+    elseif cmd == "grid" or cmd == "raster" or cmd == "overlay" then
+        if ns.GridOverlay then
+            local state = ns.GridOverlay:Toggle()
+            ns:Print(state and L["MSG_GRID_ENABLED"] or L["MSG_GRID_DISABLED"])
+        end
+    elseif cmd == "panic" or cmd == "boss" or cmd == "hideall" then
+        Engine:ToggleBossKey()
     elseif cmd == "compact" or cmd == "80" then
         Profiles:ApplyPreset("COMPACT_80")
     elseif cmd == "badges" or cmd == "badge" then
@@ -1320,6 +1387,8 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         ns:Print(L["SLASH_HELP_OPEN"])
         ns:Print(L["SLASH_HELP_TOUR"])
         ns:Print(L["SLASH_HELP_PICK"])
+        ns:Print(L["SLASH_HELP_GRID"])
+        ns:Print(L["SLASH_HELP_PANIC"])
         ns:Print(L["SLASH_HELP_PRESET"])
         ns:Print(L["SLASH_HELP_BADGES"])
         ns:Print(L["SLASH_HELP_PROFILE"])

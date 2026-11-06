@@ -280,3 +280,28 @@ L["WIN_COMM_WEAKAURAS"] = "WeakAuras Options"
 L["WIN_COMM_AUCTIONATOR"] = "Auctionator"
 L["WIN_COMM_ATLASLOOT"] = "AtlasLoot Enhanced"
 L["WIN_COMM_POSTAL"] = "Postal Mail"
+
+-- v1.7.0 Screen-Grid, Profil-Sharing 2.0 & Boss-Key
+L["UI_BTN_GRID"] = "# Grid"
+L["UI_BTN_GRID_TIP"] = "Toggle full-screen alignment grid with center crosshair, rule-of-thirds, and 32px precision lines."
+L["MSG_GRID_ENABLED"] = "Screen-Grid overlay enabled (Center Crosshair & Rule-of-Thirds)."
+L["MSG_GRID_DISABLED"] = "Screen-Grid overlay hidden."
+L["UI_EXPORT_SUMMARY_DETECTED"] = "Valid Ella Profile detected!"
+L["UI_EXPORT_SUMMARY_INVALID"] = "No valid Ella profile code recognized."
+L["UI_EXPORT_COPY_DONE"] = "Profile string copied to clipboard! Share it in chat or Discord (Ctrl+C)."
+L["UI_BTN_COPY_ALL"] = "Copy String"
+L["UI_IMPORT_CONFIRM_BTN"] = "Import (%d Windows)"
+L["MSG_BOSSKEY_PANIC"] = "Boss-Key: %d windows closed. Press again to restore."
+L["MSG_BOSSKEY_RESTORED"] = "Boss-Key: %d windows restored."
+L["MSG_BOSSKEY_NONE_OPEN"] = "Boss-Key: No open windows to close."
+L["SLASH_HELP_GRID"] = "/ella grid - Toggles the screen-grid alignment overlay"
+L["SLASH_HELP_PANIC"] = "/ella panic - Boss-Key: Instantly closes or restores all open windows"
+L["BINDING_HEADER_ELLA"] = "Ella – Easy Layout & Location Assistant"
+L["BINDING_NAME_ELLA_BOSSKEY"] = "Boss-Key: Panic Close / Restore Windows"
+L["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = "Toggle Ella Manager"
+L["BINDING_NAME_ELLA_TOGGLE_GRID"] = "Toggle Screen-Grid Overlay"
+
+_G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
+_G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]
+_G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]
+_G["BINDING_NAME_ELLA_TOGGLE_GRID"] = L["BINDING_NAME_ELLA_TOGGLE_GRID"]

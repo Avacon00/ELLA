@@ -108,8 +108,27 @@ function API:RegisterCallback(eventName, callback)
     return true
 end
 
+function API:ToggleManager()
+    if ns.ManagerUI and ns.ManagerUI.Toggle then
+        ns.ManagerUI:Toggle()
+    end
+end
+
+function API:ToggleBossKey()
+    if ns.Engine and ns.Engine.ToggleBossKey then
+        return ns.Engine:ToggleBossKey()
+    end
+end
+
+function API:ToggleGrid()
+    if ns.GridOverlay and ns.GridOverlay.Toggle then
+        return ns.GridOverlay:Toggle()
+    end
+end
+
 -- Expose via documented single global & LibStub("ELLA-1.0")
 _G.ELLA_API = API
+_G.Ella = API
 
 if _G.LibStub then
     local lib = _G.LibStub:NewLibrary("ELLA-1.0", 2)

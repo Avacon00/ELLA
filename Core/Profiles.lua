@@ -571,9 +571,10 @@ local SHORT_TO_MODE = {
 
 function Profiles:ExportString()
     if not ns.db then
-        return "ELLA1"
+        return "!ELLA:v2:Default"
     end
-    local parts = { "ELLA1" }
+    local profName = Profiles:GetActiveProfileName() or "Default"
+    local parts = { "!ELLA:v2:" .. profName }
     for windowId in Registry:IterateWindows() do
         local cfg = ns.db.windows[windowId]
         if cfg then
@@ -590,18 +591,64 @@ function Profiles:ExportString()
     return table.concat(parts, ";")
 end
 
+function Profiles:InspectImportString(raw)
+    if type(raw) ~= "string" then
+        return false, 0, "", nil
+    end
+    local trimmed = string.match(raw, "^%s*(.-)%s*$")
+    if not trimmed or trimmed == "" then
+        return false, 0, "", nil
+    end
+    local isV2 = string.match(trimmed, "^!ELLA:v2") or string.match(trimmed, "^ELLA2")
+    local isV1 = string.match(trimmed, "^ELLA1") or string.match(trimmed, "^FSCALE1")
+    if not isV2 and not isV1 then
+        return false, 0, "", nil
+    end
+
+    local profileName = nil
+    if isV2 then
+        profileName = string.match(trimmed, "^!ELLA:v2:([^;:]+)") or string.match(trimmed, "^ELLA2:([^;:]+)")
+    end
+
+    local count = 0
+    local names = {}
+    for token in string.gmatch(trimmed, "[^;]+") do
+        if not string.match(token, "^!ELLA") and not string.match(token, "^ELLA") and not string.match(token, "^FSCALE") then
+            local winId = string.match(token, "^([%w_%-]+)=")
+            if winId and Registry:GetDescriptor(winId) then
+                count = count + 1
+                if #names < 4 then
+                    local desc = Registry:GetDescriptor(winId)
+                    names[#names + 1] = Registry:GetDisplayLabel(desc)
+                end
+            end
+        end
+    end
+
+    local nameSummary = table.concat(names, ", ")
+    if count > #names then
+        nameSummary = nameSummary .. " + " .. (count - #names) .. " weitere"
+    end
+
+    return (count > 0), count, nameSummary, profileName
+end
+
 function Profiles:ImportString(raw)
     if type(raw) ~= "string" then
         return false, L["UI_IMPORT_ERROR"]
     end
     local trimmed = string.match(raw, "^%s*(.-)%s*$")
-    if not trimmed or (not string.match(trimmed, "^ELLA1") and not string.match(trimmed, "^FSCALE1")) then
+    if not trimmed or (not string.match(trimmed, "^!ELLA") and not string.match(trimmed, "^ELLA[12]") and not string.match(trimmed, "^FSCALE1")) then
         return false, L["UI_IMPORT_ERROR"]
+    end
+
+    if Profiles.PushUndoSnapshot then
+        Profiles:PushUndoSnapshot("import")
     end
 
     local importedCount = 0
     for token in string.gmatch(trimmed, "[^;]+") do
-        if token ~= "ELLA1" and token ~= "FSCALE1" then
+        if not string.match(token, "^!ELLA") and not string.match(token, "^ELLA") and not string.match(token, "^FSCALE") then
             local winId, payload = string.match(token, "^([%w_%-]+)=(.+)$")
             if winId and payload and Registry:GetDescriptor(winId) then
                 local sStr, mStr, lStr, xStr, yStr, aStr, fStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?)$")
@@ -631,7 +678,7 @@ function Profiles:ImportString(raw)
         end
     end
 
-    if importedCount == 0 and trimmed ~= "ELLA1" and trimmed ~= "FSCALE1" then
+    if importedCount == 0 then
         return false, L["UI_IMPORT_ERROR"]
     end
 

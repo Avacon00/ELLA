@@ -1,0 +1,17 @@
+<Bindings>
+    <Binding name="ELLA_BOSSKEY" header="ELLA">
+        if Ella and Ella.ToggleBossKey then
+            Ella:ToggleBossKey()
+        end
+    </Binding>
+    <Binding name="ELLA_TOGGLE_MANAGER">
+        if Ella and Ella.ToggleManager then
+            Ella:ToggleManager()
+        end
+    </Binding>
+    <Binding name="ELLA_TOGGLE_GRID">
+        if Ella and Ella.ToggleGrid then
+            Ella:ToggleGrid()
+        end
+    </Binding>
+</Bindings>

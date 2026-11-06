@@ -864,6 +864,69 @@ function Engine:OnCombatStart()
     end
 end
 
+Engine.panicClosedWindows = nil
+
+function Engine:ToggleBossKey()
+    -- If we previously panic-closed windows, restore them!
+    if Engine.panicClosedWindows and #Engine.panicClosedWindows > 0 then
+        local restoredCount = 0
+        local toRestore = Engine.panicClosedWindows
+        Engine.panicClosedWindows = nil
+
+        for i = 1, #toRestore do
+            local winId = toRestore[i]
+            local desc = Registry:GetDescriptor(winId)
+            if desc and desc.boundFrame then
+                local ok = pcall(function()
+                    Registry:ToggleWindowPreview(winId)
+                end)
+                if ok then
+                    restoredCount = restoredCount + 1
+                end
+            end
+        end
+        ns:Print(string.format(ns.L["MSG_BOSSKEY_RESTORED"], restoredCount))
+        return "RESTORED", restoredCount
+    end
+
+    -- Otherwise, find all currently shown non-protected managed windows and close them!
+    local closedList = {}
+    for winId, desc in Registry:IterateWindows() do
+        local frame = desc.boundFrame
+        if frame and frame:IsShown() and not desc.protected and not Guard:IsProtectedHierarchy(frame) then
+            local closed = false
+            if _G.HideUIPanel then
+                local ok = pcall(_G.HideUIPanel, frame)
+                if ok and not frame:IsShown() then
+                    closed = true
+                end
+            end
+            if not closed and frame:IsShown() then
+                pcall(function() frame:Hide() end)
+                if not frame:IsShown() then
+                    closed = true
+                end
+            end
+            if closed then
+                closedList[#closedList + 1] = winId
+            end
+        end
+    end
+
+    if ns.ManagerUI and ns.ManagerUI.IsShown and ns.ManagerUI:IsShown() then
+        ns.ManagerUI:Toggle()
+    end
+
+    if #closedList > 0 then
+        Engine.panicClosedWindows = closedList
+        ns:Print(string.format(ns.L["MSG_BOSSKEY_PANIC"], #closedList))
+        return "CLOSED", #closedList
+    else
+        ns:Print(ns.L["MSG_BOSSKEY_NONE_OPEN"])
+        return "NONE", 0
+    end
+end
+
 function Engine:UpdateInstanceCompactState()
     if not ns.db or not ns.db.settings then
         return
@@ -896,8 +959,8 @@ function ns:RunSelfTest()
     local total = 6
 
     -- Test 1: Version & DB Schema
-    if ns.Version == "1.6.1" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
-        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.6.1 & Datenbank-Schema v2 OK")
+    if ns.Version == "1.7.0" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
+        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.7.0 & Datenbank-Schema v2 OK")
         passed = passed + 1
     else
         ns:Print("|cffff3333[1/6 FAIL]|r Datenbank-Schema oder Version fehlerhaft")

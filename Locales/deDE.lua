@@ -277,3 +277,28 @@ L["WIN_COMM_WEAKAURAS"] = "WeakAuras Optionen"
 L["WIN_COMM_AUCTIONATOR"] = "Auctionator"
 L["WIN_COMM_ATLASLOOT"] = "AtlasLoot Enhanced"
 L["WIN_COMM_POSTAL"] = "Postal Postfach"
+
+-- v1.7.0 Screen-Grid, Profil-Sharing 2.0 & Boss-Key
+L["UI_BTN_GRID"] = "# Gitter"
+L["UI_BTN_GRID_TIP"] = "Schaltet das Vollbild-Ausrichtungsgitter mit Zentrum-Kreuz, Drittel-Achsen und 32px-Raster ein oder aus."
+L["MSG_GRID_ENABLED"] = "Bildschirm-Ausrichtungsgitter aktiviert (Zentrum-Kreuz & Drittel-Achsen)."
+L["MSG_GRID_DISABLED"] = "Bildschirm-Ausrichtungsgitter ausgeblendet."
+L["UI_EXPORT_SUMMARY_DETECTED"] = "Gueltiges Ella-Profil erkannt!"
+L["UI_EXPORT_SUMMARY_INVALID"] = "Kein gueltiger Ella-Profilcode erkannt."
+L["UI_EXPORT_COPY_DONE"] = "Profilcode in die Zwischenablage kopiert! Teile ihn im Chat oder auf Discord (Strg+C)."
+L["UI_BTN_COPY_ALL"] = "Alles kopieren"
+L["UI_IMPORT_CONFIRM_BTN"] = "Profil importieren (%d Fenster)"
+L["MSG_BOSSKEY_PANIC"] = "Boss-Key: %d Fenster geschlossen. Erneut druecken zum Wiederherstellen."
+L["MSG_BOSSKEY_RESTORED"] = "Boss-Key: %d Fenster wiederhergestellt."
+L["MSG_BOSSKEY_NONE_OPEN"] = "Boss-Key: Keine offenen Fenster zum Schliessen vorhanden."
+L["SLASH_HELP_GRID"] = "/ella grid - Schaltet das Bildschirm-Ausrichtungsgitter ein oder aus"
+L["SLASH_HELP_PANIC"] = "/ella panic - Boss-Key: Schliesst alle Fenster sofort oder stellt sie wieder her"
+L["BINDING_HEADER_ELLA"] = "Ella – Easy Layout & Location Assistant"
+L["BINDING_NAME_ELLA_BOSSKEY"] = "Boss-Key: Panik-Schliessen & Wiederherstellen"
+L["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = "Ella Manager oeffnen/schliessen"
+L["BINDING_NAME_ELLA_TOGGLE_GRID"] = "Bildschirm-Gitter ein-/ausblenden"
+
+_G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
+_G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]
+_G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]
+_G["BINDING_NAME_ELLA_TOGGLE_GRID"] = L["BINDING_NAME_ELLA_TOGGLE_GRID"]

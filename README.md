@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.6.0](https://img.shields.io/badge/Version-v1.6.0-ffaa00)
+![Version 1.7.0](https://img.shields.io/badge/Version-v1.7.0-ffaa00)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
@@ -19,6 +19,9 @@
 ## Deutsch (Übersicht & Bedienung)
 
 ### Highlights
+* **Screen-Grid Overlay (`v1.7`):** Schalte per Klick auf `[# Gitter]` im Manager oder per `/ella grid` ein dezentes Vollbild-Ausrichtungsgitter mit leuchtendem Zentrum-Kreuz (Cyan), Drittel-Achsen (Gold) und 32px-Raster ein, um dein Interface symmetrisch wie ein Profi-Streamer einzurichten.
+* **Profil-Sharing 2.0 mit Live-Vorschau (`v1.7`):** Teile deine Layouts blitzschnell via `!ELLA:v2:`-Codes. Beim Einfügen analysiert Ella den String sofort und zeigt eine Infobox mit Profilnamen und enthaltenen Fenstern an, bevor du ihn übernimmst.
+* **Boss-Key & Panik-Aktion (`v1.7`):** Ein einziger Tastendruck schließt alle aktuell offenen Fenster blitzschnell – ein zweiter Tastendruck stellt genau dieselben Fenster wieder an Ort und Stelle her! Frei belegbar in Blizzards Menü (*Tastenbelegung* -> *Ella*) oder per `/ella panic`.
 * **Kampf- & Instanz-Schutz (`v1.6`):**
   * *Auto-Close im Kampf:* Schließt ungeschützte Menüs, Zauberbuch und Berufsfenster beim Kampfeintritt (`PLAYER_REGEN_DISABLED`) sofort automatisch.
   * *Instanz-Kompaktmodus:* Schaltet in Dungeons, Raids und PvP-Instanzen automatisch auf maximal 75 % Skalierung um. Beim Verlassen wird deine Wunschskalierung nahtlos wiederhergestellt.
@@ -50,6 +53,8 @@
 | :--- | :--- |
 | `/ella` | Öffnet bzw. schließt den durchsuchbaren **Ella Fenster-Manager** |
 | `/ella tour` | Startet das interaktive **Schritt-für-Schritt-Tutorial** |
+| `/ella grid` | Schaltet das **Vollbild-Ausrichtungsgitter** ein oder aus |
+| `/ella panic` | **Boss-Key:** Schließt alle offenen Fenster oder stellt sie wieder her |
 | `/ella profile <Name>` | Wechselt zum angegebenen Layout-Profil (ohne Namen: nächstes Profil durchschalten) |
 | `/ella compact` | Aktiviert sofort das **Classic Kompakt (80 %)**-Preset |
 | `/ella pick` | Startet den interaktiven **Frame-Inspektor** für Drittanbieter-Fenster |
@@ -61,6 +66,9 @@
 ## English (Overview & Usage)
 
 ### Key Features
+* **Screen-Grid Overlay (`v1.7`):** Toggle a full-screen alignment grid (`[# Grid]` button or `/ella grid`) featuring a glowing cyan center crosshair, golden rule-of-thirds lines, and 32px precision grid lines to align your UI like a professional streamer.
+* **Profile-Sharing 2.0 with Live Preview (`v1.7`):** Share your window layouts with friends via `!ELLA:v2:` string codes. Pasting a string instantly previews the profile name and configured windows before importing.
+* **Boss-Key & Panic Restore (`v1.7`):** Instantly closes all open windows on a single key press, and pressing it again restores exactly those same windows. Bindable via standard WoW Keybindings (`Options` -> `Keybindings` -> `Ella`) or `/ella panic`.
 * **Combat & Instance Protection (`v1.6`):**
   * *Combat Auto-Close:* Automatically closes open menus, spellbook, quests, and profession windows upon entering combat (`PLAYER_REGEN_DISABLED`) for a clear field of view.
   * *Instance Compact Mode:* Automatically caps open windows to 75% max scale inside dungeons, raids, and PvP instances. Seamlessly restores your custom sizes when exiting.
