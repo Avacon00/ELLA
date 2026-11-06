@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.5.0](https://img.shields.io/badge/Version-v1.5.0-ffaa00)
+![Version 1.6.0](https://img.shields.io/badge/Version-v1.6.0-ffaa00)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
@@ -19,7 +19,17 @@
 ## Deutsch (Übersicht & Bedienung)
 
 ### Highlights
-* **Fenster-Picker 2.0 (`v1.5`):** Visuelle Drittanbieter-Erkennung mit Live Hover-Highlighter, schwebendem Cursor-HUD und innovativer **Mausrad-Hierarchie-Navigation** (`Child` <-> `Parent`), um verschachtelte AddOns (wie Details!, Bagnon oder WeakAuras) zielsicher aufzunehmen.
+* **Kampf- & Instanz-Schutz (`v1.6`):**
+  * *Auto-Close im Kampf:* Schließt ungeschützte Menüs, Zauberbuch und Berufsfenster beim Kampfeintritt (`PLAYER_REGEN_DISABLED`) sofort automatisch.
+  * *Instanz-Kompaktmodus:* Schaltet in Dungeons, Raids und PvP-Instanzen automatisch auf maximal 75 % Skalierung um. Beim Verlassen wird deine Wunschskalierung nahtlos wiederhergestellt.
+* **Synchrones Fenster-Docking & Sticky Windows (`v1.6`):**
+  * Aneinanderliegende oder bündige Fensterkanten ($\le 16\text{ px}$) docken automatisch aneinander an.
+  * Beim Verschieben eines Fensters bewegt sich der gesamte Verbund synchron mit!
+  * Halte `[Alt]` beim Ziehen gedrückt, um ein Fenster einzeln aus der Gruppe zu lösen.
+* **Vor-Registrierte Community-AddOns (`v1.6`):**
+  * Vorkonfigurierte Unterstützung für *Details! Damage Meter*, *Questie*, *Bagnon / Baganator*, *ThreatClassic2*, *TomTom*, *WeakAuras*, *Auctionator*, *AtlasLoot* und *Postal*.
+  * Völlig ruhend (0,00 ms CPU, 0 Bytes RAM) wenn das AddOn nicht installiert ist; sofort aktiv und skaliert, sobald es geladen wird!
+* **Fenster-Picker 2.0 (`v1.5`):** Visuelle Drittanbieter-Erkennung mit Live Hover-Highlighter, schwebendem Cursor-HUD und innovativer **Mausrad-Hierarchie-Navigation** (`Child` <-> `Parent`), um verschachtelte AddOns zielsicher aufzunehmen.
 * **Fenster-Deckkraft & Mouseover-Fade (`v1.4`):** Passe die Transparenz jedes Fensters stufenlos (30%–100%) an. Mit *Mouseover-Fade* bleiben Fenster dezent durchscheinend, bis du mit der Maus darüberfährst – dann schalten sie sofort auf 100% Sichtbarkeit (0,00 ms Leerlauf-CPU).
 * **Charakter-gebundene Profile & Handheld-Erkennung (`v1.4`):** Binde Layout-Profile direkt an deine Charaktere. Auf kompakten Displays wie dem Steam Deck (<= 1400x800) schlägt Ella automatisch das handliche 72%-Preset vor.
 * **Minimap-Button & Schnellmenü (`v1.3`):** Eleganter Kompass-Button an der Minimap für schnellen Zugriff auf Profile, Presets, Fenstervorschau und Filter.
@@ -51,6 +61,15 @@
 ## English (Overview & Usage)
 
 ### Key Features
+* **Combat & Instance Protection (`v1.6`):**
+  * *Combat Auto-Close:* Automatically closes open menus, spellbook, quests, and profession windows upon entering combat (`PLAYER_REGEN_DISABLED`) for a clear field of view.
+  * *Instance Compact Mode:* Automatically caps open windows to 75% max scale inside dungeons, raids, and PvP instances. Seamlessly restores your custom sizes when exiting.
+* **Sticky Window Docking & Group Dragging (`v1.6`):**
+  * Windows touching edge-to-edge ($\le 16\text{ px}$) dock together and move synchronously as a group!
+  * Hold `[Alt]` while dragging to detach a single window from the cluster.
+* **Pre-Registered Community AddOns (`v1.6`):**
+  * Built-in support for *Details!*, *Questie*, *Bagnon / Baganator*, *ThreatClassic2*, *TomTom*, *WeakAuras*, *Auctionator*, *AtlasLoot*, and *Postal*.
+  * Zero overhead (0.00 ms CPU, 0 bytes RAM) when absent; instantly recognized with %-badge and management when loaded!
 * **Window Picker 2.0 (`v1.5`):** Visual third-party inspector with real-time hover highlight, floating cursor HUD, and mouse-wheel hierarchy navigation (`Child` <-> `Parent`) to capture nested addon frames with pixel precision.
 * **Per-Window Opacity & Mouseover Fade (`v1.4`):** Customize panel transparency (30%–100%) with smart mouseover fade-in for distraction-free gameplay and 0.00 ms idle CPU.
 * **Character-Bound Profiles & Handheld Auto-Detection (`v1.4`):** Bind profiles per character and enjoy automatic Steam Deck (<= 1400x800) detection with tailored 72% handheld presets.

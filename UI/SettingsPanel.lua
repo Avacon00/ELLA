@@ -205,7 +205,7 @@ local function OpenNewProfileModal()
 end
 
 local DEFAULT_MANAGER_W = 720
-local DEFAULT_MANAGER_H = 580
+local DEFAULT_MANAGER_H = 620
 local MIN_MANAGER_W = 680
 local MAX_MANAGER_W = 1080
 local MIN_MANAGER_H = 440
@@ -252,15 +252,38 @@ local function ApplyManagerResponsiveLayout(f)
     local innerW = w - 28
     local rightColX = math.max(336, math.floor(w * 0.486))
 
-    if f.chkBadges then f.chkBadges:SetPoint("TOPLEFT", rightColX, -38) end
-    if f.chkMinimap then f.chkMinimap:SetPoint("TOPLEFT", rightColX, -58) end
-    if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", rightColX, -78) end
-    if f.chkMagneticSnap then f.chkMagneticSnap:SetPoint("TOPLEFT", rightColX, -98) end
+    if f.chkBadges then f.chkBadges:SetPoint("TOPLEFT", rightColX, -36) end
+    if f.chkMinimap then f.chkMinimap:SetPoint("TOPLEFT", rightColX, -56) end
+    if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", rightColX, -76) end
+    if f.chkStickyDock then f.chkStickyDock:SetPoint("TOPLEFT", rightColX, -96) end
+    if f.chkInstCompact then f.chkInstCompact:SetPoint("TOPLEFT", rightColX, -116) end
 
-    if f.chkEnabled then f.chkEnabled:SetPoint("TOPLEFT", 14, -38) end
-    if f.chkCtrlWheel then f.chkCtrlWheel:SetPoint("TOPLEFT", 14, -58) end
-    if f.chkDragOpacity then f.chkDragOpacity:SetPoint("TOPLEFT", 14, -78) end
-    if f.chkBindChar then f.chkBindChar:SetPoint("TOPLEFT", 14, -98) end
+    if f.chkEnabled then f.chkEnabled:SetPoint("TOPLEFT", 14, -36) end
+    if f.chkCtrlWheel then f.chkCtrlWheel:SetPoint("TOPLEFT", 14, -56) end
+    if f.chkDragOpacity then f.chkDragOpacity:SetPoint("TOPLEFT", 14, -76) end
+    if f.chkMagneticSnap then f.chkMagneticSnap:SetPoint("TOPLEFT", 14, -96) end
+    if f.chkCombatClose then f.chkCombatClose:SetPoint("TOPLEFT", 14, -116) end
+    if f.chkBindChar then f.chkBindChar:SetPoint("TOPLEFT", 14, -136) end
+
+    if f.profLabel then f.profLabel:SetPoint("TOPLEFT", 16, -164) end
+    if f.profCycleBtn then f.profCycleBtn:SetPoint("TOPLEFT", 60, -158) end
+
+    if f.presetBtns then
+        local gap = 6
+        local btnW = math.floor((innerW - (3 * gap)) / 4)
+        for i = 1, #f.presetBtns do
+            local b = f.presetBtns[i]
+            b:SetSize(btnW, 24)
+            b:ClearAllPoints()
+            b:SetPoint("TOPLEFT", 14 + (i - 1) * (btnW + gap), -188)
+        end
+    end
+
+    if f.searchBox then
+        -- 152 (pick) + 148 (export) + 136 (reset) + 24 (3x8px gaps) = 460
+        f.searchBox:SetWidth(math.max(190, innerW - 460))
+        f.searchBox:SetPoint("TOPLEFT", 14, -218)
+    end
 
     if f.filterPills then
         local gap = 4
@@ -270,24 +293,8 @@ local function ApplyManagerResponsiveLayout(f)
             local p = f.filterPills[i]
             p:SetSize(pillW, 20)
             p:ClearAllPoints()
-            p:SetPoint("TOPLEFT", 14 + (i - 1) * (pillW + gap), -210)
+            p:SetPoint("TOPLEFT", 14 + (i - 1) * (pillW + gap), -248)
         end
-    end
-
-    if f.presetBtns then
-        local gap = 6
-        local btnW = math.floor((innerW - (3 * gap)) / 4)
-        for i = 1, #f.presetBtns do
-            local b = f.presetBtns[i]
-            b:SetSize(btnW, 24)
-            b:ClearAllPoints()
-            b:SetPoint("TOPLEFT", 14 + (i - 1) * (btnW + gap), -148)
-        end
-    end
-
-    if f.searchBox then
-        -- 152 (pick) + 148 (export) + 136 (reset) + 24 (3x8px gaps) = 460
-        f.searchBox:SetWidth(math.max(190, innerW - 460))
     end
 
     if f.scrollChild then
@@ -744,7 +751,7 @@ local function EnsureManagerFrame()
         end)
     end
 
-    f.chkEnabled = CreateToggle(L["UI_GLOBAL_ENABLED"], 14, -38,
+    f.chkEnabled = CreateToggle(L["UI_GLOBAL_ENABLED"], 14, -36,
         function() return ns.db.settings.enabled end,
         function(val)
             ns.db.settings.enabled = val
@@ -753,7 +760,7 @@ local function EnsureManagerFrame()
         end
     )
 
-    f.chkBadges = CreateToggle(L["UI_SHOW_BADGES"], 350, -38,
+    f.chkBadges = CreateToggle(L["UI_SHOW_BADGES"], 350, -36,
         function() return ns.db.settings.showBadges end,
         function(val)
             ns.db.settings.showBadges = val
@@ -761,7 +768,7 @@ local function EnsureManagerFrame()
         end
     )
 
-    f.chkMinimap = CreateToggle(L["UI_SHOW_MINIMAP_BTN"], 350, -58,
+    f.chkMinimap = CreateToggle(L["UI_SHOW_MINIMAP_BTN"], 350, -56,
         function() return ns.db.settings.showMinimapButton end,
         function(val)
             ns.db.settings.showMinimapButton = val
@@ -772,12 +779,12 @@ local function EnsureManagerFrame()
     )
     AddBtnTooltip(f.chkMinimap, L["UI_SHOW_MINIMAP_BTN"], L["UI_SHOW_MINIMAP_BTN_TIP"])
 
-    f.chkCtrlWheel = CreateToggle(L["UI_CTRL_WHEEL"], 14, -58,
+    f.chkCtrlWheel = CreateToggle(L["UI_CTRL_WHEEL"], 14, -56,
         function() return ns.db.settings.ctrlWheelZoom end,
         function(val) ns.db.settings.ctrlWheelZoom = val end
     )
 
-    f.chkClamp = CreateToggle(L["UI_CLAMP_SCREEN"], 350, -78,
+    f.chkClamp = CreateToggle(L["UI_CLAMP_SCREEN"], 350, -76,
         function() return ns.db.settings.clampToScreen end,
         function(val)
             ns.db.settings.clampToScreen = val
@@ -785,12 +792,38 @@ local function EnsureManagerFrame()
         end
     )
 
-    f.chkDragOpacity = CreateToggle(L["UI_DRAG_OPACITY"], 14, -78,
+    f.chkDragOpacity = CreateToggle(L["UI_DRAG_OPACITY"], 14, -76,
         function() return ns.db.settings.dragOpacity end,
         function(val) ns.db.settings.dragOpacity = val end
     )
 
-    f.chkBindChar = CreateToggle(L["UI_PROFILE_BIND_CHAR"], 14, -98,
+    f.chkMagneticSnap = CreateToggle(L["UI_MAGNETIC_SNAP"], 14, -96,
+        function() return ns.db.settings.magneticSnap end,
+        function(val) ns.db.settings.magneticSnap = val end
+    )
+
+    f.chkStickyDock = CreateToggle(L["UI_STICKY_DOCKING"], 350, -96,
+        function() return ns.db.settings.stickyDocking end,
+        function(val) ns.db.settings.stickyDocking = val end
+    )
+    AddBtnTooltip(f.chkStickyDock, L["UI_STICKY_DOCKING"], L["UI_STICKY_DOCKING_TIP"])
+
+    f.chkCombatClose = CreateToggle(L["UI_COMBAT_AUTOCLOSE"], 14, -116,
+        function() return ns.db.settings.combatAutoClose end,
+        function(val) ns.db.settings.combatAutoClose = val end
+    )
+    AddBtnTooltip(f.chkCombatClose, L["UI_COMBAT_AUTOCLOSE"], L["UI_COMBAT_AUTOCLOSE_TIP"])
+
+    f.chkInstCompact = CreateToggle(L["UI_INSTANCE_AUTOCOMPACT"], 350, -116,
+        function() return ns.db.settings.instanceAutoCompact end,
+        function(val)
+            ns.db.settings.instanceAutoCompact = val
+            Engine:UpdateInstanceCompactState()
+        end
+    )
+    AddBtnTooltip(f.chkInstCompact, L["UI_INSTANCE_AUTOCOMPACT"], L["UI_INSTANCE_AUTOCOMPACT_TIP"])
+
+    f.chkBindChar = CreateToggle(L["UI_PROFILE_BIND_CHAR"], 14, -136,
         function() return Profiles:IsCharBoundToActiveProfile() end,
         function(val)
             Profiles:SetCharProfileBinding(val)
@@ -798,19 +831,15 @@ local function EnsureManagerFrame()
     )
     AddBtnTooltip(f.chkBindChar, L["UI_PROFILE_BIND_CHAR"], L["UI_PROFILE_BIND_CHAR_TIP"])
 
-    f.chkMagneticSnap = CreateToggle(L["UI_MAGNETIC_SNAP"], 350, -98,
-        function() return ns.db.settings.magneticSnap end,
-        function(val) ns.db.settings.magneticSnap = val end
-    )
-
     -- Named Profile Bar with Save Checkpoint, Revert to Saved & Undo (v1.1.2)
     local profLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    profLabel:SetPoint("TOPLEFT", 16, -124)
+    profLabel:SetPoint("TOPLEFT", 16, -164)
     profLabel:SetText(L["UI_PROFILE_LABEL"])
+    f.profLabel = profLabel
 
     local profCycleBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     profCycleBtn:SetSize(148, 24)
-    profCycleBtn:SetPoint("TOPLEFT", 60, -118)
+    profCycleBtn:SetPoint("TOPLEFT", 60, -158)
     ApplyCompactButtonFont(profCycleBtn)
     profCycleBtn:SetScript("OnClick", function()
         Profiles:CycleNextProfile()
@@ -910,7 +939,7 @@ local function EnsureManagerFrame()
         local pd = presetDefs[i]
         local pBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         pBtn:SetSize(168, 24)
-        pBtn:SetPoint("TOPLEFT", 14 + (i - 1) * 174, -148)
+        pBtn:SetPoint("TOPLEFT", 14 + (i - 1) * 174, -188)
         ApplyCompactButtonFont(pBtn)
         pBtn:SetText(pd.label)
         pBtn:SetScript("OnClick", function()
@@ -936,7 +965,7 @@ local function EnsureManagerFrame()
     -- Search Box + Utility Buttons
     local searchBox = CreateFrame("EditBox", nil, f, BACKDROP_TEMPLATE)
     searchBox:SetSize(232, 24)
-    searchBox:SetPoint("TOPLEFT", 14, -180)
+    searchBox:SetPoint("TOPLEFT", 14, -218)
     searchBox:SetAutoFocus(false)
     searchBox:SetFontObject("ChatFontNormal")
     searchBox:SetTextInsets(8, 8, 0, 0)
@@ -1010,7 +1039,7 @@ local function EnsureManagerFrame()
 
     -- Scrollable Window List
     local listBorder = CreateFrame("Frame", nil, f, BACKDROP_TEMPLATE)
-    listBorder:SetPoint("TOPLEFT", 14, -236)
+    listBorder:SetPoint("TOPLEFT", 14, -274)
     listBorder:SetPoint("BOTTOMRIGHT", -14, 18)
     StyleBox(listBorder, 0.03, 0.04, 0.06, 0.90)
 

@@ -199,6 +199,9 @@ function Engine:ApplyToFrame(windowId, frame, desc)
         or desc.defaultMode
         or (ns.db and ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
     local targetScale = (mode == ns.MODE_DISABLED) and ns.DEFAULT_SCALE or Engine:ClampScale(cfg and cfg.scale or ns.DEFAULT_SCALE)
+    if Engine.inCompactMode and mode ~= ns.MODE_DISABLED then
+        targetScale = math.min(targetScale, 0.75)
+    end
 
     local canModify, reason = Guard:CanModifyNow(frame, desc.protected)
     if not canModify then
@@ -463,6 +466,76 @@ local function ApplyMagneticOrGridSnap(draggedFrame, scale, candX, candY)
     return snappedX, snappedY
 end
 
+-- Checks if two managed frames share a touching or aligned edge within threshold
+local function AreFramesDocked(frameA, frameB)
+    local aX, aY = Engine:ReadUipTopLeft(frameA)
+    local bX, bY = Engine:ReadUipTopLeft(frameB)
+    if not aX or not aY or not bX or not bY then
+        return false
+    end
+
+    local aScale = frameA:GetScale() or 1
+    local bScale = frameB:GetScale() or 1
+    local aW = (frameA:GetWidth() or 350) * aScale
+    local aH = (frameA:GetHeight() or 400) * aScale
+    local bW = (frameB:GetWidth() or 350) * bScale
+    local bH = (frameB:GetHeight() or 400) * bScale
+
+    -- Tolerance for snapping / docking: 16 UIParent pixels
+    local TOL = 16
+
+    local hOverlap = (aX <= (bX + bW + TOL)) and ((aX + aW + TOL) >= bX)
+    local vOverlap = ((aY - aH - TOL) <= bY) and (aY >= (bY - bH - TOL))
+
+    -- Touching side-by-side (within TOL) and overlapping vertically:
+    local touchSide = vOverlap and (math.abs((aX + aW) - bX) <= TOL or math.abs((bX + bW) - aX) <= TOL)
+    -- Touching top-to-bottom (within TOL) and overlapping horizontally:
+    local touchVert = hOverlap and (math.abs((aY - aH) - bY) <= TOL or math.abs((bY - bH) - aY) <= TOL)
+    -- Aligned top edge and close together horizontally:
+    local touchAligned = (math.abs(aY - bY) <= TOL) and (math.abs((aX + aW) - bX) <= TOL or math.abs((bX + bW) - aX) <= TOL)
+
+    return touchSide or touchVert or touchAligned
+end
+
+function Engine:FindDockedCluster(sourceFrame)
+    local cluster = {}
+    local visited = { [sourceFrame] = true }
+    local queue = { sourceFrame }
+
+    while #queue > 0 do
+        local curr = table.remove(queue, 1)
+        for otherId, otherDesc in Registry:IterateWindows() do
+            local other = otherDesc.boundFrame
+            if other and other ~= sourceFrame and other:IsShown() and not visited[other] and not otherDesc.protected and not Guard:IsForbidden(other) then
+                local oCfg = ns:GetWindowConfig(otherId, false)
+                if not oCfg or (oCfg.mode == ns.MODE_SCALE_MOVE and not oCfg.locked) then
+                    if AreFramesDocked(curr, other) then
+                        visited[other] = true
+                        local oX, oY = Engine:ReadUipTopLeft(other)
+                        if oX and oY then
+                            local oScale = other:GetScale() or 1
+                            local oAlpha = (type(other.GetAlpha) == "function" and other:GetAlpha()) or 1
+                            cluster[#cluster + 1] = {
+                                windowId = otherId,
+                                frame = other,
+                                desc = otherDesc,
+                                startUipX = oX,
+                                startUipY = oY,
+                                lastUipX = oX,
+                                lastUipY = oY,
+                                scale = oScale,
+                                origAlpha = oAlpha,
+                            }
+                            queue[#queue + 1] = other
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return cluster
+end
+
 -- Active Drag Loop (ONLY active while Left Mouse Button is held down)
 local function OnDragUpdate()
     if not activeDrag then
@@ -503,6 +576,37 @@ local function OnDragUpdate()
 
     activeDrag.lastUipX = newUipX
     activeDrag.lastUipY = newUipY
+
+    -- Synchronous Docked Group Dragging (Option 2)
+    -- If [Alt] is held down, user explicitly detaches/unsticks this window from the group
+    local isAltDown = IsAltKeyDown()
+    if activeDrag.dockedFrames and #activeDrag.dockedFrames > 0 then
+        local deltaX = newUipX - activeDrag.startUipX
+        local deltaY = newUipY - activeDrag.startUipY
+
+        for i = 1, #activeDrag.dockedFrames do
+            local docked = activeDrag.dockedFrames[i]
+            local dFrame = docked.frame
+            if dFrame and dFrame:IsShown() and Guard:CanModifyNow(dFrame, docked.desc.protected) then
+                local targetX = isAltDown and docked.startUipX or (docked.startUipX + deltaX)
+                local targetY = isAltDown and docked.startUipY or (docked.startUipY + deltaY)
+                local cX, cY = Engine:ClampUipPosition(dFrame, docked.scale, targetX, targetY)
+
+                local dState = frameState[dFrame]
+                if dState then
+                    dState.applying = true
+                    dState.hasCustomPosApplied = true
+                end
+                dFrame:ClearAllPoints()
+                dFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", cX / docked.scale, cY / docked.scale)
+                if dState then
+                    dState.applying = false
+                end
+                docked.lastUipX = cX
+                docked.lastUipY = cY
+            end
+        end
+    end
 end
 
 function Engine:StartWindowDrag(windowId, frame, desc)
@@ -544,6 +648,19 @@ function Engine:StartWindowDrag(windowId, frame, desc)
         frame:SetAlpha(math.min(origAlpha, 0.78))
     end
 
+    local dockedCluster = {}
+    if ns.db.settings.stickyDocking then
+        dockedCluster = Engine:FindDockedCluster(frame)
+        if ns.db.settings.dragOpacity then
+            for i = 1, #dockedCluster do
+                local d = dockedCluster[i]
+                if d.frame and type(d.frame.SetAlpha) == "function" then
+                    d.frame:SetAlpha(math.min(d.origAlpha, 0.78))
+                end
+            end
+        end
+    end
+
     local curX, curY = GetCursorPosition()
     activeDrag = {
         windowId = windowId,
@@ -556,6 +673,7 @@ function Engine:StartWindowDrag(windowId, frame, desc)
         startUipY = uipY,
         lastUipX = uipX,
         lastUipY = uipY,
+        dockedFrames = dockedCluster,
     }
     if state then
         state.isDragging = true
@@ -590,6 +708,29 @@ function Engine:StopActiveDrag()
         uipY = finished.lastUipY,
     }
     ns:Fire("OnWindowConfigChanged", finished.windowId, cfg)
+
+    -- Handle docked frames from sticky dragging
+    if finished.dockedFrames and #finished.dockedFrames > 0 then
+        local isAltDown = IsAltKeyDown()
+        for i = 1, #finished.dockedFrames do
+            local docked = finished.dockedFrames[i]
+            if docked.frame and docked.desc then
+                Engine:ApplyAlphaToFrame(docked.windowId, docked.frame, docked.desc)
+            elseif docked.frame and docked.origAlpha and type(docked.frame.SetAlpha) == "function" then
+                docked.frame:SetAlpha(docked.origAlpha)
+            end
+
+            -- Only persist docked positions if not detached with Alt
+            if not isAltDown and docked.lastUipX and docked.lastUipY then
+                local dCfg = ns:GetWindowConfig(docked.windowId, true)
+                dCfg.pos = {
+                    uipX = docked.lastUipX,
+                    uipY = docked.lastUipY,
+                }
+                ns:Fire("OnWindowConfigChanged", docked.windowId, dCfg)
+            end
+        end
+    end
 end
 
 local function HookDragRegion(region, windowId, rootFrame, desc)
@@ -692,14 +833,71 @@ function Engine:GetManagedState(frame)
     return frameState[frame]
 end
 
+function Engine:OnCombatStart()
+    if not ns.db or not ns.db.settings or not ns.db.settings.combatAutoClose then
+        return
+    end
+    local closedCount = 0
+    for _, desc in Registry:IterateWindows() do
+        local frame = desc.boundFrame
+        if frame and frame:IsShown() and not desc.protected and not Guard:IsProtectedHierarchy(frame) then
+            local closed = false
+            if _G.HideUIPanel then
+                local ok = pcall(_G.HideUIPanel, frame)
+                if ok and not frame:IsShown() then
+                    closed = true
+                end
+            end
+            if not closed and frame:IsShown() then
+                pcall(function() frame:Hide() end)
+                if not frame:IsShown() then
+                    closed = true
+                end
+            end
+            if closed then
+                closedCount = closedCount + 1
+            end
+        end
+    end
+    if closedCount > 0 then
+        ns:Print(string.format(ns.L["MSG_COMBAT_AUTOCLOSE"], closedCount))
+    end
+end
+
+function Engine:UpdateInstanceCompactState()
+    if not ns.db or not ns.db.settings then
+        return
+    end
+    local enabled = ns.db.settings.instanceAutoCompact
+    local wasCompact = Engine.inCompactMode or false
+    local isCompact = false
+
+    if enabled and _G.IsInInstance then
+        local inInstance, instanceType = _G.IsInInstance()
+        if inInstance and (instanceType == "party" or instanceType == "raid" or instanceType == "pvp" or instanceType == "arena") then
+            isCompact = true
+        end
+    end
+
+    if isCompact ~= wasCompact then
+        Engine.inCompactMode = isCompact
+        if isCompact then
+            ns:Print(ns.L["MSG_INSTANCE_ENTERED"])
+        else
+            ns:Print(ns.L["MSG_INSTANCE_LEFT"])
+        end
+        Engine:ReapplyAllShown()
+    end
+end
+
 function ns:RunSelfTest()
     ns:Print("|cffffd100--- ELLA In-Game Selbsttest v" .. ns.Version .. " ---|r")
     local passed = 0
     local total = 6
 
     -- Test 1: Version & DB Schema
-    if ns.Version == "1.5.0" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
-        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.5.0 & Datenbank-Schema v2 OK")
+    if ns.Version == "1.6.0" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
+        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.6.0 & Datenbank-Schema v2 OK")
         passed = passed + 1
     else
         ns:Print("|cffff3333[1/6 FAIL]|r Datenbank-Schema oder Version fehlerhaft")
@@ -814,6 +1012,8 @@ eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("DISPLAY_SIZE_CHANGED")
 eventFrame:RegisterEvent("UI_SCALE_CHANGED")
 eventFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
@@ -836,6 +1036,7 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         if ns.Profiles and ns.Profiles.AutoLoadCharProfile then
             ns.Profiles:AutoLoadCharProfile()
         end
+        Engine:UpdateInstanceCompactState()
         Engine:ReapplyAllShown()
         if ns.MinimapButton and ns.MinimapButton.Init then
             ns.MinimapButton:Init()
@@ -850,8 +1051,11 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         if activeDrag and activeDrag.desc and (activeDrag.desc.protected or Guard:IsProtectedHierarchy(activeDrag.frame)) then
             Engine:StopActiveDrag()
         end
+        Engine:OnCombatStart()
     elseif event == "PLAYER_REGEN_ENABLED" then
         Guard:FlushCombatQueue()
+    elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" then
+        Engine:UpdateInstanceCompactState()
     elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
         Engine:ReapplyAllShown()
     elseif event == "MODIFIER_STATE_CHANGED" then

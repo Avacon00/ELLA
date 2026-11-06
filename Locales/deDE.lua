@@ -200,8 +200,8 @@ L["TUTORIAL_STEP4_BODY"] = "Jedes Fenster hat eine Modus-Schaltfläche:\n\n• |
 L["TUTORIAL_STEP5_TITLE"] = "Profile & Charakter-Bindung"
 L["TUTORIAL_STEP5_BODY"] = "Layouts sichern & verwalten:\n\n• |cff00ff96Profil an Charakter binden|r: Lädt dein Setup beim Einloggen dieses Charakters automatisch!\n• |cffffd100Auf Profil-Stand|r: Verwirft Experimente und stellt den Speicherstand her.\n• |cffffd100Rückgängig|r: Bis zu 25 Änderungen schrittweise zurücknehmen."
 
-L["TUTORIAL_STEP6_TITLE"] = "Magnetisches Einrasten"
-L["TUTORIAL_STEP6_BODY"] = "Beim Bewegen von Fenstern:\n\n• Rasten Fenster sanft an der |cff00ccffBildschirmmitte|r sowie an Kanten anderer offener Fenster ein (mit leuchtenden Cyan-Hilfslinien).\n• Halte |cffffd100Shift|r gedrückt für ein pixelgenaues 10px-Raster.\n• Fenster werden beim Ziehen halbtransparent!"
+L["TUTORIAL_STEP6_TITLE"] = "Magnetisches Einrasten & Sticky Windows"
+L["TUTORIAL_STEP6_BODY"] = "Beim Bewegen von Fenstern:\n\n• Rasten Fenster sanft an der |cff00ccffBildschirmmitte|r sowie an Kanten anderer offener Fenster ein (mit leuchtenden Cyan-Hilfslinien).\n• |cff00ff96Sticky Windows:|r Anliegende Fenster bewegen sich gemeinsam als Gruppe! Halte |cffffd100Alt|r gedrueckt, um ein Fenster einzeln zu loesen.\n• Halte |cffffd100Shift|r gedrueckt fuer ein pixelgenaues 10px-Raster.\n• Fenster werden beim Ziehen halbtransparent!"
 
 L["TUTORIAL_STEP7_TITLE"] = "Titelleisten-Badge & Deckkraft"
 L["TUTORIAL_STEP7_BODY"] = "Du musst nicht immer /ella öffnen:\n\n• Jedes Fenster hat oben rechts ein dezentes |cffffd100%-Badge|r.\n• |cffffd100Mausrad|r auf dem Badge zoomt direkt unterm Cursor.\n• |cff00ff96Linksklick|r öffnet das Popover: Steuere hier stufenlos |cff00ff96Deckkraft (Transparenz)|r und aktiviere |cffffd100Mouseover-Fade|r!"
@@ -255,3 +255,25 @@ L["PICKER_HUD_MANAGED"] = "|cffffd100[Bereits verwaltet (%s)]|r"
 L["PICKER_HUD_BLOCKED"] = "|cffff3333[Geschuetzt / Nicht unterstuetzt (%s)]|r"
 L["PICKER_LEVEL_UP"] = "Eine Ebene nach oben gewechselt: %s"
 L["PICKER_LEVEL_DOWN"] = "Eine Ebene nach unten gewechselt: %s"
+
+-- v1.6.0 Combat Protection, Sticky Windows & Community AddOns
+L["UI_COMBAT_AUTOCLOSE"] = "Kampf-Schutz: Auto-Schliessen"
+L["UI_COMBAT_AUTOCLOSE_TIP"] = "Schliesst ungeschuetzte Fenster (Zauberbuch, Questlog, Berufe etc.) sofort beim Eintritt in den Kampf, um freie Sicht zu gewaehrleisten."
+L["UI_INSTANCE_AUTOCOMPACT"] = "Instanz-Kompaktmodus (75%)"
+L["UI_INSTANCE_AUTOCOMPACT_TIP"] = "Begrenzt geoeffnete Fenster in Dungeons, Raids und Schlachtfeldern automatisch auf maximal 75% Skalierung fuer optimale Uebersicht."
+L["UI_STICKY_DOCKING"] = "Sticky Windows (Gruppen-Verschiebung)"
+L["UI_STICKY_DOCKING_TIP"] = "Anliegende Fenster bewegen sich gemeinsam als Gruppe. Halte [Alt] gedrueckt, um ein einzelnes Fenster zu loesen."
+L["MSG_COMBAT_AUTOCLOSE"] = "Kampf begonnen: %d ungeschuetzte Fenster automatisch geschlossen."
+L["MSG_INSTANCE_ENTERED"] = "Instanz betreten: Kompaktmodus aktiv (max. 75% Skalierung)."
+L["MSG_INSTANCE_LEFT"] = "Instanz verlassen: Standard-Skalierung wiederhergestellt."
+
+-- Vor-registrierte Community-AddOn-Fenster
+L["WIN_COMM_DETAILS"] = "Details! Damage Meter"
+L["WIN_COMM_QUESTIE"] = "Questie"
+L["WIN_COMM_BAGNON"] = "Bagnon / Baganator"
+L["WIN_COMM_THREAT"] = "ThreatClassic2"
+L["WIN_COMM_TOMTOM"] = "TomTom Block"
+L["WIN_COMM_WEAKAURAS"] = "WeakAuras Optionen"
+L["WIN_COMM_AUCTIONATOR"] = "Auctionator"
+L["WIN_COMM_ATLASLOOT"] = "AtlasLoot Enhanced"
+L["WIN_COMM_POSTAL"] = "Postal Postfach"

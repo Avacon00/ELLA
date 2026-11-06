@@ -203,8 +203,8 @@ L["TUTORIAL_STEP4_BODY"] = "Each window has a mode toggle button:\n\n• |cff00f
 L["TUTORIAL_STEP5_TITLE"] = "Profiles & Character Binding"
 L["TUTORIAL_STEP5_BODY"] = "Manage and protect your layouts:\n\n• |cff00ff96Bind Profile to Character|r: Automatically loads this layout upon login with this character!\n• |cffffd100Revert to Saved|r: Reverts recent changes to your saved profile.\n• |cffffd100Undo|r: Step back up to 25 recent adjustments."
 
-L["TUTORIAL_STEP6_TITLE"] = "Magnetic Snapping"
-L["TUTORIAL_STEP6_BODY"] = "When moving windows:\n\n• Windows gently snap to the |cff00ccffscreen center|r and edges of neighboring open windows (with cyan alignment guides).\n• Hold |cffffd100Shift|r while dragging for a crisp 10px grid.\n• Dragged windows become semi-transparent so you see underneath!"
+L["TUTORIAL_STEP6_TITLE"] = "Magnetic Snapping & Sticky Windows"
+L["TUTORIAL_STEP6_BODY"] = "When moving windows:\n\n• Windows gently snap to the |cff00ccffscreen center|r and edges of neighboring open windows (with cyan alignment guides).\n• |cff00ff96Sticky Windows:|r Touching windows move synchronously as a group! Hold |cffffd100Alt|r while dragging to detach a single window.\n• Hold |cffffd100Shift|r while dragging for a crisp 10px grid.\n• Dragged windows become semi-transparent so you see underneath!"
 
 L["TUTORIAL_STEP7_TITLE"] = "Titlebar Badge & Opacity"
 L["TUTORIAL_STEP7_BODY"] = "No need to always type /ella:\n\n• Every window features a subtle titlebar |cffffd100% badge|r.\n• |cffffd100Mouse Wheel|r zooms anchored beneath your cursor.\n• |cff00ff96Left-Click|r opens the popover: Adjust |cff00ff96Opacity (transparency)|r and toggle |cffffd100Mouseover Fade|r!"
@@ -258,3 +258,25 @@ L["PICKER_HUD_MANAGED"] = "|cffffd100[Already Managed (%s)]|r"
 L["PICKER_HUD_BLOCKED"] = "|cffff3333[Protected / Unsupported (%s)]|r"
 L["PICKER_LEVEL_UP"] = "Moved one level up: %s"
 L["PICKER_LEVEL_DOWN"] = "Moved one level down: %s"
+
+-- v1.6.0 Combat Protection, Sticky Windows & Community AddOns
+L["UI_COMBAT_AUTOCLOSE"] = "Combat Protection: Auto-Close"
+L["UI_COMBAT_AUTOCLOSE_TIP"] = "Automatically closes open menus, spellbook, quests, and profession windows upon entering combat to keep your view clear."
+L["UI_INSTANCE_AUTOCOMPACT"] = "Instance Compact Mode (75%)"
+L["UI_INSTANCE_AUTOCOMPACT_TIP"] = "Caps all open windows to a maximum scale of 75% inside dungeons, raids, and PvP instances for better situational awareness."
+L["UI_STICKY_DOCKING"] = "Sticky Windows (Group Dragging)"
+L["UI_STICKY_DOCKING_TIP"] = "Windows touching edge-to-edge move together as a group. Hold [Alt] while dragging to detach and move a single window."
+L["MSG_COMBAT_AUTOCLOSE"] = "Combat started: %d unprotected windows automatically closed."
+L["MSG_INSTANCE_ENTERED"] = "Entered instance: Compact Mode active (max 75% scale)."
+L["MSG_INSTANCE_LEFT"] = "Left instance: Standard scale restored."
+
+-- Pre-registered Community AddOn Windows
+L["WIN_COMM_DETAILS"] = "Details! Damage Meter"
+L["WIN_COMM_QUESTIE"] = "Questie"
+L["WIN_COMM_BAGNON"] = "Bagnon / Baganator"
+L["WIN_COMM_THREAT"] = "ThreatClassic2"
+L["WIN_COMM_TOMTOM"] = "TomTom Block"
+L["WIN_COMM_WEAKAURAS"] = "WeakAuras Options"
+L["WIN_COMM_AUCTIONATOR"] = "Auctionator"
+L["WIN_COMM_ATLASLOOT"] = "AtlasLoot Enhanced"
+L["WIN_COMM_POSTAL"] = "Postal Mail"

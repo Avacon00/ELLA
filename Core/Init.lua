@@ -1,7 +1,7 @@
 local AddonName, ns = ...
 
 ns.AddonName = AddonName
-ns.Version = "1.5.0"
+ns.Version = "1.6.0"
 
 -- Internal Project Camelot (WoW: Forever) constant is 18
 ns.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
@@ -67,13 +67,16 @@ local DEFAULT_SETTINGS = {
     activePreset = nil,
     managerScale = 1.00,
     managerWidth = 720,
-    managerHeight = 580,
+    managerHeight = 620,
     tutorialPromptShown = false,
     tutorialCompleted = false,
     showMinimapButton = true,
     minimapPos = 220,
     selectedCategoryFilter = "ALL",
     handheldPromptShown = false,
+    combatAutoClose = false,
+    instanceAutoCompact = false,
+    stickyDocking = true,
 }
 
 function ns:InitDatabase()
@@ -89,6 +92,9 @@ function ns:InitDatabase()
         if db.settings[k] == nil then
             db.settings[k] = v
         end
+    end
+    if db.settings.managerHeight and db.settings.managerHeight < 620 then
+        db.settings.managerHeight = 620
     end
 
     -- Schema v2: Named Profiles (seamless migration from v1 db.windows)

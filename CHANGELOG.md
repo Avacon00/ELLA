@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.6.0 – Kampf-Schutz, Synchrones Fenster-Docking & Community-AddOns
+* **Option 1: Instanz- & Kampf-Schutz (Auto-Close & Kompaktmodus):**
+  * **Kampf-Schutz (`combatAutoClose`):** Schließt ungeschützte Menüs, Zauberbuch, Questlog und Handwerksfenster sofort und automatisch beim Eintritt in den Kampf (`PLAYER_REGEN_DISABLED`), um das Sichtfeld sofort freizugeben.
+  * **Instanz-Kompaktmodus (`instanceAutoCompact`):** Überwacht Instanzen (Dungeons, Raids, PvP) via `IsInInstance()`. Begrenzt alle geöffneten Fenster temporär auf maximal 75 % Skalierung für optimale Übersicht bei Bosskämpfen. Beim Verlassen wird die persönliche Wunschgröße nahtlos wiederhergestellt (0 Profil-Überschreibungen).
+  * **Zero-Taint Garantie:** Geschützte Blizzard-Elemente (Aktionsleisten, UnitFrames) bleiben unangetastet.
+* **Option 2: Synchrones Fenster-Docking (Sticky Windows & Gruppen-Verschiebung):**
+  * **Intelligentes Edge-Docking:** Erkennt automatisch aneinanderliegende oder bündig ausgerichtete Fensterkanten ($\le 16\text{ px}$).
+  * **Gruppen-Verschiebung:** Wird ein angedocktes Fenster verschoben, bewegen sich alle damit verbundenen Fenster synchron und nahtlos als Verbund mit.
+  * **Alt-Unstick-Modifier:** Halte `[Alt]` beim Ziehen gedrückt, um die magnetische Bindung aufzubrechen und ein Fenster einzeln aus der Gruppe herauszuziehen.
+  * **Persistente Verbund-Positionierung:** Nach dem Loslassen werden alle neuen Fensterkoordinaten automatisch im aktiven Profil gespeichert.
+* **Option 3: Vor-Registrierte Community-AddOns (Out-of-the-Box für WoW: Forever):**
+  * Vorab hinterlegte Deskriptoren für die beliebtesten AddOns:
+    * *Details! Damage Meter* (`DetailsBaseWindow1`, `_detalhes`)
+    * *Questie* (`Questie_BaseFrame`, `QuestieFrame`, `QuestieTracker`)
+    * *Bagnon / Baganator* (`BagnonFrameinventory`, `BagnonFramebank`, `Baganator`)
+    * *ThreatClassic2* (`ThreatClassic2BarFrame`, `ThreatClassicFrame`)
+    * *TomTom* (`TomTomBlock`)
+    * *WeakAuras Optionen* (`WeakAurasOptions`)
+    * *Auctionator* (`AuctionatorShoppingFrame`, `AuctionatorConfigFrame`)
+    * *AtlasLoot Enhanced* (`AtlasLoot_GUI-Frame`, `AtlasLootDefaultFrame`)
+    * *Postal* (`Postal_OpenAllMenu`)
+  * **Lazy-Resolution-System:** Völlig ruhend (0,00 ms CPU, 0 Bytes RAM) wenn das jeweilige AddOn fehlt. Sobald es aktiviert wird, erhält es sofort ein Titelleisten-`%`-Badge und erscheint in `/ella`.
+* **Manager & UI-Optimierungen:**
+  * Sauberes 6-Zeilen-Kontrollfeld mit Tooltips im Ella Manager (`/ella`).
+  * Automatische Mindesthöhen-Anpassung auf 620 px für ermüdungsfreie Übersicht.
+  * Aktualisierte interaktive Tutorial-Tour (Schritt 6 erklärt nun Sticky Windows und Alt-Unstick).
+
 ## v1.5.0 – Fenster-Picker 2.0 (Hover-Highlighter & Hierarchie-Inspektor)
 * **Live Hover-Highlighter mit 3-Farben-Status:**
   * Legt in Echtzeit eine Bounding-Box um das anvisierte Fenster:
