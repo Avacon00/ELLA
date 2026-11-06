@@ -60,7 +60,7 @@ local function GetOrCreatePopover()
     end
 
     local p = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    p:SetSize(276, 198)
+    p:SetSize(276, 218)
     p:SetFrameStrata("DIALOG")
     p:SetFrameLevel(200)
     p:EnableMouse(true)
@@ -182,7 +182,7 @@ local function GetOrCreatePopover()
     scaleOnlyChk:SetSize(22, 22)
     scaleOnlyChk:SetPoint("TOPLEFT", 10, -104)
     local soText = scaleOnlyChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    soText:SetPoint("LEFT", scaleOnlyChk, "RIGHT", 2, 0)
+    soText:SetPoint("LEFT", scaleOnlyChk, "RIGHT", 4, 0)
     soText:SetText(L["POPOVER_SCALE_ONLY"])
     p.scaleOnlyChk = scaleOnlyChk
 
@@ -197,9 +197,9 @@ local function GetOrCreatePopover()
     -- Mouseover Fade Checkbox
     local fadeChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
     fadeChk:SetSize(22, 22)
-    fadeChk:SetPoint("TOPLEFT", 136, -104)
+    fadeChk:SetPoint("TOPLEFT", 10, -126)
     local fadeText = fadeChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    fadeText:SetPoint("LEFT", fadeChk, "RIGHT", 2, 0)
+    fadeText:SetPoint("LEFT", fadeChk, "RIGHT", 4, 0)
     fadeText:SetText(L["POPOVER_MOUSEOVER_FADE"])
     p.fadeChk = fadeChk
 
@@ -226,9 +226,9 @@ local function GetOrCreatePopover()
     -- Lock Position Checkbox
     local lockChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
     lockChk:SetSize(22, 22)
-    lockChk:SetPoint("TOPLEFT", 10, -128)
+    lockChk:SetPoint("TOPLEFT", 10, -148)
     local lockText = lockChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    lockText:SetPoint("LEFT", lockChk, "RIGHT", 2, 0)
+    lockText:SetPoint("LEFT", lockChk, "RIGHT", 4, 0)
     lockText:SetText(L["POPOVER_LOCK_POS"])
     p.lockChk = lockChk
 
