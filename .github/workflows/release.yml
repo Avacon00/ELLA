@@ -9,6 +9,9 @@ jobs:
   package:
     name: BigWigs Packager (WoW Forever 16001)
     runs-on: ubuntu-latest
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,8 +20,9 @@ jobs:
       - name: Validate before packaging
         run: python3 tests/validate_addon.py
 
-      - name: Package & Upload Addon
+      - name: Build Release ZIP
+        run: python3 scripts/build-release-zip.py
+
+      - name: Package & Upload Addon to CurseForge (when CF_API_KEY is configured)
+        if: ${{ env.CF_API_KEY != '' }}
         uses: BigWigsMods/packager@v2
-        env:
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
-          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

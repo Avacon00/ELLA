@@ -28,6 +28,7 @@ read_globals = {
     "SlashCmdList",
     "CreateFrame",
     "GetLocale",
+    "GetTime",
     "GetCursorPosition",
     "GetMouseFoci",
     "GetMouseFocus",
