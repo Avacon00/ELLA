@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.7.2 – Erweitertes 13-Schritte Onboarding-Tutorial
+* **Umfassende Tutorial-Erweiterung auf 13 geführte Schritte:**
+  * Das interaktive Ingame-Tutorial (`/ella tour`) wurde auf 13 präzise, übersichtliche Schritte ausgebaut:
+    1. *Willkommen & Grundkonzept* (Reiter: Fenster)
+    2. *Fensterliste & Feineinstellung (+ / -, 100% Reset, Live-Vorschau-Auge)* (Reiter: Fenster)
+    3. *Die 3 Skalierungsmodi (Skalieren+Bewegen, Nur Skalieren, Deaktiviert)* (Reiter: Fenster)
+    4. *Suchleiste & 7 Kategorie-Filter* (Reiter: Fenster)
+    5. *Fenster-Picker 2.0 mit Hover-HUD & Mausrad-Hierarchie für AddOns* (Reiter: Fenster)
+    6. *Bildschirm-Ausrichtungsgitter (Screen-Grid mit Zentrum-Kreuz & Drittel-Achsen)* (Reiter: Fenster)
+    7. *1-Klick-Vorlagen (Classic Kompakt, WQHD/4K, Laptop/Deck, Standard)* (Reiter: Profile)
+    8. *Profile, Snapshots & Charakter-Bindung* (Reiter: Profile)
+    9. *Profil-Sharing 2.0 (Export / Import mit Live-Prüfung & 1-Klick-Kopieren)* (Reiter: Profile)
+    10. *Magnetisches Einrasten, 10px-Raster (Shift) & Sticky Windows (Alt)* (Reiter: Einstellungen)
+    11. *Kampf- & Instanz-Schutz (Auto-Schließen & 75%-Kompaktmodus)* (Reiter: Einstellungen)
+    12. *Titelleisten-Badges (%), Deckkraft (30%-100%) & Mouseover-Fade* (Reiter: Einstellungen)
+    13. *Boss-Key (/ella panic), Blizzard-Tastenbelegung & Startklar!* (Reiter: Fenster)
+  * Automatische Reiter-Navigation und präziser Spotlight-Rahmen für jeden Schritt.
+  * Leicht vergrößerte Callout-Karte (400x195px) für perfekten Lesekomfort.
+
 ## v1.7.1 – UI/UX-Entzerrung & Moderne 3-Reiter-Architektur
 * **Vollständige Benutzeroberflächen-Entzerrung (User-Friendly UI/UX):**
   * Das bisher überfüllte Hauptmenü mit über 30 gleichzeitig sichtbaren Steuerelementen wurde in **3 logische Hauptbereiche** aufgeteilt:

@@ -189,28 +189,43 @@ L["TUTORIAL_HELP_BUTTON_TIP"] = "Start Interactive Tutorial (/ella tour)"
 L["TUTORIAL_FINISHED_MSG"] = "Tutorial completed! You can restart it anytime via the |cffffd100[?]|r icon or |cffffd100/ella tour|r."
 
 L["TUTORIAL_STEP1_TITLE"] = "Welcome to Ella!"
-L["TUTORIAL_STEP1_BODY"] = "Ella (Easy Layout & Location Assistant) solves a major issue in WoW: Forever:\n\nScale down oversized panels like Spellbook, Quest Log, or Professions and move them anywhere—without shrinking your chat, action bars, or Blizzard Edit Mode."
+L["TUTORIAL_STEP1_BODY"] = "Ella solves a major challenge in WoW: Forever:\n\nYou can smoothly scale and position chunky interface panels like your Spellbook, Quest Log, or Professions—without shrinking your chat, action bars, or breaking Edit Mode.\n\nThis short tour will introduce you to all essential features!"
 
-L["TUTORIAL_STEP2_TITLE"] = "1-Click Presets & Handheld Detection"
-L["TUTORIAL_STEP2_BODY"] = "Top bar offers tailored 1-click presets:\n\n• |cffffd100Classic Compact (80%)|r: Flagship classic Vanilla proportion.\n• |cffffd100WQHD / 4K (85%)|r: Balanced for high-resolution monitors.\n• |cffffd100Laptop / Deck (72%)|r: Tailored for handhelds & compact screens.\n• |cffffd100Standard (100%)|r: Restores all windows to default size.\n\n|cff00ff96Tip:|r Ella auto-detects handhelds (e.g. Steam Deck) on login!"
+L["TUTORIAL_STEP2_TITLE"] = "Window List & Fine-Tuning"
+L["TUTORIAL_STEP2_BODY"] = "In the list, you can manage every window individually:\n\n• |cff00ff96+|r and |cffff6060-|r: Smoothly scale in 5% increments (|cffffd100Shift|r = 1%).\n• |cffffd100100%|r: Resets a single window back to default scale.\n• |cff00ff96[Eye Icon]|r: Opens the window instantly for a live preview—no NPC visit required!"
 
-L["TUTORIAL_STEP3_TITLE"] = "Window List, Preview & Filters"
-L["TUTORIAL_STEP3_BODY"] = "Manage all supported panels:\n\n• |cff00ff96+|r and |cffff6060-|r: Adjust scale in 5% steps (|cffffd100Shift|r = 1%).\n• |cff00ff96[Eye]|r: Instantly toggles the window for live testing - no NPC visit needed!\n• |cffffd100Filter Pills|r quickly filter by [Open], [Professions], [Quests], etc."
+L["TUTORIAL_STEP3_TITLE"] = "The 3 Scaling Modes"
+L["TUTORIAL_STEP3_BODY"] = "Every window features an interactive mode button:\n\n• |cff00ff96Scale + Move|r: Free dragging & persistent coordinate saving.\n• |cffffd100Scale Only|r: Keeps Blizzard's native automatic side-by-side push layout, but renders at your custom scale!\n• |cff888888Disabled|r: Leaves the frame completely untouched."
 
-L["TUTORIAL_STEP4_TITLE"] = "The 3 Window Modes"
-L["TUTORIAL_STEP4_BODY"] = "Each window has a mode toggle button:\n\n• |cff00ff96Scale + Move|r: Freely draggable with saved position.\n• |cffffd100Scale Only|r: Blizzard's auto side-by-side push layout stays active, but panels open at your chosen scale!\n• |cff888888Disabled|r: Leaves the window completely unmanaged."
+L["TUTORIAL_STEP4_TITLE"] = "Search & Category Filters"
+L["TUTORIAL_STEP4_BODY"] = "Stay organized and find windows in seconds:\n\n• |cffffd100Search Box|r: Type any window name to filter the list instantly.\n• |cff00ff96Category Pills|r: Quickly filter by [All], [Open], [Character], [Professions], [Quests & World], [Social], or [Custom]."
 
-L["TUTORIAL_STEP5_TITLE"] = "Profiles & Character Binding"
-L["TUTORIAL_STEP5_BODY"] = "Manage and protect your layouts:\n\n• |cff00ff96Bind Profile to Character|r: Automatically loads this layout upon login with this character!\n• |cffffd100Revert to Saved|r: Reverts recent changes to your saved profile.\n• |cffffd100Undo|r: Step back up to 25 recent adjustments."
+L["TUTORIAL_STEP5_TITLE"] = "Window Picker 2.0"
+L["TUTORIAL_STEP5_BODY"] = "Want to scale third-party addons like Details!, Questie, or WeakAuras?\n\n• Click |cff00ff96[+ Window Picker]|r or type |cffffd100/ella pick|r.\n• Hover over any frame on screen.\n• |cffffd100Mouse Wheel|r: Navigate the hierarchy (child <-> parent frames) to capture nested addon containers with pixel precision!"
 
-L["TUTORIAL_STEP6_TITLE"] = "Magnetic Snapping & Sticky Windows"
-L["TUTORIAL_STEP6_BODY"] = "When moving windows:\n\n• Windows gently snap to the |cff00ccffscreen center|r and edges of neighboring open windows (with cyan alignment guides).\n• |cff00ff96Sticky Windows:|r Touching windows move synchronously as a group! Hold |cffffd100Alt|r while dragging to detach a single window.\n• Hold |cffffd100Shift|r while dragging for a crisp 10px grid.\n• Dragged windows become semi-transparent so you see underneath!"
+L["TUTORIAL_STEP6_TITLE"] = "Screen-Grid Alignment Overlay"
+L["TUTORIAL_STEP6_BODY"] = "For pixel-perfect symmetry and alignment:\n\n• Click |cff00ff96[# Grid]|r or type |cffffd100/ella grid|r.\n• Displays a full-screen overlay with a bright |cff00ccffCyan center crosshair|r, |cffffd100rule-of-thirds|r axes, and subtle 32px precision lines.\n• Automatically hides when exiting Ella!"
 
-L["TUTORIAL_STEP7_TITLE"] = "Titlebar Badge & Opacity"
-L["TUTORIAL_STEP7_BODY"] = "No need to always type /ella:\n\n• Every window features a subtle titlebar |cffffd100% badge|r.\n• |cffffd100Mouse Wheel|r zooms anchored beneath your cursor.\n• |cff00ff96Left-Click|r opens the popover: Adjust |cff00ff96Opacity (transparency)|r and toggle |cffffd100Mouseover Fade|r!"
+L["TUTORIAL_STEP7_TITLE"] = "One-Click Presets"
+L["TUTORIAL_STEP7_BODY"] = "Battle-tested scaling presets ready at your fingertips:\n\n• |cffffd100Classic Compact (80%)|r: Clean, classic Vanilla proportion.\n• |cffffd100WQHD / 4K (85%)|r: Optimized for 1440p and 4K monitors.\n• |cffffd100Laptop / Deck (72%)|r: Ideal for Steam Deck & handheld displays.\n• |cffffd100Default (100%)|r: Resets all panels to Blizzard standard."
 
-L["TUTORIAL_STEP8_TITLE"] = "Ready, Minimap & Picker 2.0"
-L["TUTORIAL_STEP8_BODY"] = "You're all set!\n\n• |cff00ff96Minimap Button|r: Left-click toggles Ella, right-click opens the Quick Menu.\n• |cff00ff96+ Window Picker 2.0|r: Capture any third-party panel (mouse wheel traverses nested hierarchy levels!).\n• Replay this tour anytime via the |cffffd100[?]|r icon top right!"
+L["TUTORIAL_STEP8_TITLE"] = "Profiles & Character Binding"
+L["TUTORIAL_STEP8_BODY"] = "Save, backup, and organize your layouts:\n\n• |cff00ff96Bind Profile to Character|r: Automatically loads your setup upon logging into this character.\n• |cffffd100+ New...|r: Create custom named layout profiles.\n• |cffffd100Undo|r: Revert up to 25 scaling & position adjustments step-by-step."
+
+L["TUTORIAL_STEP9_TITLE"] = "Profile Sharing 2.0"
+L["TUTORIAL_STEP9_BODY"] = "Share window layouts or backup your setups:\n\n• Click |cff00ff96[Export / Import]|r to export your setup as a portable |cffffd100!ELLA:v2:|r code.\n• Click |cff00ff96[Copy String]|r for 1-click sharing in chat or Discord.\n• Real-time inspection displays profile name and window count before importing!"
+
+L["TUTORIAL_STEP10_TITLE"] = "Magnetic Snapping & Sticky Windows"
+L["TUTORIAL_STEP10_BODY"] = "Smart window physics when dragging:\n\n• Panels smoothly snap to |cff00ccffscreen center|r and edges of other open windows with cyan guide lines.\n• |cff00ff96Sticky Windows:|r Adjacent panels dock and move together as a group! Hold |cffffd100Alt|r to detach a single frame.\n• Hold |cffffd100Shift|r for a 10px precision snap grid."
+
+L["TUTORIAL_STEP11_TITLE"] = "Combat & Instance Protection"
+L["TUTORIAL_STEP11_BODY"] = "Clear view when action heats up:\n\n• |cff00ff96Combat Auto-Close:|r Automatically closes open spellbooks, quest logs, and professions upon entering combat.\n• |cffffd100Instance Compact Mode:|r Automatically caps windows in dungeons, raids, and battlegrounds to a maximum 75% scale."
+
+L["TUTORIAL_STEP12_TITLE"] = "Titlebar Badges, Opacity & Fade"
+L["TUTORIAL_STEP12_BODY"] = "Direct control without opening /ella:\n\n• Every window features a discrete |cffffd100%-badge|r in its titlebar.\n• |cffffd100Mouse Wheel|r on the badge zooms right beneath your cursor.\n• |cff00ff96Left-Click|r opens the popover: Adjust |cff00ff96opacity (30%-100%)|r and enable |cffffd100Mouseover-Fade|r!\n• Quick zoom: |cffffd100Ctrl + Mouse Wheel|r over any window."
+
+L["TUTORIAL_STEP13_TITLE"] = "Boss-Key, Keybindings & All Set!"
+L["TUTORIAL_STEP13_BODY"] = "You are all set for WoW: Forever!\n\n• |cff00ff96Boss-Key:|r |cffffd100/ella panic|r instantly closes all open windows. Press again to restore them!\n• |cffffd100Keybindings:|r Under Game Menu -> Keybindings -> Ella, bind Boss-Key, Manager, and Grid to any shortcut.\n• Replay this tour anytime by clicking the |cffffd100[?]|r icon in the manager titlebar!"
 
 -- v1.3.0 Minimap, Filter Pills & Window Preview
 L["MINIMAP_TOOLTIP_TITLE"] = "Ella - Layout & Location Assistant"

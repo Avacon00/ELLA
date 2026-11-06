@@ -5,7 +5,7 @@ local L = ns.L
 local Tutorial = {
     active = false,
     currentStep = 0,
-    TOTAL_STEPS = 8,
+    TOTAL_STEPS = 13,
 }
 ns.Tutorial = Tutorial
 
@@ -216,7 +216,7 @@ local function EnsureTutorialFrames()
 
     -- Interactive Tutorial Card (Draggable Callout)
     local c = CreateFrame("Frame", "EllaTutorialCard", UIParent, BACKDROP_TEMPLATE)
-    c:SetSize(390, 185)
+    c:SetSize(400, 195)
     c:SetPoint("CENTER", 0, -40)
     c:SetFrameStrata("FULLSCREEN_DIALOG")
     c:SetFrameLevel(200)
@@ -325,21 +325,9 @@ local STEPS = {
         end,
     },
     [2] = {
-        tab = "PROFILES",
+        tab = "WINDOWS",
         titleKey = "TUTORIAL_STEP2_TITLE",
         bodyKey = "TUTORIAL_STEP2_BODY",
-        getTarget = function()
-            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.presetBtns and #mf.presetBtns > 0 then
-                return { tl = mf.presetBtns[1], br = mf.presetBtns[#mf.presetBtns] }
-            end
-            return nil
-        end,
-    },
-    [3] = {
-        tab = "WINDOWS",
-        titleKey = "TUTORIAL_STEP3_TITLE",
-        bodyKey = "TUTORIAL_STEP3_BODY",
         getTarget = function()
             local row = ns.ManagerUI and ns.ManagerUI.GetRow and ns.ManagerUI:GetRow(1)
             if row and row.minusBtn and (row.eyeBtn or row.resetBtn) then
@@ -349,54 +337,115 @@ local STEPS = {
             return mf and mf.scrollFrame
         end,
     },
-    [4] = {
+    [3] = {
         tab = "WINDOWS",
-        titleKey = "TUTORIAL_STEP4_TITLE",
-        bodyKey = "TUTORIAL_STEP4_BODY",
+        titleKey = "TUTORIAL_STEP3_TITLE",
+        bodyKey = "TUTORIAL_STEP3_BODY",
         getTarget = function()
             local row = ns.ManagerUI and ns.ManagerUI.GetRow and ns.ManagerUI:GetRow(1)
             return row and row.modeBtn
         end,
     },
+    [4] = {
+        tab = "WINDOWS",
+        titleKey = "TUTORIAL_STEP4_TITLE",
+        bodyKey = "TUTORIAL_STEP4_BODY",
+        getTarget = function()
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            if mf and mf.searchBox and mf.filterPills and #mf.filterPills > 0 then
+                return { tl = mf.searchBox, br = mf.filterPills[#mf.filterPills] }
+            end
+            return mf and mf.searchBox
+        end,
+    },
     [5] = {
-        tab = "PROFILES",
+        tab = "WINDOWS",
         titleKey = "TUTORIAL_STEP5_TITLE",
         bodyKey = "TUTORIAL_STEP5_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.chkBindChar and mf.profDelBtn then
-                return { tl = mf.chkBindChar, br = mf.profDelBtn }
-            elseif mf and mf.profCycleBtn and mf.profDelBtn then
-                return { tl = mf.profCycleBtn, br = mf.profDelBtn }
-            end
-            return mf and mf.profCycleBtn
+            return mf and mf.pickBtn
         end,
     },
     [6] = {
-        tab = "SETTINGS",
+        tab = "WINDOWS",
         titleKey = "TUTORIAL_STEP6_TITLE",
         bodyKey = "TUTORIAL_STEP6_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.chkDragOpacity and mf.chkMagneticSnap then
-                return { tl = mf.chkDragOpacity, br = mf.chkMagneticSnap }
-            end
-            return mf and mf.chkMagneticSnap
+            return mf and mf.gridBtn
         end,
     },
     [7] = {
-        tab = "SETTINGS",
+        tab = "PROFILES",
         titleKey = "TUTORIAL_STEP7_TITLE",
         bodyKey = "TUTORIAL_STEP7_BODY",
+        getTarget = function()
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            if mf and mf.presetBtns and #mf.presetBtns > 0 then
+                return { tl = mf.presetBtns[1], br = mf.presetBtns[#mf.presetBtns] }
+            end
+            return nil
+        end,
+    },
+    [8] = {
+        tab = "PROFILES",
+        titleKey = "TUTORIAL_STEP8_TITLE",
+        bodyKey = "TUTORIAL_STEP8_BODY",
+        getTarget = function()
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            if mf and mf.profCycleBtn and mf.chkBindChar then
+                return { tl = mf.profCycleBtn, br = mf.chkBindChar }
+            end
+            return mf and mf.cardProf
+        end,
+    },
+    [9] = {
+        tab = "PROFILES",
+        titleKey = "TUTORIAL_STEP9_TITLE",
+        bodyKey = "TUTORIAL_STEP9_BODY",
+        getTarget = function()
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            return mf and (mf.expBtn or mf.cardSharing)
+        end,
+    },
+    [10] = {
+        tab = "SETTINGS",
+        titleKey = "TUTORIAL_STEP10_TITLE",
+        bodyKey = "TUTORIAL_STEP10_BODY",
+        getTarget = function()
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            if mf and mf.chkCtrlWheel and mf.chkClamp then
+                return { tl = mf.chkCtrlWheel, br = mf.chkClamp }
+            end
+            return mf and mf.cardMouse
+        end,
+    },
+    [11] = {
+        tab = "SETTINGS",
+        titleKey = "TUTORIAL_STEP11_TITLE",
+        bodyKey = "TUTORIAL_STEP11_BODY",
+        getTarget = function()
+            local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
+            if mf and mf.chkCombatClose and mf.chkInstCompact then
+                return { tl = mf.chkCombatClose, br = mf.chkInstCompact }
+            end
+            return mf and mf.cardCombat
+        end,
+    },
+    [12] = {
+        tab = "SETTINGS",
+        titleKey = "TUTORIAL_STEP12_TITLE",
+        bodyKey = "TUTORIAL_STEP12_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
             return mf and mf.chkBadges
         end,
     },
-    [8] = {
+    [13] = {
         tab = "WINDOWS",
-        titleKey = "TUTORIAL_STEP8_TITLE",
-        bodyKey = "TUTORIAL_STEP8_BODY",
+        titleKey = "TUTORIAL_STEP13_TITLE",
+        bodyKey = "TUTORIAL_STEP13_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
             if mf and mf.helpBtn and mf.selfScaleBtn then
