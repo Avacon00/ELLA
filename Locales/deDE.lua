@@ -1,0 +1,141 @@
+local AddonName, ns = ...
+
+if GetLocale() ~= "deDE" then
+    return
+end
+
+local L = ns.L
+
+-- General & Branding
+L["ADDON_TITLE"] = "Ella"
+L["ADDON_SUBTITLE"] = "Easy Layout & Location Assistant für WoW: Forever"
+L["LOADED_MSG"] = "v%s geladen (%s). Tippe |cffffd100/ella|r zum Konfigurieren."
+L["PROJECT_FOREVER"] = "WoW: Forever (Camelot)"
+L["PROJECT_GENERIC"] = "Kompatibler Client"
+
+-- Modes
+L["MODE_SCALE_MOVE"] = "Skalieren + Bewegen"
+L["MODE_SCALE_ONLY"] = "Nur Skalieren (Blizzard-Layout)"
+L["MODE_DISABLED"] = "Deaktiviert (100%)"
+
+-- Categories
+L["CAT_CHARACTER"] = "Charakter & Fortschritt"
+L["CAT_QUEST_WORLD"] = "Quests, Karte & Ruf"
+L["CAT_CRAFT_ECON"] = "Berufe & Wirtschaft"
+L["CAT_SOCIAL"] = "Soziales, Sammlungen & Dungeons"
+L["CAT_FOREVER"] = "WoW: Forever Systeme"
+L["CAT_CUSTOM"] = "Eigene & Drittanbieter-Fenster"
+
+-- Built-in Window Labels
+L["WIN_CHARACTER"] = "Charakterinfo & Ausrüstung"
+L["WIN_REPUTATION"] = "Ruf-Übersicht"
+L["WIN_SPELLBOOK"] = "Zauberbuch & Fähigkeiten"
+L["WIN_TALENTS"] = "Talente & Spezialisierungen"
+L["WIN_QUESTLOG"] = "Questlog"
+L["WIN_QUESTMAP"] = "Weltkarte & Questlog"
+L["WIN_QUEST_DIALOG"] = "NPC-Questdialog"
+L["WIN_GOSSIP"] = "NPC-Gesprächsfenster"
+L["WIN_MERCHANT"] = "Händler / Verkäufer"
+L["WIN_MAIL"] = "Briefkasten"
+L["WIN_BANK"] = "Bankfach"
+L["WIN_DRESSUP"] = "Anprobe"
+L["WIN_INSPECT"] = "Spieler betrachten"
+L["WIN_FRIENDS"] = "Freunde & Wer-Liste"
+L["WIN_ITEMTEXT"] = "Bücher & Schriftrollen"
+L["WIN_TAXI"] = "Flugmeister-Karte"
+L["WIN_LOOT"] = "Beutefenster"
+L["WIN_TABARD"] = "Wappenrock-Designer"
+L["WIN_PROFESSIONS"] = "Berufe & Handwerk"
+L["WIN_TRADESKILL_CLASSIC"] = "Handwerksfenster (Klassisch)"
+L["WIN_CRAFT_CLASSIC"] = "Verzauberkunst / Handwerk"
+L["WIN_AUCTION"] = "Auktionshaus"
+L["WIN_TRAINER"] = "Klassen- & Berufslehrer"
+L["WIN_COLLECTIONS"] = "Reittiere, Haustiere & Erbstücke"
+L["WIN_COMMUNITIES"] = "Gilde & Communitys"
+L["WIN_ENCOUNTER_JOURNAL"] = "Dungeonkompendium & Abenteuerführer"
+L["WIN_GROUP_FINDER"] = "Gruppensuche (PVE/PVP)"
+L["WIN_CALENDAR"] = "Kalender"
+L["WIN_MACRO"] = "Makros"
+L["WIN_LEGACY_TREE"] = "Forever: Legacy-Baum & Herausforderungen"
+L["WIN_CAMPING_UI"] = "Forever: Camping & Baupläne (Blueprints)"
+L["WIN_FACTION_QUARTERMASTER"] = "Forever: Neue Fraktionsübersicht"
+
+-- Badge & Popover Tooltips
+L["BADGE_TOOLTIP_TITLE"] = "%s (%d%%)"
+L["BADGE_TOOLTIP_SCROLL"] = "|cffffd100Mausrad:|r Fenstergröße ändern (Shift = 1%)"
+L["BADGE_TOOLTIP_LCLICK"] = "|cffffd100Linksklick:|r Regler & Modus-Menü öffnen"
+L["BADGE_TOOLTIP_RCLICK"] = "|cffffd100Rechtsklick:|r Skalierung auf 100% zurücksetzen"
+L["BADGE_TOOLTIP_SRCLICK"] = "|cffffd100Shift + Rechtsklick:|r Gespeicherte Position zurücksetzen"
+L["BADGE_LOCKED"] = "Position gesperrt"
+L["BADGE_UNLOCKED"] = "Verschiebbar"
+L["POPOVER_SCALE"] = "Größe: %d%%"
+L["POPOVER_LOCK_POS"] = "Fensterposition sperren"
+L["POPOVER_SCALE_ONLY"] = "Nur Skalieren (Auto-Anordnung behalten)"
+L["POPOVER_RESET_SCALE"] = "100% Reset"
+L["POPOVER_RESET_POS"] = "Pos. Reset"
+
+-- Presets
+L["PRESET_DEFAULT_NAME"] = "Standard (100%)"
+L["PRESET_DEFAULT_DESC"] = "Setzt alle verwalteten Fenster wieder auf 100% Originalgröße zurück."
+L["PRESET_COMPACT80_NAME"] = "Classic Kompakt (80%)"
+L["PRESET_COMPACT80_DESC"] = "Verkleinert klobige Retail-Menüs auf angenehme 80-85% Classic-Proportionen – HUD & Schriften bleiben 100% unberührt."
+L["PRESET_WQHD85_NAME"] = "WQHD / 4K (85%)"
+L["PRESET_WQHD85_DESC"] = "Angenehme 85-90% Skalierung, abgestimmt auf 1440p- und 4K-Monitore."
+L["PRESET_LAPTOP72_NAME"] = "Laptop / Deck (72%)"
+L["PRESET_LAPTOP72_DESC"] = "Besonders platzsparende 70-75% Fenster für kleinere Displays und Handhelds."
+L["PRESET_APPLIED"] = "Preset aktiviert: |cff00ff96%s|r."
+
+-- Combat & Guard Messages
+L["GUARD_DEFERRED_COMBAT"] = "Geschütztes Fenster '%s' darf im Kampf nicht geändert werden. Wird nach Kampfende angewendet."
+L["GUARD_COMBAT_APPLIED"] = "%d vorgemerkte Fenster-Anpassung(en) nach Kampfende übernommen."
+L["GUARD_ERR_FORBIDDEN"] = "Fenster kann nicht verwaltet werden: Von Blizzard geschützt/gesperrt."
+L["GUARD_ERR_EDITMODE"] = "Gesperrt: HUD- & Kampfelemente gehören zu Blizzards nativem Edit Mode."
+L["GUARD_ERR_UNSAFE"] = "Unbenannte Frames können nicht gespeichert werden; nur globale Fenster sind erlaubt."
+
+-- Welcome Dialog
+L["WELCOME_TITLE"] = "Willkommen bei Ella!"
+L["WELCOME_BODY"] = "Zu riesige Menüs in WoW: Forever? Ella (Easy Layout & Location Assistant) skaliert und verschiebt einzelne Fenster (Questlog, Berufe, Zauberbuch, Ruf) – ganz ohne deinen Chat, deine Aktionsleisten oder den Edit Mode zu verändern.\n\nWie möchtest du starten?"
+L["WELCOME_BTN_COMPACT"] = "Classic Kompakt (80%) aktivieren"
+L["WELCOME_BTN_WQHD"] = "Ausgewogen (85%) aktivieren"
+L["WELCOME_BTN_KEEP100"] = "Bei 100% belassen (Später einstellen)"
+
+-- Settings & Window Manager UI
+L["UI_MANAGER_TITLE"] = "Ella – Easy Layout & Location Assistant"
+L["UI_SEARCH_PLACEHOLDER"] = "Fenster suchen..."
+L["UI_GLOBAL_ENABLED"] = "Ella aktivieren"
+L["UI_SHOW_BADGES"] = "Skalierungs-Badge (%) in Titelleisten anzeigen"
+L["UI_CTRL_WHEEL"] = "Strg + Mausrad zum Skalieren auf Fenstern erlauben"
+L["UI_CLAMP_SCREEN"] = "Fenster immer innerhalb des Bildschirms halten"
+L["UI_DEFAULT_SCALE_ONLY"] = "Neue Fenster standardmäßig im Modus 'Nur Skalieren'"
+L["UI_OPEN_MANAGER"] = "Ella öffnen (/ella)"
+L["UI_START_PICKER"] = "+ Fenster-Picker"
+L["UI_EXPORT_IMPORT"] = "Export / Import"
+L["UI_RESET_ALL"] = "Alle Reset"
+L["UI_RESET_CONFIRM"] = "Alle Fensterskalierungen und Positionen wurden auf 100% zurückgesetzt."
+L["UI_EXPORT_TITLE"] = "Ella Profil-String (Strg+C zum Kopieren oder einfügen & Importieren klicken)"
+L["UI_BTN_IMPORT"] = "Importieren"
+L["UI_BTN_CLOSE"] = "Schließen"
+L["UI_IMPORT_SUCCESS"] = "%d Fenstereinstellung(en) erfolgreich importiert!"
+L["UI_IMPORT_ERROR"] = "Ungültiger Ella Profil-String."
+L["UI_STATUS_OPEN"] = "Jetzt offen"
+L["UI_STATUS_LOADED"] = "Geladen"
+L["UI_STATUS_LOD"] = "Bei Bedarf"
+
+-- Frame Picker
+L["PICKER_BANNER_TITLE"] = "Ella Frame-Inspektor"
+L["PICKER_BANNER_HELP"] = "Maus über ein Fenster bewegen • |cff00ff96Linksklick|r zum Aufnehmen • |cffff6060Rechtsklick / ESC|r Abbruch"
+L["PICKER_SAFE"] = "|cff00ff96SICHER VERWALTBAR:|r %s"
+L["PICKER_BLOCKED"] = "|cffff5050GESPERRT:|r %s (%s)"
+L["PICKER_ADDED"] = "Eigenes Fenster |cff00ff96%s|r hinzugefügt! Du kannst es jetzt skalieren & bewegen."
+L["PICKER_SNIPPET_TITLE"] = "GitHub-Beitrags-Schnipsel für '%s'"
+
+-- Addon Compartment & Slash Help
+L["COMPARTMENT_LEFT"] = "|cffffd100Linksklick:|r Ella Fenster-Manager öffnen"
+L["COMPARTMENT_RIGHT"] = "|cffffd100Rechtsklick:|r Titelleisten-Badges ein-/ausblenden"
+L["COMPARTMENT_MIDDLE"] = "|cffffd100Mittelklick:|r Eigenes Fenster per Mausklick aufnehmen"
+L["SLASH_HELP_HEADER"] = "Befehle:"
+L["SLASH_HELP_OPEN"] = "|cffffd100/ella|r – Ella Fenster-Manager öffnen"
+L["SLASH_HELP_PICK"] = "|cffffd100/ella pick|r – Drittanbieter-/Spezialfenster per Klick aufnehmen"
+L["SLASH_HELP_PRESET"] = "|cffffd100/ella compact|r – Classic-Kompakt-Preset (80%) aktivieren"
+L["SLASH_HELP_BADGES"] = "|cffffd100/ella badges|r – %-Badges in Titelleisten umschalten"
+L["SLASH_HELP_RESET"] = "|cffffd100/ella reset|r – Notfall-Reset aller Größen & Positionen"

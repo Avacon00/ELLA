@@ -1,0 +1,43 @@
+## Interface: 16001
+## Title: Ella – Easy Layout & Location Assistant
+## Title-deDE: Ella – Easy Layout & Location Assistant
+## Notes: Easy Layout & Location Assistant – Scale and move Blizzard & WoW: Forever windows individually without shrinking fonts, action bars, or breaking Edit Mode.
+## Notes-deDE: Easy Layout & Location Assistant – Skaliert und verschiebt Blizzard- & WoW:-Forever-Fenster einzeln, ohne Schriften, Aktionsleisten oder den Edit Mode zu verändern.
+## Author: Avacon00
+## Version: 1.0.1
+## SavedVariables: ELLADB
+## AllowLoadGameType: camelot, standard
+## IconTexture: Interface\Icons\INV_Misc_Spyglass_03
+## Category-enUS: User Interface
+## Category-deDE: Benutzerinterface
+## X-License: MIT
+## X-Website: https://github.com/Avacon00/ELLA
+## X-Curse-Project-ID: 000000
+
+# Embedded Public-Domain Library
+Libs\LibStub\LibStub.lua
+
+# Localization (enUS fallback first, then client-specific overrides)
+Locales\enUS.lua
+Locales\deDE.lua
+
+# Core Engine & Anti-Taint Architecture
+Core\Init.lua
+Core\Guard.lua
+Core\Registry.lua
+Core\Engine.lua
+Core\Profiles.lua
+
+# Declarative Window Definitions (Community-Extensible)
+Data\Frames_Core.lua
+Data\Frames_LoD.lua
+Data\Frames_Forever.lua
+
+# User Interface Components (UIParent-Isolated)
+UI\Badge.lua
+UI\Picker.lua
+UI\WelcomeDialog.lua
+UI\SettingsPanel.lua
+
+# Third-Party Extensibility API
+API\PublicAPI.lua

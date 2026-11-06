@@ -1,0 +1,22 @@
+name: Lint & Golden Rulebook Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate TOC, Locales & Golden Rulebook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ELLA Golden Rulebook & Schema Validator
+        run: python3 tests/validate_addon.py
+
+      - name: Run Luacheck (Anti-Taint & Global Leak Check)
+        uses: nebularg/actions-luacheck@v1.2.0
+        with:
+          args: . --config .luacheckrc

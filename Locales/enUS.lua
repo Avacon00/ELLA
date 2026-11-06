@@ -1,0 +1,144 @@
+local AddonName, ns = ...
+
+local L = {}
+ns.L = setmetatable(L, {
+    __index = function(t, key)
+        local fallback = tostring(key)
+        rawset(t, key, fallback)
+        return fallback
+    end,
+})
+
+-- General & Branding
+L["ADDON_TITLE"] = "Ella"
+L["ADDON_SUBTITLE"] = "Easy Layout & Location Assistant for WoW: Forever"
+L["LOADED_MSG"] = "v%s loaded (%s). Type |cffffd100/ella|r to configure windows."
+L["PROJECT_FOREVER"] = "WoW: Forever (Camelot)"
+L["PROJECT_GENERIC"] = "Compatible Client"
+
+-- Modes
+L["MODE_SCALE_MOVE"] = "Scale + Move"
+L["MODE_SCALE_ONLY"] = "Scale Only (Blizzard Layout)"
+L["MODE_DISABLED"] = "Disabled (100%)"
+
+-- Categories
+L["CAT_CHARACTER"] = "Character & Progression"
+L["CAT_QUEST_WORLD"] = "Quests, Map & Reputation"
+L["CAT_CRAFT_ECON"] = "Professions & Economy"
+L["CAT_SOCIAL"] = "Social, Collections & Dungeons"
+L["CAT_FOREVER"] = "WoW: Forever Systems"
+L["CAT_CUSTOM"] = "Custom & Third-Party"
+
+-- Built-in Window Labels
+L["WIN_CHARACTER"] = "Character Info & Equipment"
+L["WIN_REPUTATION"] = "Reputation Panel"
+L["WIN_SPELLBOOK"] = "Spellbook & Abilities"
+L["WIN_TALENTS"] = "Talents & Specializations"
+L["WIN_QUESTLOG"] = "Quest Log"
+L["WIN_QUESTMAP"] = "World Map & Quest Log"
+L["WIN_QUEST_DIALOG"] = "NPC Quest Dialog"
+L["WIN_GOSSIP"] = "NPC Gossip Dialog"
+L["WIN_MERCHANT"] = "Merchant / Vendor"
+L["WIN_MAIL"] = "Mailbox"
+L["WIN_BANK"] = "Bank Vault"
+L["WIN_DRESSUP"] = "Dressing Room"
+L["WIN_INSPECT"] = "Inspect Player"
+L["WIN_FRIENDS"] = "Friends & Who List"
+L["WIN_ITEMTEXT"] = "Books & Scrolls"
+L["WIN_TAXI"] = "Flight Master Map"
+L["WIN_LOOT"] = "Loot Window"
+L["WIN_TABARD"] = "Tabard Designer"
+L["WIN_PROFESSIONS"] = "Professions & Crafting"
+L["WIN_TRADESKILL_CLASSIC"] = "Trade Skills (Classic Frame)"
+L["WIN_CRAFT_CLASSIC"] = "Enchanting / Craft Frame"
+L["WIN_AUCTION"] = "Auction House"
+L["WIN_TRAINER"] = "Class & Profession Trainer"
+L["WIN_COLLECTIONS"] = "Mounts, Pets & Heirlooms"
+L["WIN_COMMUNITIES"] = "Guild & Communities"
+L["WIN_ENCOUNTER_JOURNAL"] = "Dungeon & Adventure Guide"
+L["WIN_GROUP_FINDER"] = "Group Finder (PVE/PVP)"
+L["WIN_CALENDAR"] = "Calendar"
+L["WIN_MACRO"] = "Macros"
+L["WIN_LEGACY_TREE"] = "Forever: Legacy Tree & Challenges"
+L["WIN_CAMPING_UI"] = "Forever: Camping & Blueprints"
+L["WIN_FACTION_QUARTERMASTER"] = "Forever: Faction Overview"
+
+-- Badge & Popover Tooltips
+L["BADGE_TOOLTIP_TITLE"] = "%s (%d%%)"
+L["BADGE_TOOLTIP_SCROLL"] = "|cffffd100Mouse Wheel:|r Adjust window scale (Shift = 1%)"
+L["BADGE_TOOLTIP_LCLICK"] = "|cffffd100Left-Click:|r Open scale slider & mode options"
+L["BADGE_TOOLTIP_RCLICK"] = "|cffffd100Right-Click:|r Reset scale to 100%"
+L["BADGE_TOOLTIP_SRCLICK"] = "|cffffd100Shift + Right-Click:|r Reset saved position"
+L["BADGE_LOCKED"] = "Position Locked"
+L["BADGE_UNLOCKED"] = "Draggable"
+L["POPOVER_SCALE"] = "Scale: %d%%"
+L["POPOVER_LOCK_POS"] = "Lock Window Position"
+L["POPOVER_SCALE_ONLY"] = "Scale Only (Keep Auto-Layout)"
+L["POPOVER_RESET_SCALE"] = "Reset 100%"
+L["POPOVER_RESET_POS"] = "Reset Pos"
+
+-- Presets
+L["PRESET_DEFAULT_NAME"] = "Default (100%)"
+L["PRESET_DEFAULT_DESC"] = "Restores all managed windows to 100% original size."
+L["PRESET_COMPACT80_NAME"] = "Classic Compact (80%)"
+L["PRESET_COMPACT80_DESC"] = "Shrinks oversized Retail-style panels to classic 80-85% proportions while keeping HUD & fonts untouched."
+L["PRESET_WQHD85_NAME"] = "WQHD / 4K (85%)"
+L["PRESET_WQHD85_DESC"] = "Comfortable 85-90% scaling tailored for 1440p and 4K monitors."
+L["PRESET_LAPTOP72_NAME"] = "Laptop / Deck (72%)"
+L["PRESET_LAPTOP72_DESC"] = "Extra compact 70-75% panels for smaller screens and Steam Deck."
+L["PRESET_APPLIED"] = "Applied preset: |cff00ff96%s|r."
+
+-- Combat & Guard Messages
+L["GUARD_DEFERRED_COMBAT"] = "Protected window '%s' cannot be modified in combat. Queued for combat end."
+L["GUARD_COMBAT_APPLIED"] = "Applied %d queued window adjustment(s) after combat."
+L["GUARD_ERR_FORBIDDEN"] = "Cannot manage this frame: restricted/forbidden by Blizzard."
+L["GUARD_ERR_EDITMODE"] = "Blocked: HUD & combat frames belong to Blizzard's native Edit Mode."
+L["GUARD_ERR_UNSAFE"] = "Cannot pick an unnamed frame; only global named windows can be saved across sessions."
+
+-- Welcome Dialog
+L["WELCOME_TITLE"] = "Welcome to Ella!"
+L["WELCOME_BODY"] = "Oversized menus in WoW: Forever? Ella (Easy Layout & Location Assistant) lets you shrink and move individual panels (Quest Log, Professions, Spellbook, Reputation) without shrinking your chat, action bars, or breaking Edit Mode.\n\nChoose how you would like to start:"
+L["WELCOME_BTN_COMPACT"] = "Activate Classic Compact (80%)"
+L["WELCOME_BTN_WQHD"] = "Activate Balanced (85%)"
+L["WELCOME_BTN_KEEP100"] = "Keep 100% (Configure Later)"
+
+-- Settings & Window Manager UI
+L["UI_MANAGER_TITLE"] = "Ella – Easy Layout & Location Assistant"
+L["UI_SEARCH_PLACEHOLDER"] = "Search window..."
+L["UI_GLOBAL_ENABLED"] = "Enable Ella"
+L["UI_SHOW_BADGES"] = "Show Scale Badge (%) in Window Titlebars"
+L["UI_CTRL_WHEEL"] = "Allow Ctrl + Mouse Wheel Scaling on Windows"
+L["UI_CLAMP_SCREEN"] = "Keep Windows Clamped Inside Screen Bounds"
+L["UI_DEFAULT_SCALE_ONLY"] = "New Windows Default to 'Scale Only' Mode"
+L["UI_OPEN_MANAGER"] = "Open Ella (/ella)"
+L["UI_START_PICKER"] = "+ Pick Window"
+L["UI_EXPORT_IMPORT"] = "Export / Import"
+L["UI_RESET_ALL"] = "Reset All"
+L["UI_RESET_CONFIRM"] = "All window scales and saved positions have been reset to 100%."
+L["UI_EXPORT_TITLE"] = "Ella Profile String (Ctrl+C to copy, or paste & click Import)"
+L["UI_BTN_IMPORT"] = "Import String"
+L["UI_BTN_CLOSE"] = "Close"
+L["UI_IMPORT_SUCCESS"] = "Successfully imported %d window setting(s)!"
+L["UI_IMPORT_ERROR"] = "Invalid Ella profile string."
+L["UI_STATUS_OPEN"] = "Open Now"
+L["UI_STATUS_LOADED"] = "Loaded"
+L["UI_STATUS_LOD"] = "On Demand"
+
+-- Frame Picker
+L["PICKER_BANNER_TITLE"] = "Ella Frame Inspector"
+L["PICKER_BANNER_HELP"] = "Hover any window • |cff00ff96Left-Click|r to register • |cffff6060Right-Click / ESC|r to cancel"
+L["PICKER_SAFE"] = "|cff00ff96SAFE TO MANAGE:|r %s"
+L["PICKER_BLOCKED"] = "|cffff5050BLOCKED:|r %s (%s)"
+L["PICKER_ADDED"] = "Added custom window |cff00ff96%s|r! You can now scale & move it."
+L["PICKER_SNIPPET_TITLE"] = "GitHub Contribution Snippet for '%s'"
+
+-- Addon Compartment & Slash Help
+L["COMPARTMENT_LEFT"] = "|cffffd100Left-Click:|r Open Ella Window Manager"
+L["COMPARTMENT_RIGHT"] = "|cffffd100Right-Click:|r Toggle Titlebar Badges"
+L["COMPARTMENT_MIDDLE"] = "|cffffd100Middle-Click:|r Start Custom Window Picker"
+L["SLASH_HELP_HEADER"] = "Commands:"
+L["SLASH_HELP_OPEN"] = "|cffffd100/ella|r – Open the Ella Window Manager"
+L["SLASH_HELP_PICK"] = "|cffffd100/ella pick|r – Inspect & add any custom third-party window"
+L["SLASH_HELP_PRESET"] = "|cffffd100/ella compact|r – Apply Classic Compact (80%) preset"
+L["SLASH_HELP_BADGES"] = "|cffffd100/ella badges|r – Toggle titlebar % badges"
+L["SLASH_HELP_RESET"] = "|cffffd100/ella reset|r – Emergency reset of all scales & positions"
