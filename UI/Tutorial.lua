@@ -382,10 +382,7 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP7_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.presetBtns and #mf.presetBtns > 0 then
-                return { tl = mf.presetBtns[1], br = mf.presetBtns[#mf.presetBtns] }
-            end
-            return nil
+            return mf and (mf.cardPresets or (mf.presetBtns and #mf.presetBtns > 0 and { tl = mf.presetBtns[1], br = mf.presetBtns[#mf.presetBtns] }))
         end,
     },
     [8] = {
@@ -394,10 +391,7 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP8_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.profCycleBtn and mf.chkBindChar then
-                return { tl = mf.profCycleBtn, br = mf.chkBindChar }
-            end
-            return mf and mf.cardProf
+            return mf and (mf.cardProf or (mf.profCycleBtn and mf.chkBindChar and { tl = mf.profCycleBtn, br = mf.chkBindChar }))
         end,
     },
     [9] = {
@@ -406,7 +400,7 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP9_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            return mf and (mf.expBtn or mf.cardSharing)
+            return mf and (mf.cardSharing or mf.expBtn)
         end,
     },
     [10] = {
@@ -415,10 +409,7 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP10_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.chkCtrlWheel and mf.chkClamp then
-                return { tl = mf.chkCtrlWheel, br = mf.chkClamp }
-            end
-            return mf and mf.cardMouse
+            return mf and (mf.cardMouse or (mf.chkCtrlWheel and mf.chkClamp and { tl = mf.chkCtrlWheel, br = mf.chkClamp }))
         end,
     },
     [11] = {
@@ -427,10 +418,7 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP11_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.chkCombatClose and mf.chkInstCompact then
-                return { tl = mf.chkCombatClose, br = mf.chkInstCompact }
-            end
-            return mf and mf.cardCombat
+            return mf and (mf.cardCombat or (mf.chkCombatClose and mf.chkInstCompact and { tl = mf.chkCombatClose, br = mf.chkInstCompact }))
         end,
     },
     [12] = {
@@ -439,7 +427,7 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP12_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            return mf and mf.chkBadges
+            return mf and (mf.cardDisplay or mf.chkBadges)
         end,
     },
     [13] = {
