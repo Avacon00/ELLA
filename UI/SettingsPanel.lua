@@ -18,6 +18,13 @@ local newProfileModal = nil
 local rowPool = {}
 local searchQuery = ""
 local activeCategoryFilter = "ALL"
+local activeMainTab = "WINDOWS"
+
+local TAB_DEFS = {
+    { id = "WINDOWS", labelKey = "UI_TAB_WINDOWS" },
+    { id = "SETTINGS", labelKey = "UI_TAB_SETTINGS" },
+    { id = "PROFILES", labelKey = "UI_TAB_PROFILES" },
+}
 
 local FILTER_DEFS = {
     { id = "ALL", labelKey = "FILTER_ALL" },
@@ -44,7 +51,7 @@ local function ModeLabel(mode)
     return L["MODE_SCALE_MOVE"]
 end
 
-local function StyleBox(frame, bgR, bgG, bgB, alpha)
+local function StyleBox(frame, bgR, bgG, bgB, alpha, edgeR, edgeG, edgeB, edgeA)
     if frame.SetBackdrop then
         frame:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -55,7 +62,7 @@ local function StyleBox(frame, bgR, bgG, bgB, alpha)
             insets = { left = 3, right = 3, top = 3, bottom = 3 },
         })
         frame:SetBackdropColor(bgR or 0.06, bgG or 0.07, bgB or 0.10, alpha or 0.96)
-        frame:SetBackdropBorderColor(0.78, 0.65, 0.25, 0.95)
+        frame:SetBackdropBorderColor(edgeR or 0.78, edgeG or 0.65, edgeB or 0.25, edgeA or 0.95)
     end
 end
 
@@ -290,60 +297,77 @@ local function ApplyManagerResponsiveLayout(f)
         return
     end
     local w = f:GetWidth() or DEFAULT_MANAGER_W
+    local h = f:GetHeight() or DEFAULT_MANAGER_H
     local innerW = w - 28
-    local rightColX = math.max(336, math.floor(w * 0.486))
 
-    if f.chkBadges then f.chkBadges:SetPoint("TOPLEFT", rightColX, -36) end
-    if f.chkMinimap then f.chkMinimap:SetPoint("TOPLEFT", rightColX, -56) end
-    if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", rightColX, -76) end
-    if f.chkStickyDock then f.chkStickyDock:SetPoint("TOPLEFT", rightColX, -96) end
-    if f.chkInstCompact then f.chkInstCompact:SetPoint("TOPLEFT", rightColX, -116) end
-
-    if f.chkEnabled then f.chkEnabled:SetPoint("TOPLEFT", 14, -36) end
-    if f.chkCtrlWheel then f.chkCtrlWheel:SetPoint("TOPLEFT", 14, -56) end
-    if f.chkDragOpacity then f.chkDragOpacity:SetPoint("TOPLEFT", 14, -76) end
-    if f.chkMagneticSnap then f.chkMagneticSnap:SetPoint("TOPLEFT", 14, -96) end
-    if f.chkCombatClose then f.chkCombatClose:SetPoint("TOPLEFT", 14, -116) end
-    if f.chkBindChar then f.chkBindChar:SetPoint("TOPLEFT", 14, -136) end
-
-    if f.profLabel then f.profLabel:SetPoint("TOPLEFT", 16, -164) end
-    if f.profCycleBtn then f.profCycleBtn:SetPoint("TOPLEFT", 60, -158) end
-
-    if f.presetBtns then
+    -- Top Navigation Tabs (3 even tabs)
+    if f.navTabs and #f.navTabs >= 3 then
         local gap = 6
-        local btnW = math.floor((innerW - (3 * gap)) / 4)
-        for i = 1, #f.presetBtns do
-            local b = f.presetBtns[i]
-            b:SetSize(btnW, 24)
-            b:ClearAllPoints()
-            b:SetPoint("TOPLEFT", 14 + (i - 1) * (btnW + gap), -188)
+        local tabW = math.floor((innerW - (2 * gap)) / 3)
+        for i = 1, 3 do
+            local tab = f.navTabs[i]
+            tab:SetSize(tabW, 26)
+            tab:ClearAllPoints()
+            tab:SetPoint("TOPLEFT", 14 + (i - 1) * (tabW + gap), -36)
         end
     end
 
-    if f.searchBox then
-        -- 126 (pick) + 84 (grid) + 130 (export) + 120 (reset) + 32 (4x8px gaps) = 492
-        f.searchBox:SetWidth(math.max(180, innerW - 492))
-        f.searchBox:SetPoint("TOPLEFT", 14, -218)
-    end
+    -- Tab 1: WINDOWS
+    if f.tabViewWindows then
+        if f.searchBox then
+            f.searchBox:SetWidth(innerW)
+        end
 
-    if f.filterPills then
-        local gap = 4
-        local numPills = #f.filterPills
-        local pillW = math.floor((innerW - ((numPills - 1) * gap)) / numPills)
-        for i = 1, numPills do
-            local p = f.filterPills[i]
-            p:SetSize(pillW, 20)
-            p:ClearAllPoints()
-            p:SetPoint("TOPLEFT", 14 + (i - 1) * (pillW + gap), -248)
+        if f.filterPills then
+            local gap = 4
+            local numPills = #f.filterPills
+            local pillW = math.floor((innerW - ((numPills - 1) * gap)) / numPills)
+            for i = 1, numPills do
+                local p = f.filterPills[i]
+                p:SetSize(pillW, 20)
+                p:ClearAllPoints()
+                p:SetPoint("TOPLEFT", (i - 1) * (pillW + gap), -58)
+            end
+        end
+
+        if f.scrollChild then
+            local childW = math.max(614, w - 66)
+            f.scrollChild:SetWidth(childW)
+            for i = 1, #rowPool do
+                if rowPool[i] then
+                    ApplyRowResponsiveWidth(rowPool[i], childW)
+                end
+            end
         end
     end
 
-    if f.scrollChild then
-        local childW = math.max(614, w - 66)
-        f.scrollChild:SetWidth(childW)
-        for i = 1, #rowPool do
-            if rowPool[i] then
-                ApplyRowResponsiveWidth(rowPool[i], childW)
+    -- Tab 2: SETTINGS
+    if f.tabViewSettings then
+        local col2X = math.max(300, math.floor(innerW * 0.48))
+        if f.cardCombat then f.cardCombat:SetWidth(innerW) end
+        if f.cardMouse then f.cardMouse:SetWidth(innerW) end
+        if f.cardDisplay then f.cardDisplay:SetWidth(innerW) end
+
+        if f.chkInstCompact then f.chkInstCompact:SetPoint("TOPLEFT", col2X, -32) end
+        if f.chkStickyDock then f.chkStickyDock:SetPoint("TOPLEFT", col2X, -32) end
+        if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", col2X, -58) end
+        if f.chkMinimap then f.chkMinimap:SetPoint("TOPLEFT", col2X, -32) end
+    end
+
+    -- Tab 3: PROFILES
+    if f.tabViewProfiles then
+        if f.cardProf then f.cardProf:SetWidth(innerW) end
+        if f.cardPresets then f.cardPresets:SetWidth(innerW) end
+        if f.cardSharing then f.cardSharing:SetWidth(innerW) end
+
+        if f.presetBtns then
+            local gap = 6
+            local pBtnW = math.floor((innerW - 28 - (3 * gap)) / 4)
+            for i = 1, #f.presetBtns do
+                local b = f.presetBtns[i]
+                b:SetSize(pBtnW, 24)
+                b:ClearAllPoints()
+                b:SetPoint("TOPLEFT", 14 + (i - 1) * (pBtnW + gap), -50)
             end
         end
     end
@@ -486,15 +510,16 @@ function ManagerUI:RefreshList()
 
     -- Sync global checkboxes & active profile bar
     local s = ns.db.settings
-    managerFrame.chkEnabled:SetChecked(s.enabled)
-    managerFrame.chkBadges:SetChecked(s.showBadges)
-    managerFrame.chkCtrlWheel:SetChecked(s.ctrlWheelZoom)
-    managerFrame.chkClamp:SetChecked(s.clampToScreen)
-    managerFrame.chkDragOpacity:SetChecked(s.dragOpacity)
-    managerFrame.chkMagneticSnap:SetChecked(s.magneticSnap)
-    if managerFrame.chkMinimap then
-        managerFrame.chkMinimap:SetChecked(s.showMinimapButton)
-    end
+    if managerFrame.chkEnabled then managerFrame.chkEnabled:SetChecked(s.enabled) end
+    if managerFrame.chkBadges then managerFrame.chkBadges:SetChecked(s.showBadges) end
+    if managerFrame.chkCtrlWheel then managerFrame.chkCtrlWheel:SetChecked(s.ctrlWheelZoom) end
+    if managerFrame.chkClamp then managerFrame.chkClamp:SetChecked(s.clampToScreen) end
+    if managerFrame.chkDragOpacity then managerFrame.chkDragOpacity:SetChecked(s.dragOpacity) end
+    if managerFrame.chkMagneticSnap then managerFrame.chkMagneticSnap:SetChecked(s.magneticSnap) end
+    if managerFrame.chkMinimap then managerFrame.chkMinimap:SetChecked(s.showMinimapButton) end
+    if managerFrame.chkCombatClose then managerFrame.chkCombatClose:SetChecked(s.combatAutoClose) end
+    if managerFrame.chkInstCompact then managerFrame.chkInstCompact:SetChecked(s.instanceAutoCompact) end
+    if managerFrame.chkStickyDock then managerFrame.chkStickyDock:SetChecked(s.stickyDocking) end
 
     if managerFrame.filterPills then
         for i = 1, #managerFrame.filterPills do
@@ -514,7 +539,12 @@ function ManagerUI:RefreshList()
 
     local activeProf = Profiles:GetActiveProfileName()
     local isDirty = Profiles:HasUnsavedChanges()
-    managerFrame.profCycleBtn:SetText("» " .. activeProf .. " «")
+    if managerFrame.profCycleBtn then
+        managerFrame.profCycleBtn:SetText("» " .. activeProf .. " «")
+    end
+    if managerFrame.profCycleBtnQuick then
+        managerFrame.profCycleBtnQuick:SetText("» " .. activeProf .. " «")
+    end
     if managerFrame.profSaveBtn then
         managerFrame.profSaveBtn:SetText(isDirty and L["UI_PROFILE_SAVE_DIRTY"] or L["UI_PROFILE_SAVE"])
     end
@@ -524,7 +554,12 @@ function ManagerUI:RefreshList()
     if managerFrame.profUndoBtn then
         managerFrame.profUndoBtn:SetEnabled(Profiles:CanUndo())
     end
-    managerFrame.profDelBtn:SetEnabled(activeProf ~= "Default")
+    if managerFrame.profUndoBtnQuick then
+        managerFrame.profUndoBtnQuick:SetEnabled(Profiles:CanUndo())
+    end
+    if managerFrame.profDelBtn then
+        managerFrame.profDelBtn:SetEnabled(activeProf ~= "Default")
+    end
     if managerFrame.chkBindChar then
         managerFrame.chkBindChar:SetChecked(Profiles:IsCharBoundToActiveProfile())
     end
@@ -761,10 +796,10 @@ local function EnsureManagerFrame()
         end
     end)
 
-    -- Global Settings Toggles (3x2 compact grid)
-    local function CreateToggle(label, x, y, getter, setter)
-        local chk = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
-        chk:SetSize(24, 24)
+    -- Global Settings Toggle Factory
+    local function CreateToggle(parent, label, x, y, getter, setter)
+        local chk = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+        chk:SetSize(22, 22)
         chk:SetPoint("TOPLEFT", x, y)
         local txt = chk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         txt:SetPoint("LEFT", chk, "RIGHT", 4, 0)
@@ -792,101 +827,58 @@ local function EnsureManagerFrame()
         end)
     end
 
-    f.chkEnabled = CreateToggle(L["UI_GLOBAL_ENABLED"], 14, -36,
-        function() return ns.db.settings.enabled end,
-        function(val)
-            ns.db.settings.enabled = val
-            Engine:ReapplyAllShown()
-            BadgeUI:RefreshAll()
-        end
-    )
+    -- ========================================================================
+    -- Top Navigation Tabs (3-Tab System)
+    -- ========================================================================
+    f.navTabs = {}
+    for i = 1, #TAB_DEFS do
+        local td = TAB_DEFS[i]
+        local tabBtn = CreateFrame("Button", nil, f, BACKDROP_TEMPLATE)
+        tabBtn.tabId = td.id
+        StyleBox(tabBtn, 0.06, 0.08, 0.12, 0.70, 0.28, 0.32, 0.40, 0.75)
+        local txt = tabBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        txt:SetPoint("CENTER", 0, 0)
+        txt:SetText(L[td.labelKey] or td.id)
+        tabBtn.text = txt
+        tabBtn:SetScript("OnClick", function()
+            ManagerUI:SelectTab(td.id)
+        end)
+        f.navTabs[i] = tabBtn
+    end
 
-    f.chkBadges = CreateToggle(L["UI_SHOW_BADGES"], 350, -36,
-        function() return ns.db.settings.showBadges end,
-        function(val)
-            ns.db.settings.showBadges = val
-            BadgeUI:RefreshAll()
-        end
-    )
+    -- ========================================================================
+    -- View Frames for each Tab
+    -- ========================================================================
+    local tabViewWindows = CreateFrame("Frame", nil, f)
+    tabViewWindows:SetPoint("TOPLEFT", 14, -68)
+    tabViewWindows:SetPoint("BOTTOMRIGHT", -14, 18)
+    f.tabViewWindows = tabViewWindows
 
-    f.chkMinimap = CreateToggle(L["UI_SHOW_MINIMAP_BTN"], 350, -56,
-        function() return ns.db.settings.showMinimapButton end,
-        function(val)
-            ns.db.settings.showMinimapButton = val
-            if ns.MinimapButton and ns.MinimapButton.UpdateVisibility then
-                ns.MinimapButton:UpdateVisibility()
-            end
-        end
-    )
-    AddBtnTooltip(f.chkMinimap, L["UI_SHOW_MINIMAP_BTN"], L["UI_SHOW_MINIMAP_BTN_TIP"])
+    local tabViewSettings = CreateFrame("Frame", nil, f)
+    tabViewSettings:SetPoint("TOPLEFT", 14, -68)
+    tabViewSettings:SetPoint("BOTTOMRIGHT", -14, 18)
+    tabViewSettings:Hide()
+    f.tabViewSettings = tabViewSettings
 
-    f.chkCtrlWheel = CreateToggle(L["UI_CTRL_WHEEL"], 14, -56,
-        function() return ns.db.settings.ctrlWheelZoom end,
-        function(val) ns.db.settings.ctrlWheelZoom = val end
-    )
+    local tabViewProfiles = CreateFrame("Frame", nil, f)
+    tabViewProfiles:SetPoint("TOPLEFT", 14, -68)
+    tabViewProfiles:SetPoint("BOTTOMRIGHT", -14, 18)
+    tabViewProfiles:Hide()
+    f.tabViewProfiles = tabViewProfiles
 
-    f.chkClamp = CreateToggle(L["UI_CLAMP_SCREEN"], 350, -76,
-        function() return ns.db.settings.clampToScreen end,
-        function(val)
-            ns.db.settings.clampToScreen = val
-            Engine:ReapplyAllShown()
-        end
-    )
-
-    f.chkDragOpacity = CreateToggle(L["UI_DRAG_OPACITY"], 14, -76,
-        function() return ns.db.settings.dragOpacity end,
-        function(val) ns.db.settings.dragOpacity = val end
-    )
-
-    f.chkMagneticSnap = CreateToggle(L["UI_MAGNETIC_SNAP"], 14, -96,
-        function() return ns.db.settings.magneticSnap end,
-        function(val) ns.db.settings.magneticSnap = val end
-    )
-
-    f.chkStickyDock = CreateToggle(L["UI_STICKY_DOCKING"], 350, -96,
-        function() return ns.db.settings.stickyDocking end,
-        function(val) ns.db.settings.stickyDocking = val end
-    )
-    AddBtnTooltip(f.chkStickyDock, L["UI_STICKY_DOCKING"], L["UI_STICKY_DOCKING_TIP"])
-
-    f.chkCombatClose = CreateToggle(L["UI_COMBAT_AUTOCLOSE"], 14, -116,
-        function() return ns.db.settings.combatAutoClose end,
-        function(val) ns.db.settings.combatAutoClose = val end
-    )
-    AddBtnTooltip(f.chkCombatClose, L["UI_COMBAT_AUTOCLOSE"], L["UI_COMBAT_AUTOCLOSE_TIP"])
-
-    f.chkInstCompact = CreateToggle(L["UI_INSTANCE_AUTOCOMPACT"], 350, -116,
-        function() return ns.db.settings.instanceAutoCompact end,
-        function(val)
-            ns.db.settings.instanceAutoCompact = val
-            Engine:UpdateInstanceCompactState()
-        end
-    )
-    AddBtnTooltip(f.chkInstCompact, L["UI_INSTANCE_AUTOCOMPACT"], L["UI_INSTANCE_AUTOCOMPACT_TIP"])
-
-    f.chkBindChar = CreateToggle(L["UI_PROFILE_BIND_CHAR"], 14, -136,
-        function() return Profiles:IsCharBoundToActiveProfile() end,
-        function(val)
-            Profiles:SetCharProfileBinding(val)
-        end
-    )
-    AddBtnTooltip(f.chkBindChar, L["UI_PROFILE_BIND_CHAR"], L["UI_PROFILE_BIND_CHAR_TIP"])
-
-    -- Named Profile Bar with Save Checkpoint, Revert to Saved & Undo (v1.1.2)
-    local profLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    profLabel:SetPoint("TOPLEFT", 16, -164)
-    profLabel:SetText(L["UI_PROFILE_LABEL"])
-    f.profLabel = profLabel
-
-    local profCycleBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profCycleBtn:SetSize(148, 24)
-    profCycleBtn:SetPoint("TOPLEFT", 60, -158)
-    ApplyCompactButtonFont(profCycleBtn)
-    profCycleBtn:SetScript("OnClick", function()
+    -- ========================================================================
+    -- TAB 1: WINDOWS & SCALE (tabViewWindows)
+    -- ========================================================================
+    -- Quick Profile Selector on Windows Tab
+    local profCycleBtnQuick = CreateFrame("Button", nil, tabViewWindows, "UIPanelButtonTemplate")
+    profCycleBtnQuick:SetSize(160, 24)
+    profCycleBtnQuick:SetPoint("TOPLEFT", 0, 0)
+    ApplyCompactButtonFont(profCycleBtnQuick)
+    profCycleBtnQuick:SetScript("OnClick", function()
         Profiles:CycleNextProfile()
         ManagerUI:RefreshList()
     end)
-    profCycleBtn:SetScript("OnEnter", function(self)
+    profCycleBtnQuick:SetScript("OnEnter", function(self)
         if _G.GameTooltip then
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:AddLine(L["UI_PROFILE_LABEL"], 1, 0.82, 0)
@@ -900,146 +892,44 @@ local function EnsureManagerFrame()
                     GameTooltip:AddLine("• " .. pName, 0.8, 0.8, 0.8)
                 end
             end
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("|cffffd100Klick:|r Naechstes Profil • |cffffd100Reiter 'Profile':|r Verwalten", 0.75, 0.8, 0.85)
             GameTooltip:Show()
         end
     end)
-    profCycleBtn:SetScript("OnLeave", function()
-        if _G.GameTooltip then
-            GameTooltip:Hide()
-        end
+    profCycleBtnQuick:SetScript("OnLeave", function()
+        if _G.GameTooltip then GameTooltip:Hide() end
     end)
-    f.profCycleBtn = profCycleBtn
+    f.profCycleBtnQuick = profCycleBtnQuick
 
-    local profSaveBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profSaveBtn:SetSize(118, 24)
-    profSaveBtn:SetPoint("LEFT", profCycleBtn, "RIGHT", 4, 0)
-    ApplyCompactButtonFont(profSaveBtn)
-    profSaveBtn:SetText(L["UI_PROFILE_SAVE"])
-    profSaveBtn:SetScript("OnClick", function()
-        Profiles:SaveActiveProfileSnapshot(false)
-        ManagerUI:RefreshList()
-    end)
-    AddBtnTooltip(profSaveBtn, L["UI_PROFILE_SAVE"], L["UI_PROFILE_SAVE_TIP"])
-    f.profSaveBtn = profSaveBtn
-
-    local profRevertBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profRevertBtn:SetSize(126, 24)
-    profRevertBtn:SetPoint("LEFT", profSaveBtn, "RIGHT", 4, 0)
-    ApplyCompactButtonFont(profRevertBtn)
-    profRevertBtn:SetText(L["UI_PROFILE_REVERT"])
-    profRevertBtn:SetScript("OnClick", function()
-        Profiles:RevertToSavedProfile()
-        ManagerUI:RefreshList()
-    end)
-    AddBtnTooltip(profRevertBtn, L["UI_PROFILE_REVERT"], L["UI_PROFILE_REVERT_TIP"])
-    f.profRevertBtn = profRevertBtn
-
-    local profUndoBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profUndoBtn:SetSize(92, 24)
-    profUndoBtn:SetPoint("LEFT", profRevertBtn, "RIGHT", 4, 0)
-    ApplyCompactButtonFont(profUndoBtn)
-    profUndoBtn:SetText(L["UI_BTN_UNDO"])
-    profUndoBtn:SetScript("OnClick", function()
+    local profUndoBtnQuick = CreateFrame("Button", nil, tabViewWindows, "UIPanelButtonTemplate")
+    profUndoBtnQuick:SetSize(90, 24)
+    profUndoBtnQuick:SetPoint("LEFT", profCycleBtnQuick, "RIGHT", 6, 0)
+    ApplyCompactButtonFont(profUndoBtnQuick)
+    profUndoBtnQuick:SetText(L["UI_BTN_UNDO"])
+    profUndoBtnQuick:SetScript("OnClick", function()
         Profiles:UndoLastChange()
         ManagerUI:RefreshList()
     end)
-    AddBtnTooltip(profUndoBtn, L["UI_BTN_UNDO"], L["UI_BTN_UNDO_TIP"])
-    f.profUndoBtn = profUndoBtn
+    AddBtnTooltip(profUndoBtnQuick, L["UI_BTN_UNDO"], L["UI_BTN_UNDO_TIP"])
+    f.profUndoBtnQuick = profUndoBtnQuick
 
-    local profNewBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profNewBtn:SetSize(82, 24)
-    profNewBtn:SetPoint("LEFT", profUndoBtn, "RIGHT", 4, 0)
-    ApplyCompactButtonFont(profNewBtn)
-    profNewBtn:SetText(L["UI_PROFILE_NEW"])
-    profNewBtn:SetScript("OnClick", function()
-        OpenNewProfileModal()
-    end)
-    AddBtnTooltip(profNewBtn, L["UI_PROFILE_NEW"], L["UI_PROFILE_NEW_TIP"])
-    f.profNewBtn = profNewBtn
-
-    local profDelBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profDelBtn:SetSize(72, 24)
-    profDelBtn:SetPoint("LEFT", profNewBtn, "RIGHT", 4, 0)
-    ApplyCompactButtonFont(profDelBtn)
-    profDelBtn:SetText(L["UI_PROFILE_DELETE"])
-    profDelBtn:SetScript("OnClick", function()
-        Profiles:DeleteProfile(Profiles:GetActiveProfileName())
+    -- Window Tools on Top Right: [Reset] [# Gitter] [+ Picker]
+    local rstBtn = CreateFrame("Button", nil, tabViewWindows, "UIPanelButtonTemplate")
+    rstBtn:SetSize(90, 24)
+    rstBtn:SetPoint("TOPRIGHT", 0, 0)
+    ApplyCompactButtonFont(rstBtn)
+    rstBtn:SetText(L["UI_RESET_ALL"])
+    rstBtn:SetScript("OnClick", function()
+        Profiles:ResetAll()
         ManagerUI:RefreshList()
     end)
-    f.profDelBtn = profDelBtn
+    AddBtnTooltip(rstBtn, L["UI_RESET_ALL"], L["UI_RESET_CONFIRM"])
+    f.rstBtn = rstBtn
 
-    -- Preset Bar (4 evenly spaced responsive buttons)
-    local presetDefs = {
-        { id = "DEFAULT_100", label = L["PRESET_DEFAULT_NAME"], desc = L["PRESET_DEFAULT_DESC"] },
-        { id = "COMPACT_80", label = L["PRESET_COMPACT80_NAME"], desc = L["PRESET_COMPACT80_DESC"] },
-        { id = "WQHD_85", label = L["PRESET_WQHD85_NAME"], desc = L["PRESET_WQHD85_DESC"] },
-        { id = "LAPTOP_72", label = L["PRESET_LAPTOP72_NAME"], desc = L["PRESET_LAPTOP72_DESC"] },
-    }
-    f.presetBtns = {}
-    for i = 1, #presetDefs do
-        local pd = presetDefs[i]
-        local pBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-        pBtn:SetSize(168, 24)
-        pBtn:SetPoint("TOPLEFT", 14 + (i - 1) * 174, -188)
-        ApplyCompactButtonFont(pBtn)
-        pBtn:SetText(pd.label)
-        pBtn:SetScript("OnClick", function()
-            Profiles:ApplyPreset(pd.id)
-            ManagerUI:RefreshList()
-        end)
-        pBtn:SetScript("OnEnter", function(self)
-            if _G.GameTooltip then
-                GameTooltip:SetOwner(self, "ANCHOR_TOP")
-                GameTooltip:AddLine(pd.label, 1, 0.82, 0)
-                GameTooltip:AddLine(pd.desc, 0.9, 0.9, 0.9, true)
-                GameTooltip:Show()
-            end
-        end)
-        pBtn:SetScript("OnLeave", function()
-            if _G.GameTooltip then
-                GameTooltip:Hide()
-            end
-        end)
-        f.presetBtns[i] = pBtn
-    end
-
-    -- Search Box + Utility Buttons
-    local searchBox = CreateFrame("EditBox", nil, f, BACKDROP_TEMPLATE)
-    searchBox:SetSize(232, 24)
-    searchBox:SetPoint("TOPLEFT", 14, -218)
-    searchBox:SetAutoFocus(false)
-    searchBox:SetFontObject("ChatFontNormal")
-    searchBox:SetTextInsets(8, 8, 0, 0)
-    StyleBox(searchBox, 0.02, 0.02, 0.04, 0.92)
-    local placeholder = searchBox:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-    placeholder:SetPoint("LEFT", 8, 0)
-    placeholder:SetText(L["UI_SEARCH_PLACEHOLDER"])
-    f.searchBox = searchBox
-
-    searchBox:SetScript("OnTextChanged", function(self)
-        local txt = self:GetText() or ""
-        placeholder:SetShown(txt == "")
-        searchQuery = txt
-        ManagerUI:RefreshList()
-    end)
-    searchBox:SetScript("OnEscapePressed", function(self)
-        self:ClearFocus()
-    end)
-
-    local pickBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    pickBtn:SetSize(126, 24)
-    pickBtn:SetPoint("LEFT", searchBox, "RIGHT", 8, 0)
-    ApplyCompactButtonFont(pickBtn)
-    pickBtn:SetText(L["UI_START_PICKER"])
-    pickBtn:SetScript("OnClick", function()
-        f:Hide()
-        Picker:Start(true)
-    end)
-    f.pickBtn = pickBtn
-
-    local gridBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    gridBtn:SetSize(84, 24)
-    gridBtn:SetPoint("LEFT", pickBtn, "RIGHT", 8, 0)
+    local gridBtn = CreateFrame("Button", nil, tabViewWindows, "UIPanelButtonTemplate")
+    gridBtn:SetSize(80, 24)
+    gridBtn:SetPoint("RIGHT", rstBtn, "LEFT", -6, 0)
     ApplyCompactButtonFont(gridBtn)
     gridBtn:SetText(L["UI_BTN_GRID"])
     gridBtn:SetScript("OnClick", function()
@@ -1051,32 +941,44 @@ local function EnsureManagerFrame()
     AddBtnTooltip(gridBtn, L["UI_BTN_GRID"], L["UI_BTN_GRID_TIP"])
     f.gridBtn = gridBtn
 
-    local expBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    expBtn:SetSize(130, 24)
-    expBtn:SetPoint("LEFT", gridBtn, "RIGHT", 8, 0)
-    ApplyCompactButtonFont(expBtn)
-    expBtn:SetText(L["UI_EXPORT_IMPORT"])
-    expBtn:SetScript("OnClick", function()
-        OpenExportImportModal()
+    local pickBtn = CreateFrame("Button", nil, tabViewWindows, "UIPanelButtonTemplate")
+    pickBtn:SetSize(126, 24)
+    pickBtn:SetPoint("RIGHT", gridBtn, "LEFT", -6, 0)
+    ApplyCompactButtonFont(pickBtn)
+    pickBtn:SetText(L["UI_START_PICKER"])
+    pickBtn:SetScript("OnClick", function()
+        f:Hide()
+        Picker:Start(true)
     end)
-    f.expBtn = expBtn
+    f.pickBtn = pickBtn
 
-    local rstBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    rstBtn:SetSize(120, 24)
-    rstBtn:SetPoint("LEFT", expBtn, "RIGHT", 8, 0)
-    ApplyCompactButtonFont(rstBtn)
-    rstBtn:SetText(L["UI_RESET_ALL"])
-    rstBtn:SetScript("OnClick", function()
-        Profiles:ResetAll()
+    -- Search Box (Full Width)
+    local searchBox = CreateFrame("EditBox", nil, tabViewWindows, BACKDROP_TEMPLATE)
+    searchBox:SetHeight(24)
+    searchBox:SetPoint("TOPLEFT", 0, -30)
+    searchBox:SetAutoFocus(false)
+    searchBox:SetFontObject("ChatFontNormal")
+    searchBox:SetTextInsets(8, 8, 0, 0)
+    StyleBox(searchBox, 0.02, 0.02, 0.04, 0.92)
+    local placeholder = searchBox:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    placeholder:SetPoint("LEFT", 8, 0)
+    placeholder:SetText(L["UI_SEARCH_PLACEHOLDER"])
+    searchBox:SetScript("OnTextChanged", function(self)
+        local txt = self:GetText() or ""
+        placeholder:SetShown(txt == "")
+        searchQuery = txt
         ManagerUI:RefreshList()
     end)
-    f.rstBtn = rstBtn
+    searchBox:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+    end)
+    f.searchBox = searchBox
 
     -- Category Filter Pills
     f.filterPills = {}
     for i = 1, #FILTER_DEFS do
         local fd = FILTER_DEFS[i]
-        local pill = CreateFrame("Button", nil, f, BACKDROP_TEMPLATE)
+        local pill = CreateFrame("Button", nil, tabViewWindows, BACKDROP_TEMPLATE)
         pill:SetSize(84, 20)
         pill.filterId = fd.id
         StyleBox(pill, 0.06, 0.07, 0.10, 0.90, 0.28, 0.32, 0.40)
@@ -1094,10 +996,10 @@ local function EnsureManagerFrame()
         f.filterPills[i] = pill
     end
 
-    -- Scrollable Window List
-    local listBorder = CreateFrame("Frame", nil, f, BACKDROP_TEMPLATE)
-    listBorder:SetPoint("TOPLEFT", 14, -274)
-    listBorder:SetPoint("BOTTOMRIGHT", -14, 18)
+    -- Scrollable Window List (Clean & Spacious: Starts at y = -84!)
+    local listBorder = CreateFrame("Frame", nil, tabViewWindows, BACKDROP_TEMPLATE)
+    listBorder:SetPoint("TOPLEFT", 0, -84)
+    listBorder:SetPoint("BOTTOMRIGHT", 0, 0)
     StyleBox(listBorder, 0.03, 0.04, 0.06, 0.90)
 
     local emptyMsg = listBorder:CreateFontString(nil, "OVERLAY", "GameFontDisable")
@@ -1127,6 +1029,294 @@ local function EnsureManagerFrame()
     scrollFrame:SetScrollChild(scrollChild)
     f.scrollFrame = scrollFrame
     f.scrollChild = scrollChild
+
+    -- ========================================================================
+    -- TAB 2: SETTINGS / OPTIONEN (tabViewSettings)
+    -- ========================================================================
+    -- Card 1: Kampf & Instanzen
+    local cardCombat = CreateFrame("Frame", nil, tabViewSettings, BACKDROP_TEMPLATE)
+    cardCombat:SetPoint("TOPLEFT", 0, 0)
+    cardCombat:SetHeight(68)
+    StyleBox(cardCombat, 0.05, 0.06, 0.09, 0.85, 0.35, 0.40, 0.50, 0.75)
+    local tCombat = cardCombat:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tCombat:SetPoint("TOPLEFT", 14, -10)
+    tCombat:SetText("» " .. (L["UI_SEC_COMBAT_INSTANCE"] or "Kampf- & Instanz-Schutz"))
+    tCombat:SetTextColor(1.0, 0.82, 0.25)
+    f.cardCombat = cardCombat
+
+    f.chkCombatClose = CreateToggle(cardCombat, L["UI_COMBAT_AUTOCLOSE"], 14, -32,
+        function() return ns.db.settings.combatAutoClose end,
+        function(val) ns.db.settings.combatAutoClose = val end
+    )
+    AddBtnTooltip(f.chkCombatClose, L["UI_COMBAT_AUTOCLOSE"], L["UI_COMBAT_AUTOCLOSE_TIP"])
+
+    f.chkInstCompact = CreateToggle(cardCombat, L["UI_INSTANCE_AUTOCOMPACT"], 340, -32,
+        function() return ns.db.settings.instanceAutoCompact end,
+        function(val)
+            ns.db.settings.instanceAutoCompact = val
+            Engine:UpdateInstanceCompactState()
+        end
+    )
+    AddBtnTooltip(f.chkInstCompact, L["UI_INSTANCE_AUTOCOMPACT"], L["UI_INSTANCE_AUTOCOMPACT_TIP"])
+
+    -- Card 2: Maus- & Bewegungsverhalten
+    local cardMouse = CreateFrame("Frame", nil, tabViewSettings, BACKDROP_TEMPLATE)
+    cardMouse:SetPoint("TOPLEFT", 0, -78)
+    cardMouse:SetHeight(116)
+    StyleBox(cardMouse, 0.05, 0.06, 0.09, 0.85, 0.35, 0.40, 0.50, 0.75)
+    local tMouse = cardMouse:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tMouse:SetPoint("TOPLEFT", 14, -10)
+    tMouse:SetText("» " .. (L["UI_SEC_MOUSE_BEHAVIOR"] or "Maus- & Bewegungsverhalten"))
+    tMouse:SetTextColor(1.0, 0.82, 0.25)
+    f.cardMouse = cardMouse
+
+    f.chkCtrlWheel = CreateToggle(cardMouse, L["UI_CTRL_WHEEL"], 14, -32,
+        function() return ns.db.settings.ctrlWheelZoom end,
+        function(val) ns.db.settings.ctrlWheelZoom = val end
+    )
+    f.chkDragOpacity = CreateToggle(cardMouse, L["UI_DRAG_OPACITY"], 14, -58,
+        function() return ns.db.settings.dragOpacity end,
+        function(val) ns.db.settings.dragOpacity = val end
+    )
+    f.chkMagneticSnap = CreateToggle(cardMouse, L["UI_MAGNETIC_SNAP"], 14, -84,
+        function() return ns.db.settings.magneticSnap end,
+        function(val) ns.db.settings.magneticSnap = val end
+    )
+
+    f.chkStickyDock = CreateToggle(cardMouse, L["UI_STICKY_DOCKING"], 340, -32,
+        function() return ns.db.settings.stickyDocking end,
+        function(val) ns.db.settings.stickyDocking = val end
+    )
+    AddBtnTooltip(f.chkStickyDock, L["UI_STICKY_DOCKING"], L["UI_STICKY_DOCKING_TIP"])
+
+    f.chkClamp = CreateToggle(cardMouse, L["UI_CLAMP_SCREEN"], 340, -58,
+        function() return ns.db.settings.clampToScreen end,
+        function(val)
+            ns.db.settings.clampToScreen = val
+            Engine:ReapplyAllShown()
+        end
+    )
+
+    -- Card 3: Anzeige & System
+    local cardDisplay = CreateFrame("Frame", nil, tabViewSettings, BACKDROP_TEMPLATE)
+    cardDisplay:SetPoint("TOPLEFT", 0, -204)
+    cardDisplay:SetHeight(114)
+    StyleBox(cardDisplay, 0.05, 0.06, 0.09, 0.85, 0.35, 0.40, 0.50, 0.75)
+    local tDisplay = cardDisplay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tDisplay:SetPoint("TOPLEFT", 14, -10)
+    tDisplay:SetText("» " .. (L["UI_SEC_DISPLAY_SYSTEM"] or "Anzeige & Interface"))
+    tDisplay:SetTextColor(1.0, 0.82, 0.25)
+    f.cardDisplay = cardDisplay
+
+    f.chkEnabled = CreateToggle(cardDisplay, L["UI_GLOBAL_ENABLED"], 14, -32,
+        function() return ns.db.settings.enabled end,
+        function(val)
+            ns.db.settings.enabled = val
+            Engine:ReapplyAllShown()
+            BadgeUI:RefreshAll()
+        end
+    )
+    f.chkBadges = CreateToggle(cardDisplay, L["UI_SHOW_BADGES"], 14, -58,
+        function() return ns.db.settings.showBadges end,
+        function(val)
+            ns.db.settings.showBadges = val
+            BadgeUI:RefreshAll()
+        end
+    )
+    f.chkMinimap = CreateToggle(cardDisplay, L["UI_SHOW_MINIMAP_BTN"], 340, -32,
+        function() return ns.db.settings.showMinimapButton end,
+        function(val)
+            ns.db.settings.showMinimapButton = val
+            if ns.MinimapButton and ns.MinimapButton.UpdateVisibility then
+                ns.MinimapButton:UpdateVisibility()
+            end
+        end
+    )
+    AddBtnTooltip(f.chkMinimap, L["UI_SHOW_MINIMAP_BTN"], L["UI_SHOW_MINIMAP_BTN_TIP"])
+
+    local noteDisplay = cardDisplay:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    noteDisplay:SetPoint("TOPLEFT", 14, -86)
+    noteDisplay:SetText(L["UI_SETTINGS_FOOTNOTE"] or "Tipp: Das Fenster laesst sich unten rechts an der Ecke vergroessern und mit Strg + Mausrad skalieren.")
+
+    -- ========================================================================
+    -- TAB 3: PROFILES & PRESETS (tabViewProfiles)
+    -- ========================================================================
+    -- Card 1: Aktives Profil & Verwaltung
+    local cardProf = CreateFrame("Frame", nil, tabViewProfiles, BACKDROP_TEMPLATE)
+    cardProf:SetPoint("TOPLEFT", 0, 0)
+    cardProf:SetHeight(98)
+    StyleBox(cardProf, 0.05, 0.06, 0.09, 0.85, 0.35, 0.40, 0.50, 0.75)
+    local tProf = cardProf:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tProf:SetPoint("TOPLEFT", 14, -10)
+    tProf:SetText("» " .. (L["UI_SEC_ACTIVE_PROFILE"] or "Aktives Profil & Verwaltung"))
+    tProf:SetTextColor(1.0, 0.82, 0.25)
+    f.cardProf = cardProf
+
+    local profCycleBtn = CreateFrame("Button", nil, cardProf, "UIPanelButtonTemplate")
+    profCycleBtn:SetSize(170, 24)
+    profCycleBtn:SetPoint("TOPLEFT", 14, -32)
+    ApplyCompactButtonFont(profCycleBtn)
+    profCycleBtn:SetScript("OnClick", function()
+        Profiles:CycleNextProfile()
+        ManagerUI:RefreshList()
+    end)
+    profCycleBtn:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["UI_PROFILE_LABEL"], 1, 0.82, 0)
+            local active = Profiles:GetActiveProfileName()
+            local all = Profiles:ListProfiles()
+            for i = 1, #all do
+                local pName = all[i]
+                if pName == active then
+                    GameTooltip:AddLine("» " .. pName, 0, 1, 0.59)
+                else
+                    GameTooltip:AddLine("• " .. pName, 0.8, 0.8, 0.8)
+                end
+            end
+            GameTooltip:Show()
+        end
+    end)
+    profCycleBtn:SetScript("OnLeave", function()
+        if _G.GameTooltip then GameTooltip:Hide() end
+    end)
+    f.profCycleBtn = profCycleBtn
+
+    local profSaveBtn = CreateFrame("Button", nil, cardProf, "UIPanelButtonTemplate")
+    profSaveBtn:SetSize(110, 24)
+    profSaveBtn:SetPoint("LEFT", profCycleBtn, "RIGHT", 6, 0)
+    ApplyCompactButtonFont(profSaveBtn)
+    profSaveBtn:SetText(L["UI_PROFILE_SAVE"])
+    profSaveBtn:SetScript("OnClick", function()
+        Profiles:SaveActiveProfileSnapshot(false)
+        ManagerUI:RefreshList()
+    end)
+    AddBtnTooltip(profSaveBtn, L["UI_PROFILE_SAVE"], L["UI_PROFILE_SAVE_TIP"])
+    f.profSaveBtn = profSaveBtn
+
+    local profRevertBtn = CreateFrame("Button", nil, cardProf, "UIPanelButtonTemplate")
+    profRevertBtn:SetSize(120, 24)
+    profRevertBtn:SetPoint("LEFT", profSaveBtn, "RIGHT", 6, 0)
+    ApplyCompactButtonFont(profRevertBtn)
+    profRevertBtn:SetText(L["UI_PROFILE_REVERT"])
+    profRevertBtn:SetScript("OnClick", function()
+        Profiles:RevertToSavedProfile()
+        ManagerUI:RefreshList()
+    end)
+    AddBtnTooltip(profRevertBtn, L["UI_PROFILE_REVERT"], L["UI_PROFILE_REVERT_TIP"])
+    f.profRevertBtn = profRevertBtn
+
+    local profUndoBtn = CreateFrame("Button", nil, cardProf, "UIPanelButtonTemplate")
+    profUndoBtn:SetSize(90, 24)
+    profUndoBtn:SetPoint("LEFT", profRevertBtn, "RIGHT", 6, 0)
+    ApplyCompactButtonFont(profUndoBtn)
+    profUndoBtn:SetText(L["UI_BTN_UNDO"])
+    profUndoBtn:SetScript("OnClick", function()
+        Profiles:UndoLastChange()
+        ManagerUI:RefreshList()
+    end)
+    AddBtnTooltip(profUndoBtn, L["UI_BTN_UNDO"], L["UI_BTN_UNDO_TIP"])
+    f.profUndoBtn = profUndoBtn
+
+    local profNewBtn = CreateFrame("Button", nil, cardProf, "UIPanelButtonTemplate")
+    profNewBtn:SetSize(90, 22)
+    profNewBtn:SetPoint("TOPLEFT", 14, -64)
+    ApplyCompactButtonFont(profNewBtn)
+    profNewBtn:SetText(L["UI_PROFILE_NEW"])
+    profNewBtn:SetScript("OnClick", function()
+        OpenNewProfileModal()
+    end)
+    AddBtnTooltip(profNewBtn, L["UI_PROFILE_NEW"], L["UI_PROFILE_NEW_TIP"])
+    f.profNewBtn = profNewBtn
+
+    local profDelBtn = CreateFrame("Button", nil, cardProf, "UIPanelButtonTemplate")
+    profDelBtn:SetSize(90, 22)
+    profDelBtn:SetPoint("LEFT", profNewBtn, "RIGHT", 6, 0)
+    ApplyCompactButtonFont(profDelBtn)
+    profDelBtn:SetText(L["UI_PROFILE_DELETE"])
+    profDelBtn:SetScript("OnClick", function()
+        Profiles:DeleteProfile(Profiles:GetActiveProfileName())
+        ManagerUI:RefreshList()
+    end)
+    f.profDelBtn = profDelBtn
+
+    f.chkBindChar = CreateToggle(cardProf, L["UI_PROFILE_BIND_CHAR"], 210, -64,
+        function() return Profiles:IsCharBoundToActiveProfile() end,
+        function(val) Profiles:SetCharProfileBinding(val) end
+    )
+    AddBtnTooltip(f.chkBindChar, L["UI_PROFILE_BIND_CHAR"], L["UI_PROFILE_BIND_CHAR_TIP"])
+
+    -- Card 2: 1-Klick-Vorlagen (Presets)
+    local cardPresets = CreateFrame("Frame", nil, tabViewProfiles, BACKDROP_TEMPLATE)
+    cardPresets:SetPoint("TOPLEFT", 0, -108)
+    cardPresets:SetHeight(86)
+    StyleBox(cardPresets, 0.05, 0.06, 0.09, 0.85, 0.35, 0.40, 0.50, 0.75)
+    local tPresets = cardPresets:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tPresets:SetPoint("TOPLEFT", 14, -10)
+    tPresets:SetText("» " .. (L["UI_SEC_PRESETS"] or "1-Klick-Vorlagen (Presets)"))
+    tPresets:SetTextColor(1.0, 0.82, 0.25)
+    f.cardPresets = cardPresets
+
+    local subPresets = cardPresets:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    subPresets:SetPoint("TOPLEFT", 14, -28)
+    subPresets:SetText(L["UI_SEC_PRESETS_SUB"] or "Wende mit einem Klick ein erprobtes Skalierungs-Profil fuer deinen Bildschirm an:")
+
+    local presetDefs = {
+        { id = "DEFAULT_100", label = L["PRESET_DEFAULT_NAME"], desc = L["PRESET_DEFAULT_DESC"] },
+        { id = "COMPACT_80", label = L["PRESET_COMPACT80_NAME"], desc = L["PRESET_COMPACT80_DESC"] },
+        { id = "WQHD_85", label = L["PRESET_WQHD85_NAME"], desc = L["PRESET_WQHD85_DESC"] },
+        { id = "LAPTOP_72", label = L["PRESET_LAPTOP72_NAME"], desc = L["PRESET_LAPTOP72_DESC"] },
+    }
+    f.presetBtns = {}
+    for i = 1, #presetDefs do
+        local pd = presetDefs[i]
+        local pBtn = CreateFrame("Button", nil, cardPresets, "UIPanelButtonTemplate")
+        pBtn:SetSize(150, 24)
+        pBtn:SetPoint("TOPLEFT", 14 + (i - 1) * 156, -50)
+        ApplyCompactButtonFont(pBtn)
+        pBtn:SetText(pd.label)
+        pBtn:SetScript("OnClick", function()
+            Profiles:ApplyPreset(pd.id)
+            ManagerUI:RefreshList()
+        end)
+        pBtn:SetScript("OnEnter", function(self)
+            if _G.GameTooltip then
+                GameTooltip:SetOwner(self, "ANCHOR_TOP")
+                GameTooltip:AddLine(pd.label, 1, 0.82, 0)
+                GameTooltip:AddLine(pd.desc, 0.9, 0.9, 0.9, true)
+                GameTooltip:Show()
+            end
+        end)
+        pBtn:SetScript("OnLeave", function()
+            if _G.GameTooltip then GameTooltip:Hide() end
+        end)
+        f.presetBtns[i] = pBtn
+    end
+
+    -- Card 3: Profil Teilen & Sichern (Export / Import 2.0)
+    local cardSharing = CreateFrame("Frame", nil, tabViewProfiles, BACKDROP_TEMPLATE)
+    cardSharing:SetPoint("TOPLEFT", 0, -204)
+    cardSharing:SetHeight(86)
+    StyleBox(cardSharing, 0.05, 0.06, 0.09, 0.85, 0.35, 0.40, 0.50, 0.75)
+    local tSharing = cardSharing:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    tSharing:SetPoint("TOPLEFT", 14, -10)
+    tSharing:SetText("» " .. (L["UI_SEC_SHARING"] or "Profil Teilen & Sichern"))
+    tSharing:SetTextColor(1.0, 0.82, 0.25)
+    f.cardSharing = cardSharing
+
+    local subSharing = cardSharing:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    subSharing:SetPoint("TOPLEFT", 14, -28)
+    subSharing:SetText(L["UI_SEC_SHARING_SUB"] or "Tausche Profile mit anderen Spielern oder erstelle ein portables Backup:")
+
+    local expBtn = CreateFrame("Button", nil, cardSharing, "UIPanelButtonTemplate")
+    expBtn:SetSize(240, 26)
+    expBtn:SetPoint("TOPLEFT", 14, -50)
+    ApplyCompactButtonFont(expBtn)
+    expBtn:SetText(L["UI_EXPORT_IMPORT"] .. " (Live-Vorschau)")
+    expBtn:SetScript("OnClick", function()
+        OpenExportImportModal()
+    end)
+    f.expBtn = expBtn
 
     -- Bottom-Right Corner Resize Grip (Drag = resize width/height, Right-Click = default 720x580)
     local resizeGrip = CreateFrame("Button", nil, f)
@@ -1187,6 +1377,7 @@ local function EnsureManagerFrame()
     managerFrame = f
     SetManagerScale(ns.db.settings.managerScale or 1.00)
     ApplyManagerResponsiveLayout(f)
+    ManagerUI:SelectTab(activeMainTab or "WINDOWS")
     return f
 end
 
@@ -1198,12 +1389,58 @@ function ManagerUI:GetRow(index)
     return rowPool and rowPool[index]
 end
 
+function ManagerUI:IsShown()
+    return managerFrame and managerFrame:IsShown() and true or false
+end
+
+function ManagerUI:GetActiveTab()
+    return activeMainTab or "WINDOWS"
+end
+
+function ManagerUI:SelectTab(tabId)
+    activeMainTab = tabId or "WINDOWS"
+    if not managerFrame then
+        return
+    end
+
+    if managerFrame.navTabs then
+        for i = 1, #managerFrame.navTabs do
+            local tabBtn = managerFrame.navTabs[i]
+            local isSel = (tabBtn.tabId == activeMainTab)
+            if isSel then
+                tabBtn:SetBackdropBorderColor(0.0, 0.85, 1.0, 0.95)
+                tabBtn:SetBackdropColor(0.0, 0.18, 0.28, 0.85)
+                tabBtn.text:SetTextColor(1.0, 1.0, 1.0)
+            else
+                tabBtn:SetBackdropBorderColor(0.28, 0.32, 0.40, 0.70)
+                tabBtn:SetBackdropColor(0.06, 0.08, 0.12, 0.65)
+                tabBtn.text:SetTextColor(0.72, 0.76, 0.82)
+            end
+        end
+    end
+
+    if managerFrame.tabViewWindows then
+        managerFrame.tabViewWindows:SetShown(activeMainTab == "WINDOWS")
+    end
+    if managerFrame.tabViewSettings then
+        managerFrame.tabViewSettings:SetShown(activeMainTab == "SETTINGS")
+    end
+    if managerFrame.tabViewProfiles then
+        managerFrame.tabViewProfiles:SetShown(activeMainTab == "PROFILES")
+    end
+
+    if activeMainTab == "WINDOWS" then
+        ManagerUI:RefreshList()
+    end
+end
+
 function ManagerUI:Show()
     if ns.db and ns.db.settings and ns.db.settings.selectedCategoryFilter then
         activeCategoryFilter = ns.db.settings.selectedCategoryFilter
     end
     local f = EnsureManagerFrame()
     f:Show()
+    ManagerUI:SelectTab(activeMainTab or "WINDOWS")
     ManagerUI:RefreshList()
     if ns.Tutorial and ns.Tutorial.PromptIfFirstOpen then
         ns.Tutorial:PromptIfFirstOpen()

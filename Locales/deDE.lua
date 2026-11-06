@@ -298,6 +298,20 @@ L["BINDING_NAME_ELLA_BOSSKEY"] = "Boss-Key: Panik-Schliessen & Wiederherstellen"
 L["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = "Ella Manager oeffnen/schliessen"
 L["BINDING_NAME_ELLA_TOGGLE_GRID"] = "Bildschirm-Gitter ein-/ausblenden"
 
+-- v1.7.1 UI/UX De-Cluttering & 3-Tab Architecture
+L["UI_TAB_WINDOWS"] = "Fenster & Skalierung"
+L["UI_TAB_SETTINGS"] = "Einstellungen"
+L["UI_TAB_PROFILES"] = "Profile & Vorlagen"
+L["UI_SEC_COMBAT_INSTANCE"] = "Kampf- & Instanz-Schutz"
+L["UI_SEC_MOUSE_BEHAVIOR"] = "Maus- & Bewegungsverhalten"
+L["UI_SEC_DISPLAY_SYSTEM"] = "Anzeige & Interface"
+L["UI_SEC_ACTIVE_PROFILE"] = "Aktives Profil & Verwaltung"
+L["UI_SEC_PRESETS"] = "1-Klick-Vorlagen (Presets)"
+L["UI_SEC_PRESETS_SUB"] = "Wende mit einem Klick ein erprobtes Skalierungs-Profil fuer deinen Bildschirm an:"
+L["UI_SEC_SHARING"] = "Profil Teilen & Sichern"
+L["UI_SEC_SHARING_SUB"] = "Tausche Profile mit anderen Spielern oder erstelle ein portables Backup:"
+L["UI_SETTINGS_FOOTNOTE"] = "Tipp: Das Fenster laesst sich unten rechts an der Ecke vergroessern und mit Strg + Mausrad skalieren."
+
 _G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
 _G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]
 _G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]

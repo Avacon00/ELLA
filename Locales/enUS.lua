@@ -301,6 +301,20 @@ L["BINDING_NAME_ELLA_BOSSKEY"] = "Boss-Key: Panic Close / Restore Windows"
 L["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = "Toggle Ella Manager"
 L["BINDING_NAME_ELLA_TOGGLE_GRID"] = "Toggle Screen-Grid Overlay"
 
+-- v1.7.1 UI/UX De-Cluttering & 3-Tab Architecture
+L["UI_TAB_WINDOWS"] = "Windows & Scale"
+L["UI_TAB_SETTINGS"] = "Settings"
+L["UI_TAB_PROFILES"] = "Profiles & Presets"
+L["UI_SEC_COMBAT_INSTANCE"] = "Combat & Instance Protection"
+L["UI_SEC_MOUSE_BEHAVIOR"] = "Mouse & Movement Behavior"
+L["UI_SEC_DISPLAY_SYSTEM"] = "Display & Interface"
+L["UI_SEC_ACTIVE_PROFILE"] = "Active Profile & Management"
+L["UI_SEC_PRESETS"] = "One-Click Presets"
+L["UI_SEC_PRESETS_SUB"] = "Quickly apply a tested scaling profile tailored to your display:"
+L["UI_SEC_SHARING"] = "Profile Sharing & Backup"
+L["UI_SEC_SHARING_SUB"] = "Share window layouts with other players or create a portable backup:"
+L["UI_SETTINGS_FOOTNOTE"] = "Tip: The manager window can be resized at the bottom-right corner and zoomed via Ctrl + Mouse Wheel."
+
 _G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
 _G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]
 _G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]

@@ -317,6 +317,7 @@ end
 -- ============================================================================
 local STEPS = {
     [1] = {
+        tab = "WINDOWS",
         titleKey = "TUTORIAL_STEP1_TITLE",
         bodyKey = "TUTORIAL_STEP1_BODY",
         getTarget = function()
@@ -324,6 +325,7 @@ local STEPS = {
         end,
     },
     [2] = {
+        tab = "PROFILES",
         titleKey = "TUTORIAL_STEP2_TITLE",
         bodyKey = "TUTORIAL_STEP2_BODY",
         getTarget = function()
@@ -335,6 +337,7 @@ local STEPS = {
         end,
     },
     [3] = {
+        tab = "WINDOWS",
         titleKey = "TUTORIAL_STEP3_TITLE",
         bodyKey = "TUTORIAL_STEP3_BODY",
         getTarget = function()
@@ -347,6 +350,7 @@ local STEPS = {
         end,
     },
     [4] = {
+        tab = "WINDOWS",
         titleKey = "TUTORIAL_STEP4_TITLE",
         bodyKey = "TUTORIAL_STEP4_BODY",
         getTarget = function()
@@ -355,6 +359,7 @@ local STEPS = {
         end,
     },
     [5] = {
+        tab = "PROFILES",
         titleKey = "TUTORIAL_STEP5_TITLE",
         bodyKey = "TUTORIAL_STEP5_BODY",
         getTarget = function()
@@ -368,6 +373,7 @@ local STEPS = {
         end,
     },
     [6] = {
+        tab = "SETTINGS",
         titleKey = "TUTORIAL_STEP6_TITLE",
         bodyKey = "TUTORIAL_STEP6_BODY",
         getTarget = function()
@@ -379,6 +385,7 @@ local STEPS = {
         end,
     },
     [7] = {
+        tab = "SETTINGS",
         titleKey = "TUTORIAL_STEP7_TITLE",
         bodyKey = "TUTORIAL_STEP7_BODY",
         getTarget = function()
@@ -387,6 +394,7 @@ local STEPS = {
         end,
     },
     [8] = {
+        tab = "WINDOWS",
         titleKey = "TUTORIAL_STEP8_TITLE",
         bodyKey = "TUTORIAL_STEP8_BODY",
         getTarget = function()
@@ -409,6 +417,10 @@ function Tutorial:ShowStep(index)
     local s = STEPS[index]
     if not s then
         return
+    end
+
+    if s.tab and ns.ManagerUI and ns.ManagerUI.SelectTab then
+        ns.ManagerUI:SelectTab(s.tab)
     end
 
     cardFrame.title:SetText(L[s.titleKey])

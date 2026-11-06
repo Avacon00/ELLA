@@ -1,6 +1,26 @@
 # Changelog
 
-## v1.7.0 – Screen-Grid Overlay, Profil-Sharing 2.0 & Boss-Key
+## v1.7.1 – UI/UX-Entzerrung & Moderne 3-Reiter-Architektur
+* **Vollständige Benutzeroberflächen-Entzerrung (User-Friendly UI/UX):**
+  * Das bisher überfüllte Hauptmenü mit über 30 gleichzeitig sichtbaren Steuerelementen wurde in **3 logische Hauptbereiche** aufgeteilt:
+    1. **Reiter 1: Fenster & Skalierung (`tabViewWindows`):**
+       * Konzentriert sich zu 100 % auf das Verwalten und Skalieren von Spielfenstern.
+       * Die Fensterliste beginnt nun direkt bei $y = -84$ statt bisher $y = -274$ – **über 120 Pixel mehr vertikaler Raum**!
+       * Bis zu 12–14 Fensterreihen sind nun gleichzeitig ohne Scrollen sichtbar.
+       * Schlanke Aktionszeile: Profil-Schnellwechsler, Rückgängig-Button und die Fensterwerkzeuge `[+ Fenster-Picker]`, `[# Gitter]` und `[Alle Reset]` mit großzügigem Abstand.
+       * Durchgehende Suchleiste und 7 Kategorie-Tabs mit reaktiver Breitenanpassung.
+    2. **Reiter 2: Einstellungen & Optionen (`tabViewSettings`):**
+       * Alle Schalter und Checkboxen sind jetzt in 3 thematisch gegliederte Karten mit erklärenden Tooltips unterteilt:
+         * *Kampf- & Instanz-Schutz:* Kampf-Schutz (Auto-Schließen) & Instanz-Kompaktmodus (75 %).
+         * *Maus- & Bewegungsverhalten:* Strg+Mausrad, Halbtransparent beim Ziehen, Magnetisches Einrasten, Sticky Windows & Bildschirm-Clamping.
+         * *Anzeige & Interface:* EĹLA aktivieren, Titelleisten-Badges (%) & Minimap-Icon.
+    3. **Reiter 3: Profile & Vorlagen (`tabViewProfiles`):**
+       * Aufgeräumte Profilverwaltung: Profilwechsel, Speichern, Zurücksetzen, Rückgängig, Neues Profil, Löschen und Charakter-Bindung.
+       * 1-Klick-Vorlagen (Presets): Standard (100 %), Classic Kompakt (80 %), WQHD/4K (85 %) und Laptop/Deck (72 %).
+       * Profil Teilen & Sichern: Schneller Zugriff auf das Profil-Sharing 2.0 (Export / Import).
+* **Tutorial-Synchronisation:**
+  * Das interaktive Ingame-Tutorial (`/ella tour`) steuert während der einzelnen Erklärschritte automatisch den passenden Reiter an, sodass der Spotlight-Rahmen immer exakt auf das erklärte Element zeigt.
+
 * **Option A: Visuelles UI-Ausrichtungs-Gitter (Screen-Grid Overlay):**
   * Neues dezent transparentes Vollbild-Raster zur millimetergenauen Fenster-Ausrichtung.
   * **Zentrum-Kreuz:** Cyan-leuchtende Leitlinien durch den exakten Bildschirmmittelpunkt (`UIParent`).
