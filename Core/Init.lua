@@ -1,7 +1,7 @@
 local AddonName, ns = ...
 
 ns.AddonName = AddonName
-ns.Version = "1.7.3"
+ns.Version = "1.8.0"
 
 -- Internal Project Camelot (WoW: Forever) constant is 18
 ns.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
@@ -77,6 +77,7 @@ local DEFAULT_SETTINGS = {
     combatAutoClose = false,
     instanceAutoCompact = false,
     stickyDocking = true,
+    enableSounds = true,
 }
 
 function ns:InitDatabase()
@@ -153,3 +154,38 @@ function ns:GetWindowConfig(windowId, createIfMissing)
     end
     return winTbl
 end
+
+-- ============================================================================
+-- Native Sound Engine (Audio Feedback)
+-- ============================================================================
+function ns:PlaySound(soundType)
+    if not ns.db or not ns.db.settings or not ns.db.settings.enableSounds then
+        return
+    end
+    if not _G.PlaySound then
+        return
+    end
+
+    local SOUNDKIT = _G.SOUNDKIT
+    local soundId = nil
+    if soundType == "SNAP" then
+        soundId = (SOUNDKIT and SOUNDKIT.UI_BAG_SORTING_01) or 21743
+    elseif soundType == "PANIC_CLOSE" then
+        soundId = (SOUNDKIT and SOUNDKIT.IG_SPELLBOOK_CLOSE) or 829
+    elseif soundType == "PANIC_RESTORE" then
+        soundId = (SOUNDKIT and SOUNDKIT.IG_SPELLBOOK_OPEN) or 828
+    elseif soundType == "PROFILE_SWITCH" then
+        soundId = (SOUNDKIT and SOUNDKIT.GS_TITLE_OPTION_OK) or 844
+    elseif soundType == "PRESET_APPLY" then
+        soundId = (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPEN) or 850
+    elseif soundType == "GRID_TOGGLE" then
+        soundId = (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) or 856
+    elseif soundType == "CLICK" then
+        soundId = (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) or 856
+    end
+
+    if soundId then
+        pcall(_G.PlaySound, soundId, "SFX")
+    end
+end
+

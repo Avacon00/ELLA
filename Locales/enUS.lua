@@ -331,6 +331,10 @@ L["UI_SEC_SHARING"] = "Profile Sharing & Backup"
 L["UI_SEC_SHARING_SUB"] = "Share window layouts with other players or create a portable backup:"
 L["UI_SETTINGS_FOOTNOTE"] = "Tip: The manager window can be resized at the bottom-right corner and zoomed via Ctrl + Mouse Wheel."
 
+-- v1.8.0 Audio-Feedback (Sounds)
+L["UI_ENABLE_SOUNDS"] = "Audio Feedback (Sound Effects)"
+L["UI_ENABLE_SOUNDS_TIP"] = "Plays subtle native Blizzard sound effects on magnetic snapping, profile switching, and boss-key."
+
 _G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
 _G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]
 _G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]

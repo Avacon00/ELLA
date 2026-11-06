@@ -328,6 +328,10 @@ L["UI_SEC_SHARING"] = "Profil Teilen & Sichern"
 L["UI_SEC_SHARING_SUB"] = "Tausche Profile mit anderen Spielern oder erstelle ein portables Backup:"
 L["UI_SETTINGS_FOOTNOTE"] = "Tipp: Das Fenster laesst sich unten rechts an der Ecke vergroessern und mit Strg + Mausrad skalieren."
 
+-- v1.8.0 Audio-Feedback (Sounds)
+L["UI_ENABLE_SOUNDS"] = "Akustisches Feedback (Sounds)"
+L["UI_ENABLE_SOUNDS_TIP"] = "Spielt dezente Blizzard-Soundeffekte beim magnetischen Einrasten, Profil-Wechseln und beim Boss-Key ab."
+
 _G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
 _G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]
 _G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]

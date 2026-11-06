@@ -88,12 +88,14 @@ function GridOverlay:Show()
         BuildGrid()
     end
     gridFrame:Show()
+    ns:PlaySound("GRID_TOGGLE")
     ns:Fire("OnGridOverlayToggled", true)
 end
 
 function GridOverlay:Hide()
     if gridFrame then
         gridFrame:Hide()
+        ns:PlaySound("GRID_TOGGLE")
     end
     ns:Fire("OnGridOverlayToggled", false)
 end

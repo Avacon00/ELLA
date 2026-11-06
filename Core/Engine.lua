@@ -391,16 +391,22 @@ function Engine:ResetWindow(windowId, resetPositionOnly)
     ns:Fire("OnWindowConfigChanged", windowId, cfg)
 end
 
+-- State for audio feedback during magnetic snapping
+local isCurrentlySnapped = false
+local lastSnapSoundTime = 0
+
 -- Computes magnetic top-edge / side-by-side snap against other visible windows + Shift 10px grid
 local function ApplyMagneticOrGridSnap(draggedFrame, scale, candX, candY)
     snapLineH:Hide()
     snapLineV:Hide()
 
     if IsShiftKeyDown() then
+        isCurrentlySnapped = false
         return math.floor(candX / 10 + 0.5) * 10, math.floor(candY / 10 + 0.5) * 10
     end
 
     if not ns.db or not ns.db.settings.magneticSnap then
+        isCurrentlySnapped = false
         return candX, candY
     end
 
@@ -448,6 +454,20 @@ local function ApplyMagneticOrGridSnap(draggedFrame, scale, candX, candY)
                 end
             end
         end
+    end
+
+    local isSnapped = (guideY ~= nil or guideX ~= nil)
+    if isSnapped then
+        if not isCurrentlySnapped then
+            local now = _G.GetTime and _G.GetTime() or 0
+            if (now - lastSnapSoundTime) > 0.20 then
+                ns:PlaySound("SNAP")
+                lastSnapSoundTime = now
+            end
+            isCurrentlySnapped = true
+        end
+    else
+        isCurrentlySnapped = false
     end
 
     if guideY then
@@ -685,6 +705,7 @@ function Engine:StopActiveDrag()
     dragDriver:SetScript("OnUpdate", nil)
     snapLineH:Hide()
     snapLineV:Hide()
+    isCurrentlySnapped = false
     if not activeDrag then
         return
     end
@@ -885,6 +906,7 @@ function Engine:ToggleBossKey()
                 end
             end
         end
+        ns:PlaySound("PANIC_RESTORE")
         ns:Print(string.format(ns.L["MSG_BOSSKEY_RESTORED"], restoredCount))
         return "RESTORED", restoredCount
     end
@@ -919,6 +941,7 @@ function Engine:ToggleBossKey()
 
     if #closedList > 0 then
         Engine.panicClosedWindows = closedList
+        ns:PlaySound("PANIC_CLOSE")
         ns:Print(string.format(ns.L["MSG_BOSSKEY_PANIC"], #closedList))
         return "CLOSED", #closedList
     else
@@ -959,8 +982,8 @@ function ns:RunSelfTest()
     local total = 6
 
     -- Test 1: Version & DB Schema
-    if ns.Version == "1.7.3" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
-        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.7.3 & Datenbank-Schema v2 OK")
+    if ns.Version == "1.8.0" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
+        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.8.0 & Datenbank-Schema v2 OK")
         passed = passed + 1
     else
         ns:Print("|cffff3333[1/6 FAIL]|r Datenbank-Schema oder Version fehlerhaft")

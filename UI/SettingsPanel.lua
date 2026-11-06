@@ -352,6 +352,7 @@ local function ApplyManagerResponsiveLayout(f)
         if f.chkStickyDock then f.chkStickyDock:SetPoint("TOPLEFT", col2X, -32) end
         if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", col2X, -58) end
         if f.chkMinimap then f.chkMinimap:SetPoint("TOPLEFT", col2X, -32) end
+        if f.chkSounds then f.chkSounds:SetPoint("TOPLEFT", col2X, -58) end
     end
 
     -- Tab 3: PROFILES
@@ -517,14 +518,36 @@ function ManagerUI:RefreshList()
     if managerFrame.chkDragOpacity then managerFrame.chkDragOpacity:SetChecked(s.dragOpacity) end
     if managerFrame.chkMagneticSnap then managerFrame.chkMagneticSnap:SetChecked(s.magneticSnap) end
     if managerFrame.chkMinimap then managerFrame.chkMinimap:SetChecked(s.showMinimapButton) end
+    if managerFrame.chkSounds then managerFrame.chkSounds:SetChecked(s.enableSounds) end
     if managerFrame.chkCombatClose then managerFrame.chkCombatClose:SetChecked(s.combatAutoClose) end
     if managerFrame.chkInstCompact then managerFrame.chkInstCompact:SetChecked(s.instanceAutoCompact) end
     if managerFrame.chkStickyDock then managerFrame.chkStickyDock:SetChecked(s.stickyDocking) end
 
     if managerFrame.filterPills then
+        local countOpen = 0
+        local countCustom = 0
+        for _, desc in Registry:IterateWindows() do
+            local f = desc.boundFrame
+            if f and f:IsShown() then
+                countOpen = countOpen + 1
+            end
+            if desc.category == "CAT_CUSTOM" then
+                countCustom = countCustom + 1
+            end
+        end
+
         for i = 1, #managerFrame.filterPills do
             local pill = managerFrame.filterPills[i]
             local isSel = (pill.filterId == activeCategoryFilter)
+            local baseLabel = L[FILTER_DEFS[i].labelKey] or FILTER_DEFS[i].id
+            if pill.filterId == "OPEN" then
+                pill.text:SetText(string.format("%s (%d)", baseLabel, countOpen))
+            elseif pill.filterId == "CAT_CUSTOM" and countCustom > 0 then
+                pill.text:SetText(string.format("%s (%d)", baseLabel, countCustom))
+            else
+                pill.text:SetText(baseLabel)
+            end
+
             if isSel then
                 pill:SetBackdropBorderColor(0.0, 0.85, 1.0, 0.95)
                 pill:SetBackdropColor(0.0, 0.22, 0.36, 0.75)
@@ -1133,6 +1156,12 @@ local function EnsureManagerFrame()
         end
     )
     AddBtnTooltip(f.chkMinimap, L["UI_SHOW_MINIMAP_BTN"], L["UI_SHOW_MINIMAP_BTN_TIP"])
+
+    f.chkSounds = CreateToggle(cardDisplay, L["UI_ENABLE_SOUNDS"], 340, -58,
+        function() return ns.db.settings.enableSounds end,
+        function(val) ns.db.settings.enableSounds = val end
+    )
+    AddBtnTooltip(f.chkSounds, L["UI_ENABLE_SOUNDS"], L["UI_ENABLE_SOUNDS_TIP"])
 
     local noteDisplay = cardDisplay:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     noteDisplay:SetPoint("TOPLEFT", 14, -86)

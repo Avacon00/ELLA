@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.7.3](https://img.shields.io/badge/Version-v1.7.3-ffaa00)
+![Version 1.8.0](https://img.shields.io/badge/Version-v1.8.0-ffaa00)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
@@ -19,6 +19,8 @@
 ## Deutsch (Übersicht & Bedienung)
 
 ### Highlights
+* **Audio- & Haptisches Feedback (`v1.8.0`):** Native Blizzard-Soundeffekte beim magnetischen Einrasten (Snap-Sound), Boss-Key, Profil- und Preset-Wechsel. Vollständig abschaltbar unter *Einstellungen*.
+* **Dynamische Echtzeit-Filterzähler (`v1.8.0`):** Die Kategorie-Tabs im Manager zeigen nun in Echtzeit an, wie viele Fenster gerade offen sind (`Offen (2)`) bzw. wie viele benutzerdefinierte Fenster existieren (`Custom (1)`).
 * **Minimap-Schnellauswahl & Shift+Klick (`v1.7.3`):** Eigenständiges, ausfallsicheres Popover direkt an der Minimap mit Profil-Schnellwechsler, 1-Klick-Presets und Schnellstartern (Picker, Gitter, Tutorial). Halte `Shift` gedrückt und klicke auf das Icon, um sofort zum nächsten Profil durchzuschalten!
 * **Erweitertes 13-Schritte Onboarding-Tutorial (`v1.7.2`):** Vollständig ausgebaute, geführte Tour (`/ella tour`) mit automatischer Reiter-Navigation und Scheinwerfer-Spotlight über alle 3 Hauptbereiche.
 * **Entzerrte 3-Reiter-Benutzeroberfläche (`v1.7.1`):** Übersichtliche Aufteilung des Managers in *Fenster & Skalierung*, *Einstellungen* und *Profile & Vorlagen* mit über 120px mehr vertikalem Platz (12–14 Fensterzeilen gleichzeitig ohne Scrollen sichtbar).
@@ -67,6 +69,8 @@
 ## English (Overview & Usage)
 
 ### Key Features
+* **Audio Feedback & Sound Engine (`v1.8.0`):** Native Blizzard sound effects for magnetic edge snapping, boss-key panics, profile cycling, and grid toggling. Fully toggleable in Settings.
+* **Dynamic Real-Time Category Counters (`v1.8.0`):** Live counts on manager category pills (`Open (2)`, `Custom (1)`) with zero-latency event updates.
 * **Minimap Quick Menu & Shift+Click Cycle (`v1.7.3`):** Native, zero-taint popover anchored to the Minimap button for quick profile switching, 1-click presets, and tool launchers (picker, grid, tutorial). Hold `Shift` and click the icon to instantly cycle through profiles!
 * **Expanded 13-Step Onboarding Tutorial (`v1.7.2`):** Comprehensive guided interactive walkthrough (`/ella tour`) featuring automatic tab switching and spotlighting across all 3 main areas.
 * **De-Cluttered 3-Tab Architecture (`v1.7.1`):** Clean separation into *Windows & Scale*, *Settings*, and *Profiles & Presets* with >120px more vertical height for up to 14 rows visible simultaneously.

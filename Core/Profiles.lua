@@ -350,6 +350,7 @@ function Profiles:SwitchProfile(profileName, silent)
 
     Engine:ReapplyAllShown()
     if not silent then
+        ns:PlaySound("PROFILE_SWITCH")
         ns:Print(string.format(L["UI_PROFILE_SWITCHED"], clean))
     end
     ns:Fire("OnProfileSwitched", clean)
@@ -509,6 +510,7 @@ function Profiles:ApplyPreset(presetId)
     Engine:ReapplyAllShown()
 
     local presetTitle = preset.nameKey and L[preset.nameKey] or preset.name or presetId
+    ns:PlaySound("PRESET_APPLY")
     ns:Print(string.format(L["PRESET_APPLIED"], presetTitle))
     ns:Fire("OnPresetApplied", presetId)
     return true
@@ -522,6 +524,7 @@ function Profiles:ResetAll()
     lastUndoTag = nil
     wipe(ns.db.windows)
     ns.db.settings.activePreset = "DEFAULT_100"
+    ns:PlaySound("PRESET_APPLY")
 
     for windowId, desc in Registry:IterateWindows() do
         if desc.boundFrame and desc.boundFrame:IsShown() then

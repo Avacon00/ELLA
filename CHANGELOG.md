@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.8.0 – Audio-Feedback & Dynamische Echtzeit-Filterzähler
+* **Haptisches & Akustisches Feedback (Native Blizzard Sound-Engine):**
+  * **Magnetisches Einrasten (Snap-Sound):** Sanfter, haptischer Klick (`SOUNDKIT.UI_BAG_SORTING_01`), sobald ein Fenster an Hilfslinien oder Nachbarfenstern einrastet. Intelligente Flankenerkennung mit Cooldown verhindert Sound-Spam während des Ziehens.
+  * **Boss-Key (Panic Action):** Sattes Zuklapp-Geräusch (`SOUNDKIT.IG_SPELLBOOK_CLOSE`) beim Schließen aller Fenster und Aufblättern (`SOUNDKIT.IG_SPELLBOOK_OPEN`) beim Wiederherstellen.
+  * **Profil- & Preset-Klicks:** Bestätigungssound beim Durchschalten von Profilen (`Shift + Klick`), Anwenden von Presets und Umschalten des Ausrichtungsgitters.
+  * **Vollständig abschaltbar:** Neue Option *Akustisches Feedback (Sounds)* im Reiter *Einstellungen* unter *Anzeige & Interface* (standardmäßig aktiv).
+* **Dynamische Echtzeit-Kategoriezähler (`Offen (X)` & `Custom (X)`):**
+  * Die Filter-Pills im Manager zeigen nun in Echtzeit an, wie viele Fenster aktuell im Spiel geöffnet sind (z. B. `Offen (2)`) bzw. wie viele benutzerdefinierte Fenster existieren (`Custom (1)`).
+  * Vollständig ereignisgesteuert über `OnManagedFrameShown` / `OnManagedFrameHidden` (0,00 ms Leerlauf-CPU, kein Polling).
+
 ## v1.7.3 – Native Minimap-Schnellauswahl & Direktes Profil-Durchschalten
 * **Eigenständiges, ausfallsicheres Minimap-QuickMenu (Zero-Taint & Client-agnostisch):**
   * Das Minimap-Rechtsklick-Menü basierte zuvor auf Blizzards veraltetem `EasyMenu`/`UIDropDownMenuTemplate`, welches auf modernen Retail- und *WoW: Forever*-Clients (Camelot, Interface 16001) fehlschlägt oder durch Taint blockiert wird.
