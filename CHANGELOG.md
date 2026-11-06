@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.7.3 – Native Minimap-Schnellauswahl & Direktes Profil-Durchschalten
+* **Eigenständiges, ausfallsicheres Minimap-QuickMenu (Zero-Taint & Client-agnostisch):**
+  * Das Minimap-Rechtsklick-Menü basierte zuvor auf Blizzards veraltetem `EasyMenu`/`UIDropDownMenuTemplate`, welches auf modernen Retail- und *WoW: Forever*-Clients (Camelot, Interface 16001) fehlschlägt oder durch Taint blockiert wird.
+  * Komplett neu implementiert als natives EĹLA-Frame (`EllaMinimapQuickMenuFrame`) mit edlem Dunkelblau/Gold-Design, Backdrops und automatischer Bildschirmrand-Erkennung.
+  * **Inhalte der Schnellauswahl:**
+    * **Profile:** Liste aller angelegten Profile mit visueller Markierung (`» Profil «` in Hellgrün) für das derzeit aktive Profil. 1 Klick wechselt sofort das Profil.
+    * **Presets (1-Klick-Vorlagen):** Direkter Zugriff auf Standard (100%), Classic Kompakt (80%), WQHD / 4K (85%) und Laptop / Deck (72%).
+    * **Werkzeuge:** Schnellstarter für Fenster-Picker, Bildschirm-Gitter und das 13-Schritte-Tutorial.
+* **Neues Tastaturkürzel: Shift + Klick auf das Minimap-Icon:**
+  * Durch `Shift + Klick` (Links- oder Rechtsklick) auf das Minimap-Icon oder die LDB-Leiste (TitanPanel etc.) wird sofort zum nächsten Profil durchgeschaltet (`CycleNextProfile`), ohne dass ein Menü geöffnet werden muss.
+  * Aktualisierter Minimap- und LDB-Tooltip mit Hinweis auf Shift+Klick.
+
 ## v1.7.2 – Erweitertes 13-Schritte Onboarding-Tutorial
 * **Umfassende Tutorial-Erweiterung auf 13 geführte Schritte:**
   * Das interaktive Ingame-Tutorial (`/ella tour`) wurde auf 13 präzise, übersichtliche Schritte ausgebaut:

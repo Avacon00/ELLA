@@ -231,6 +231,7 @@ L["TUTORIAL_STEP13_BODY"] = "You are all set for WoW: Forever!\n\n• |cff00ff96
 L["MINIMAP_TOOLTIP_TITLE"] = "Ella - Layout & Location Assistant"
 L["MINIMAP_TOOLTIP_LCLICK"] = "|cff00ff96Left-Click:|r Toggle Manager (/ella)"
 L["MINIMAP_TOOLTIP_RCLICK"] = "|cffffd100Right-Click:|r Quick Menu (Profiles & Presets)"
+L["MINIMAP_TOOLTIP_SHIFT"] = "|cffffd100Shift + Click:|r Cycle next profile immediately"
 L["MINIMAP_TOOLTIP_MCLICK"] = "|cff00ccffMiddle-Click:|r Start Window Picker"
 L["MINIMAP_TOOLTIP_DRAG"] = "|cff888888Drag:|r Move around Minimap"
 L["UI_SHOW_MINIMAP_BTN"] = "Show Minimap Icon"
