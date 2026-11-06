@@ -23,7 +23,7 @@ local FILTER_DEFS = {
     { id = "ALL", labelKey = "FILTER_ALL" },
     { id = "OPEN", labelKey = "FILTER_OPEN" },
     { id = "CAT_CHARACTER", labelKey = "FILTER_CHAR" },
-    { id = "CAT_PROFESSION", labelKey = "FILTER_PROF" },
+    { id = "CAT_CRAFT_ECON", labelKey = "FILTER_PROF" },
     { id = "CAT_QUEST_WORLD", labelKey = "FILTER_QUEST" },
     { id = "CAT_SOCIAL", labelKey = "FILTER_SOCIAL" },
     { id = "CAT_CUSTOM", labelKey = "FILTER_CUSTOM" },
@@ -494,6 +494,8 @@ function ManagerUI:RefreshList()
         local matchFilter = true
         if activeCategoryFilter == "OPEN" then
             matchFilter = isOpen
+        elseif activeCategoryFilter == "CAT_QUEST_WORLD" then
+            matchFilter = (cat == "CAT_QUEST_WORLD" or cat == "CAT_FOREVER")
         elseif activeCategoryFilter ~= "ALL" then
             matchFilter = (cat == activeCategoryFilter)
         end
@@ -564,6 +566,10 @@ function ManagerUI:RefreshList()
 
     for i = #items + 1, #rowPool do
         rowPool[i]:Hide()
+    end
+
+    if managerFrame.emptyMsg then
+        managerFrame.emptyMsg:SetShown(#items == 0)
     end
 
     content:SetHeight(math.max(280, #items * 36 + 8))
@@ -995,6 +1001,12 @@ local function EnsureManagerFrame()
     listBorder:SetPoint("TOPLEFT", 14, -236)
     listBorder:SetPoint("BOTTOMRIGHT", -14, 18)
     StyleBox(listBorder, 0.03, 0.04, 0.06, 0.90)
+
+    local emptyMsg = listBorder:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+    emptyMsg:SetPoint("CENTER", 0, 0)
+    emptyMsg:SetText(L["UI_LIST_EMPTY"])
+    emptyMsg:Hide()
+    f.emptyMsg = emptyMsg
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, listBorder, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", 6, -6)

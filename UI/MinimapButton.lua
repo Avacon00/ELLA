@@ -16,6 +16,9 @@ local menuFrame = nil
 local function GetMinimapRadius()
     if _G.Minimap then
         local w = _G.Minimap:GetWidth() or 140
+        if w < 50 then
+            w = 140
+        end
         return (w / 2) + 8
     end
     return 78
@@ -164,10 +167,13 @@ function MinimapButton:Init()
         return
     end
 
-    btn = CreateFrame("Button", "EllaMinimapButton", _G.Minimap)
+    -- Parent to MinimapBackdrop, MinimapCluster, or UIParent (NEVER _G.Minimap directly!)
+    -- Minimap has an internal mask texture that clips children outside its circular viewport.
+    local parentFrame = _G.MinimapBackdrop or _G.MinimapCluster or _G.UIParent
+    btn = CreateFrame("Button", "EllaMinimapButton", parentFrame)
     btn:SetSize(32, 32)
-    btn:SetFrameStrata("MEDIUM")
-    btn:SetFrameLevel(8)
+    btn:SetFrameStrata("HIGH")
+    btn:SetFrameLevel(20)
     btn:EnableMouse(true)
     btn:SetMovable(true)
     btn:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
@@ -175,13 +181,13 @@ function MinimapButton:Init()
 
     -- Dark circular backdrop behind icon
     local bg = btn:CreateTexture(nil, "BACKGROUND")
-    bg:SetSize(20, 20)
+    bg:SetSize(22, 22)
     bg:SetPoint("CENTER", 0, 0)
     bg:SetColorTexture(0.05, 0.06, 0.09, 0.95)
 
     -- Custom Ella Logo Icon
     local icon = btn:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(18, 18)
+    icon:SetSize(20, 20)
     icon:SetPoint("CENTER", 0, 0)
     icon:SetTexture(ICON_PATH)
     btn.icon = icon
@@ -189,12 +195,12 @@ function MinimapButton:Init()
     -- Circular Blizzard border overlay
     local border = btn:CreateTexture(nil, "OVERLAY")
     border:SetSize(52, 52)
-    border:SetPoint("TOPLEFT", 0, 0)
+    border:SetPoint("TOPLEFT", btn, "TOPLEFT", -2, 2)
     border:SetTexture(BORDER_PATH)
 
     -- Subtle hover highlight
     local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
-    highlight:SetSize(22, 22)
+    highlight:SetSize(24, 24)
     highlight:SetPoint("CENTER", 0, 0)
     highlight:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
     highlight:SetBlendMode("ADD")
@@ -291,9 +297,13 @@ function MinimapButton:Init()
     end
 end
 
--- Initialize on PLAYER_LOGIN / VARIABLES_LOADED
-local initFrame = CreateFrame("Frame")
-initFrame:RegisterEvent("PLAYER_LOGIN")
-initFrame:SetScript("OnEvent", function()
+-- Initialize safely on PLAYER_LOGIN, or immediately if player is already logged in
+if _G.IsLoggedIn and _G.IsLoggedIn() then
     MinimapButton:Init()
-end)
+else
+    local initFrame = CreateFrame("Frame")
+    initFrame:RegisterEvent("PLAYER_LOGIN")
+    initFrame:SetScript("OnEvent", function()
+        MinimapButton:Init()
+    end)
+end

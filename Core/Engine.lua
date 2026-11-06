@@ -659,6 +659,9 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
             ns.Profiles:RestoreCustomWindows()
         end
         Engine:ReapplyAllShown()
+        if ns.MinimapButton and ns.MinimapButton.Init then
+            ns.MinimapButton:Init()
+        end
         local clientTag = ns.IsForeverClient and ns.L["PROJECT_FOREVER"] or ns.L["PROJECT_GENERIC"]
         ns:Print(string.format(ns.L["LOADED_MSG"], ns.Version, clientTag))
         ns:Fire("OnPlayerLogin")

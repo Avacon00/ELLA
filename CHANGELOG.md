@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.3.1 – Minimap Clipping Fix & Profession Category Mapping
+* **Minimap Button Unclipped:**
+  * Fixed button parenting by anchoring to `MinimapBackdrop` / `MinimapCluster` / `UIParent` instead of `_G.Minimap` directly, completely bypassing `Minimap`'s internal circular mask which was clipping perimeter buttons.
+  * Added fallback initialization for `/reload` scenarios where `PLAYER_LOGIN` has already fired.
+* **Profession Filter Category Mapping:**
+  * Fixed category identifier from `CAT_PROFESSION` to `CAT_CRAFT_ECON` so clicking the `[Berufe]` filter pill immediately populates all crafting, merchant, bank, mail, and economy windows.
+  * Added friendly empty-state label (*"Keine passenden Fenster in dieser Ansicht gefunden."*) when 0 windows match active filters.
+
 ## v1.3.0 – Minimap Icon & LDB Quick Menu, Category Filter Pills & Live Window Preview
 * **Minimap Button & LDB Quick Menu:**
   * Added a circular minimap button featuring Ella's custom obsidian/gold compass icon.
