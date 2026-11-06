@@ -15,6 +15,20 @@ local eventFrame = CreateFrame("Frame")
 local dragDriver = CreateFrame("Frame")
 local activeDrag = nil
 
+-- Magnetic alignment visual guide lines (parented to UIParent, hidden whenever not snapping!)
+local snapLineH = UIParent:CreateTexture(nil, "OVERLAY")
+snapLineH:SetColorTexture(0.0, 0.85, 1.0, 0.70)
+snapLineH:SetHeight(1.5)
+snapLineH:Hide()
+
+local snapLineV = UIParent:CreateTexture(nil, "OVERLAY")
+snapLineV:SetColorTexture(0.0, 0.85, 1.0, 0.70)
+snapLineV:SetWidth(1.5)
+snapLineV:Hide()
+
+local SNAP_THRESHOLD = 8
+local SIDE_GAP = 6
+
 -- UIParent-parented Ctrl+MouseWheel overlay (never touches EnableMouseWheel on Blizzard frames)
 local ctrlWheelCatcher = CreateFrame("Frame", nil, UIParent)
 ctrlWheelCatcher:Hide()
@@ -68,6 +82,47 @@ function Engine:ClampUipPosition(frame, scale, uipX, uipY)
     return uipX, uipY
 end
 
+-- Syncs scale onto optional companion sub-frames (e.g. QuestLogPopupDetailFrame, Orders panel)
+local function SyncLinkedFrames(windowId, desc, targetScale)
+    if type(desc.linkedFrames) ~= "table" then
+        return
+    end
+    for i = 1, #desc.linkedFrames do
+        local sub = Registry:ResolveFramePath(desc.linkedFrames[i])
+        if sub and not Guard:IsForbidden(sub) then
+            local subState = frameState[sub]
+            if not subState or not subState.linkedHooked then
+                subState = subState or {}
+                subState.linkedHooked = true
+                frameState[sub] = subState
+                if type(sub.HookScript) == "function" then
+                    sub:HookScript("OnShow", function(sFrame)
+                        local isGlobalEnabled = (ns.db and ns.db.settings.enabled)
+                        local cfg = ns:GetWindowConfig(windowId, false)
+                        local mode = (not isGlobalEnabled and ns.MODE_DISABLED)
+                            or (cfg and cfg.mode)
+                            or desc.defaultMode
+                            or (ns.db and ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
+                        local sTarget = (mode == ns.MODE_DISABLED) and ns.DEFAULT_SCALE or Engine:ClampScale(cfg and cfg.scale or ns.DEFAULT_SCALE)
+                        if Guard:CanModifyNow(sFrame, desc.protected) then
+                            local c = sFrame:GetScale() or 1
+                            if math.abs(c - sTarget) > 0.001 then
+                                sFrame:SetScale(sTarget)
+                            end
+                        end
+                    end)
+                end
+            end
+            if Guard:CanModifyNow(sub, desc.protected) then
+                local cur = sub:GetScale() or 1
+                if math.abs(cur - targetScale) > 0.001 then
+                    sub:SetScale(targetScale)
+                end
+            end
+        end
+    end
+end
+
 -- Applies scale and (when in SCALE_AND_MOVE mode with saved pos) scale-compensated anchor
 function Engine:ApplyToFrame(windowId, frame, desc)
     local state = frameState[frame]
@@ -75,12 +130,12 @@ function Engine:ApplyToFrame(windowId, frame, desc)
         return
     end
 
-    if not ns.db or not ns.db.settings.enabled then
-        return
-    end
-
+    local isGlobalEnabled = (ns.db and ns.db.settings.enabled)
     local cfg = ns:GetWindowConfig(windowId, false)
-    local mode = (cfg and cfg.mode) or desc.defaultMode or (ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
+    local mode = (not isGlobalEnabled and ns.MODE_DISABLED)
+        or (cfg and cfg.mode)
+        or desc.defaultMode
+        or (ns.db and ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
     local targetScale = (mode == ns.MODE_DISABLED) and ns.DEFAULT_SCALE or Engine:ClampScale(cfg and cfg.scale or ns.DEFAULT_SCALE)
 
     local canModify, reason = Guard:CanModifyNow(frame, desc.protected)
@@ -112,6 +167,7 @@ function Engine:ApplyToFrame(windowId, frame, desc)
     if math.abs(currentScale - targetScale) > 0.001 then
         frame:SetScale(targetScale)
     end
+    SyncLinkedFrames(windowId, desc, targetScale)
 
     if mode == ns.MODE_SCALE_MOVE and cfg and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
         local clampedX, clampedY = Engine:ClampUipPosition(frame, targetScale, cfg.pos.uipX, cfg.pos.uipY)
@@ -177,7 +233,6 @@ function Engine:SetWindowScale(windowId, requestedScale, pivotAroundCursor)
                     uipY = cY - (cY - oldUipY) * ratio,
                 }
             elseif cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
-                -- Keep existing top-left screen spot rock steady
                 cfg.pos.uipX = oldUipX
                 cfg.pos.uipY = oldUipY
             end
@@ -230,10 +285,87 @@ function Engine:ResetWindow(windowId, resetPositionOnly)
     ns:Fire("OnWindowConfigChanged", windowId, cfg)
 end
 
+-- Computes magnetic top-edge / side-by-side snap against other visible windows + Shift 10px grid
+local function ApplyMagneticOrGridSnap(draggedFrame, scale, candX, candY)
+    snapLineH:Hide()
+    snapLineV:Hide()
+
+    if IsShiftKeyDown() then
+        return math.floor(candX / 10 + 0.5) * 10, math.floor(candY / 10 + 0.5) * 10
+    end
+
+    if not ns.db or not ns.db.settings.magneticSnap then
+        return candX, candY
+    end
+
+    local thisW = (draggedFrame:GetWidth() or 350) * scale
+    local snappedX, snappedY = candX, candY
+    local guideY, guideX = nil, nil
+
+    -- Snap to horizontal screen center if near middle
+    local uipW = UIParent:GetWidth() or 1920
+    local centerTargetX = (uipW - thisW) * 0.5
+    if math.abs(candX - centerTargetX) <= SNAP_THRESHOLD then
+        snappedX = centerTargetX
+        guideX = uipW * 0.5
+    end
+
+    -- Snap against other visible managed windows (top edge alignment + side-by-side docking)
+    for _, otherDesc in Registry:IterateWindows() do
+        local other = otherDesc.boundFrame
+        if other and other ~= draggedFrame and other:IsShown() then
+            local oX, oY = Engine:ReadUipTopLeft(other)
+            if oX and oY then
+                local oScale = other:GetScale() or 1
+                local oW = (other:GetWidth() or 350) * oScale
+
+                -- Top-edge row alignment
+                if not guideY and math.abs(candY - oY) <= SNAP_THRESHOLD then
+                    snappedY = oY
+                    guideY = oY
+                end
+
+                -- Side-by-side docking (left of other, right of other, or left-edge aligned)
+                if not guideX then
+                    local rightDock = oX + oW + SIDE_GAP
+                    local leftDock = oX - thisW - SIDE_GAP
+                    if math.abs(candX - rightDock) <= SNAP_THRESHOLD then
+                        snappedX = rightDock
+                        guideX = oX + oW + (SIDE_GAP * 0.5)
+                    elseif math.abs(candX - leftDock) <= SNAP_THRESHOLD then
+                        snappedX = leftDock
+                        guideX = oX - (SIDE_GAP * 0.5)
+                    elseif math.abs(candX - oX) <= SNAP_THRESHOLD then
+                        snappedX = oX
+                        guideX = oX
+                    end
+                end
+            end
+        end
+    end
+
+    if guideY then
+        snapLineH:ClearAllPoints()
+        snapLineH:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, guideY)
+        snapLineH:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, guideY)
+        snapLineH:Show()
+    end
+    if guideX then
+        snapLineV:ClearAllPoints()
+        snapLineV:SetPoint("TOPLEFT", UIParent, "TOPLEFT", guideX, 0)
+        snapLineV:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", guideX, 0)
+        snapLineV:Show()
+    end
+
+    return snappedX, snappedY
+end
+
 -- Active Drag Loop (ONLY active while Left Mouse Button is held down)
 local function OnDragUpdate()
     if not activeDrag then
         dragDriver:SetScript("OnUpdate", nil)
+        snapLineH:Hide()
+        snapLineV:Hide()
         return
     end
 
@@ -250,11 +382,15 @@ local function OnDragUpdate()
     local dY = (curY - activeDrag.startCursorY) / uipEff
 
     local scale = frame:GetScale() or 1
-    local newUipX, newUipY = Engine:ClampUipPosition(frame, scale, activeDrag.startUipX + dX, activeDrag.startUipY + dY)
+    local rawX = activeDrag.startUipX + dX
+    local rawY = activeDrag.startUipY + dY
+    local snappedX, snappedY = ApplyMagneticOrGridSnap(frame, scale, rawX, rawY)
+    local newUipX, newUipY = Engine:ClampUipPosition(frame, scale, snappedX, snappedY)
 
     local state = frameState[frame]
     if state then
         state.applying = true
+        state.hasCustomPosApplied = true
     end
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", newUipX / scale, newUipY / scale)
@@ -283,11 +419,30 @@ function Engine:StartWindowDrag(windowId, frame, desc)
         return
     end
 
+    local state = frameState[frame]
+    if state and not state.initialPoints and type(frame.GetNumPoints) == "function" then
+        local numPts = frame:GetNumPoints()
+        if numPts and numPts > 0 then
+            local pts = {}
+            for i = 1, numPts do
+                local pt, relTo, relPt, xOfs, yOfs = frame:GetPoint(i)
+                pts[#pts + 1] = { pt, relTo, relPt, xOfs, yOfs }
+            end
+            state.initialPoints = pts
+        end
+    end
+
+    local origAlpha = (type(frame.GetAlpha) == "function" and frame:GetAlpha()) or 1
+    if ns.db.settings.dragOpacity and type(frame.SetAlpha) == "function" then
+        frame:SetAlpha(math.min(origAlpha, 0.78))
+    end
+
     local curX, curY = GetCursorPosition()
     activeDrag = {
         windowId = windowId,
         frame = frame,
         desc = desc,
+        originalAlpha = origAlpha,
         startCursorX = curX,
         startCursorY = curY,
         startUipX = uipX,
@@ -295,7 +450,6 @@ function Engine:StartWindowDrag(windowId, frame, desc)
         lastUipX = uipX,
         lastUipY = uipY,
     }
-    local state = frameState[frame]
     if state then
         state.isDragging = true
     end
@@ -304,11 +458,17 @@ end
 
 function Engine:StopActiveDrag()
     dragDriver:SetScript("OnUpdate", nil)
+    snapLineH:Hide()
+    snapLineV:Hide()
     if not activeDrag then
         return
     end
     local finished = activeDrag
     activeDrag = nil
+
+    if finished.frame and finished.originalAlpha and type(finished.frame.SetAlpha) == "function" then
+        finished.frame:SetAlpha(finished.originalAlpha)
+    end
 
     local state = frameState[finished.frame]
     if state then
@@ -335,7 +495,7 @@ local function HookDragRegion(region, windowId, rootFrame, desc)
     frameState[region].dragHooked = true
 
     region:HookScript("OnMouseDown", function(_, button)
-        if button == "LeftButton" and not IsModifierKeyDown() then
+        if button == "LeftButton" and not IsControlKeyDown() then
             Engine:StartWindowDrag(windowId, rootFrame, desc)
         elseif button == "RightButton" and IsControlKeyDown() then
             Engine:ResetWindow(windowId, IsShiftKeyDown())
@@ -365,7 +525,6 @@ function Engine:AttachWindow(windowId, frame, desc)
     state.desc = desc
     frameState[frame] = state
 
-    -- Hook OnShow & OnHide without replacing Blizzard's scripts
     if type(frame.HookScript) == "function" then
         frame:HookScript("OnShow", function(f)
             Engine:ApplyToFrame(windowId, f, desc)
@@ -379,7 +538,6 @@ function Engine:AttachWindow(windowId, frame, desc)
         end)
     end
 
-    -- Intercept Blizzard's UIPanelManageFramePositions SetPoint snaps safely via hooksecurefunc
     hooksecurefunc(frame, "SetPoint", function(f)
         local st = frameState[f]
         if not st or st.applying or st.isDragging then
@@ -394,7 +552,6 @@ function Engine:AttachWindow(windowId, frame, desc)
         end
     end)
 
-    -- Attach drag hooks to root frame and common header sub-regions
     HookDragRegion(frame, windowId, frame, desc)
     if type(rawget(frame, "TitleContainer")) == "table" then
         HookDragRegion(frame.TitleContainer, windowId, frame, desc)
@@ -426,7 +583,6 @@ function Engine:GetManagedState(frame)
     return frameState[frame]
 end
 
--- Ctrl + MouseWheel Catcher: only shown while Ctrl is physically held down over a visible managed window
 local function UpdateCtrlWheelCatcher()
     if not ns.db or not ns.db.settings.enabled or not ns.db.settings.ctrlWheelZoom or not IsControlKeyDown() then
         ctrlWheelCatcher:Hide()
@@ -434,7 +590,6 @@ local function UpdateCtrlWheelCatcher()
         return
     end
 
-    -- Find highest-strata visible managed window currently under the cursor
     local bestId, bestFrame = nil, nil
     for windowId, desc in Registry:IterateWindows() do
         local f = desc.boundFrame
@@ -465,7 +620,6 @@ ctrlWheelCatcher:SetScript("OnMouseWheel", function(self, delta)
     Engine:StepWindowScale(self.targetWindowId, delta, IsShiftKeyDown(), true)
 end)
 
--- Central Event Lifecycle
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -494,7 +648,6 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         ns:Print(string.format(ns.L["LOADED_MSG"], ns.Version, clientTag))
         ns:Fire("OnPlayerLogin")
     elseif event == "PLAYER_REGEN_DISABLED" then
-        -- Entering combat: immediately stop any active drag on a protected window before lockdown freezes
         if activeDrag and activeDrag.desc and (activeDrag.desc.protected or Guard:IsProtectedHierarchy(activeDrag.frame)) then
             Engine:StopActiveDrag()
         end

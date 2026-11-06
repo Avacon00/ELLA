@@ -24,11 +24,23 @@ local Profiles = ns.Profiles
 local API = {}
 
 function API:GetVersion()
-    return ns.Version, 1
+    return ns.Version, 2
 end
 
 function API:IsForeverClient()
     return ns.IsForeverClient
+end
+
+function API:GetActiveProfile()
+    return Profiles:GetActiveProfileName()
+end
+
+function API:GetProfiles()
+    return Profiles:ListProfiles()
+end
+
+function API:SwitchProfile(profileName)
+    return Profiles:SwitchProfile(profileName)
 end
 
 function API:RegisterWindow(windowId, descriptor)
@@ -76,6 +88,8 @@ local ALLOWED_PUBLIC_EVENTS = {
     OnWindowApplied = true,
     OnWindowConfigChanged = true,
     OnPresetApplied = true,
+    OnProfileSwitched = true,
+    OnProfileImported = true,
     OnResetAll = true,
 }
 
@@ -91,7 +105,7 @@ end
 _G.ELLA_API = API
 
 if _G.LibStub then
-    local lib = _G.LibStub:NewLibrary("ELLA-1.0", 1)
+    local lib = _G.LibStub:NewLibrary("ELLA-1.0", 2)
     if lib then
         for k, v in pairs(API) do
             lib[k] = v

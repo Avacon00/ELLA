@@ -1,7 +1,7 @@
 local AddonName, ns = ...
 
 ns.AddonName = AddonName
-ns.Version = "1.0.1"
+ns.Version = "1.1.0"
 
 -- Internal Project Camelot (WoW: Forever) constant is 18
 ns.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
@@ -60,6 +60,8 @@ local DEFAULT_SETTINGS = {
     showBadges = true,
     ctrlWheelZoom = true,
     clampToScreen = true,
+    dragOpacity = true,
+    magneticSnap = true,
     defaultScaleOnly = false,
     welcomeShown = false,
     activePreset = nil,
@@ -70,7 +72,6 @@ function ns:InitDatabase()
         _G.ELLADB = {}
     end
     local db = _G.ELLADB
-    db.schemaVersion = db.schemaVersion or 1
 
     if type(db.settings) ~= "table" then
         db.settings = {}
@@ -81,9 +82,31 @@ function ns:InitDatabase()
         end
     end
 
-    if type(db.windows) ~= "table" then
-        db.windows = {}
+    -- Schema v2: Named Profiles (seamless migration from v1 db.windows)
+    if type(db.profiles) ~= "table" then
+        db.profiles = {}
+        if type(db.windows) == "table" and next(db.windows) ~= nil then
+            db.profiles["Default"] = { windows = db.windows }
+        else
+            db.profiles["Default"] = { windows = {} }
+        end
+        db.profiles["Laptop / Deck"] = { windows = {} }
     end
+
+    if type(db.profiles["Default"]) ~= "table" then
+        db.profiles["Default"] = { windows = {} }
+    end
+    if type(db.profiles["Default"].windows) ~= "table" then
+        db.profiles["Default"].windows = {}
+    end
+
+    if type(db.activeProfile) ~= "string" or not db.profiles[db.activeProfile] then
+        db.activeProfile = "Default"
+    end
+
+    db.schemaVersion = 2
+    db.windows = db.profiles[db.activeProfile].windows
+
     if type(db.customWindows) ~= "table" then
         db.customWindows = {}
     end

@@ -7,6 +7,26 @@ local Engine = ns.Engine
 local Profiles = {}
 ns.Profiles = Profiles
 
+local function DeepCopyWindows(src)
+    local out = {}
+    if type(src) ~= "table" then
+        return out
+    end
+    for winId, cfg in pairs(src) do
+        if type(cfg) == "table" then
+            out[winId] = {
+                scale = cfg.scale,
+                mode = cfg.mode,
+                locked = cfg.locked,
+                pos = (type(cfg.pos) == "table" and cfg.pos.uipX and cfg.pos.uipY)
+                    and { uipX = cfg.pos.uipX, uipY = cfg.pos.uipY }
+                    or nil,
+            }
+        end
+    end
+    return out
+end
+
 function Profiles:Init()
     -- 1. Blizzard Default (100%)
     Registry:RegisterPreset("DEFAULT_100", {
@@ -80,6 +100,119 @@ function Profiles:Init()
     })
 end
 
+-- ============================================================================
+-- Named Profile Management (v1.1)
+-- ============================================================================
+function Profiles:GetActiveProfileName()
+    if not ns.db then
+        ns:InitDatabase()
+    end
+    return ns.db.activeProfile or "Default"
+end
+
+function Profiles:ListProfiles()
+    if not ns.db then
+        ns:InitDatabase()
+    end
+    local names = {}
+    for name in pairs(ns.db.profiles) do
+        if name ~= "Default" then
+            names[#names + 1] = name
+        end
+    end
+    table.sort(names)
+    table.insert(names, 1, "Default")
+    return names
+end
+
+function Profiles:SwitchProfile(profileName, silent)
+    if type(profileName) ~= "string" then
+        return false
+    end
+    local clean = string.match(profileName, "^%s*(.-)%s*$")
+    if not clean or clean == "" then
+        return false
+    end
+    if not ns.db then
+        ns:InitDatabase()
+    end
+
+    if not ns.db.profiles[clean] then
+        ns.db.profiles[clean] = { windows = {} }
+    elseif type(ns.db.profiles[clean].windows) ~= "table" then
+        ns.db.profiles[clean].windows = {}
+    end
+
+    ns.db.activeProfile = clean
+    ns.db.windows = ns.db.profiles[clean].windows
+
+    Engine:ReapplyAllShown()
+    if not silent then
+        ns:Print(string.format(L["UI_PROFILE_SWITCHED"], clean))
+    end
+    ns:Fire("OnProfileSwitched", clean)
+    return true
+end
+
+function Profiles:CycleNextProfile()
+    local list = Profiles:ListProfiles()
+    local current = Profiles:GetActiveProfileName()
+    local nextIdx = 1
+    for i = 1, #list do
+        if list[i] == current then
+            nextIdx = (i % #list) + 1
+            break
+        end
+    end
+    return Profiles:SwitchProfile(list[nextIdx])
+end
+
+function Profiles:CreateOrCopyProfile(newName, copyFromCurrent)
+    if type(newName) ~= "string" then
+        return false
+    end
+    local clean = string.match(newName, "^%s*(.-)%s*$")
+    if not clean or clean == "" then
+        return false
+    end
+    if not ns.db then
+        ns:InitDatabase()
+    end
+
+    local sourceWindows = copyFromCurrent and ns.db.windows or nil
+    ns.db.profiles[clean] = {
+        windows = DeepCopyWindows(sourceWindows),
+    }
+    Profiles:SwitchProfile(clean, true)
+    ns:Print(string.format(L["UI_PROFILE_CREATED"], clean))
+    return true
+end
+
+function Profiles:DeleteProfile(profileName)
+    if not ns.db then
+        ns:InitDatabase()
+    end
+    local target = profileName or ns.db.activeProfile
+    if target == "Default" then
+        ns:Print(L["UI_PROFILE_CANNOT_DEL"])
+        return false
+    end
+    if not ns.db.profiles[target] then
+        return false
+    end
+
+    ns.db.profiles[target] = nil
+    if ns.db.activeProfile == target then
+        Profiles:SwitchProfile("Default", true)
+    end
+    ns:Print(string.format(L["UI_PROFILE_DELETED"], target))
+    ns:Fire("OnProfileSwitched", ns.db.activeProfile)
+    return true
+end
+
+-- ============================================================================
+-- Presets & Reset
+-- ============================================================================
 function Profiles:ApplyPreset(presetId)
     local preset = Registry:GetPreset(presetId)
     if not preset then
@@ -144,7 +277,6 @@ function Profiles:RestoreCustomWindows()
 end
 
 -- Safe, deterministic ASCII profile export (NO loadstring ever used!)
--- Format: FSCALE1;ID=scale,mode,locked,x,y;ID2=...
 local MODE_TO_SHORT = {
     [ns.MODE_SCALE_MOVE] = "M",
     [ns.MODE_SCALE_ONLY] = "S",
@@ -207,7 +339,7 @@ function Profiles:ImportString(raw)
         end
     end
 
-    if importedCount == 0 and trimmed ~= "FSCALE1" then
+    if importedCount == 0 and trimmed ~= "ELLA1" and trimmed ~= "FSCALE1" then
         return false, L["UI_IMPORT_ERROR"]
     end
 

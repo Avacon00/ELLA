@@ -41,8 +41,13 @@ function Welcome:ShowIfFirstRun()
             f:SetBackdropBorderColor(0.88, 0.72, 0.25, 1)
         end
 
+        local icon = f:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(24, 24)
+        icon:SetPoint("TOPLEFT", 18, -12)
+        icon:SetTexture("Interface\\AddOns\\ELLA\\Media\\Icon")
+
         local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-        title:SetPoint("TOP", 0, -14)
+        title:SetPoint("LEFT", icon, "RIGHT", 8, 0)
         title:SetText(L["WELCOME_TITLE"])
 
         local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")

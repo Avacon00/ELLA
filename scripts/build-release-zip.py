@@ -7,7 +7,7 @@ import pathlib
 import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-EXCLUDED_TOP = {".git", ".github", ".gitignore", ".luacheckrc", ".pkgmeta", ".release", "CONTRIBUTING.md", "README.md", "scripts", "tests"}
+EXCLUDED_TOP = {".git", ".github", ".gitignore", ".luacheckrc", ".pkgmeta", ".release", "assets", "CONTRIBUTING.md", "README.md", "scripts", "tests"}
 
 
 def build_zip() -> pathlib.Path:

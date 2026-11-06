@@ -14,6 +14,7 @@ Registry:RegisterBatch(nil, {
         category = "CAT_CHARACTER",
         defaultCompactScale = 0.85,
         protected = true,
+        linkedFrames = { "TokenFramePopup", "GearManagerDialogPopup" },
     },
     REPUTATION = {
         candidates = { "ReputationFrame" },
@@ -35,6 +36,7 @@ Registry:RegisterBatch(nil, {
         defaultCompactScale = 0.82,
         protected = true,
         dragSubFrames = { "BorderFrame", "NavBar" },
+        linkedFrames = { "QuestLogPopupDetailFrame" },
     },
     QUEST_DIALOG = {
         frame = "QuestFrame",
@@ -71,12 +73,14 @@ Registry:RegisterBatch(nil, {
         labelKey = "WIN_DRESSUP",
         category = "CAT_CHARACTER",
         defaultCompactScale = 0.84,
+        linkedFrames = { "SideDressUpFrame" },
     },
     FRIENDS = {
         frame = "FriendsFrame",
         labelKey = "WIN_FRIENDS",
         category = "CAT_SOCIAL",
         defaultCompactScale = 0.84,
+        linkedFrames = { "AddFriendFrame", "FriendsFriendsFrame" },
     },
     GROUP_FINDER = {
         candidates = { "PVEFrame", "LFGParentFrame" },

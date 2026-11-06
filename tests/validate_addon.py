@@ -100,6 +100,10 @@ def validate_toc() -> list[pathlib.Path]:
         raise ValidationError("TOC must include 'camelot' in '## AllowLoadGameType'")
     if meta.get("SavedVariables") != "ELLADB":
         raise ValidationError("TOC must declare '## SavedVariables: ELLADB'")
+    if meta.get("IconTexture") == r"Interface\AddOns\ELLA\Media\Icon":
+        icon_tga = ROOT / "Media" / "Icon.tga"
+        if not icon_tga.is_file():
+            raise ValidationError(f"Custom IconTexture declared in ELLA.toc, but missing file: {icon_tga}")
 
     # Ensure no Lua files in Core/Data/UI/API/Locales were forgotten in TOC
     ref_set = {p.resolve() for p in referenced_files}
@@ -206,6 +210,18 @@ def validate_lua_syntax_and_golden_rules(lua_files: list[pathlib.Path]) -> None:
             raise ValidationError(f"{rel}: Unclosed Lua block(s) remaining at EOF: {bstack}")
 
         if not is_lib:
+            # Friz Quadrata (Windows-1252) font glyph safety check: prevent missing-glyph '▯' boxes in-game
+            for lineno, line in enumerate(raw.splitlines(), 1):
+                code_part = line.split("--", 1)[0]
+                for ch in code_part:
+                    if ord(ch) > 127:
+                        try:
+                            ch.encode("cp1252")
+                        except UnicodeEncodeError as exc:
+                            raise ValidationError(
+                                f"{rel}:{lineno}: Unsupported in-game font glyph {ch!r} (U+{ord(ch):04X}) would render as '▯' in Friz Quadrata"
+                            ) from exc
+
             # Golden Rule #3: Never mutate UIPanelWindows
             if re.search(r"\bUIPanelWindows\b", stripped):
                 raise ValidationError(f"{rel}: Forbidden reference/mutation of UIPanelWindows (Golden Rule #3)")

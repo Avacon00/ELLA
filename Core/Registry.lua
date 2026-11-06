@@ -95,6 +95,7 @@ function Registry:RegisterWindow(windowId, spec)
     desc.defaultMode = spec.defaultMode or desc.defaultMode
     desc.protected = (spec.protected == true)
     desc.dragSubFrames = spec.dragSubFrames or desc.dragSubFrames
+    desc.linkedFrames = spec.linkedFrames or desc.linkedFrames
     desc.badgeOffsetX = tonumber(spec.badgeOffsetX) or desc.badgeOffsetX or -28
     desc.badgeOffsetY = tonumber(spec.badgeOffsetY) or desc.badgeOffsetY or -5
     desc.isCustom = (spec.isCustom == true)

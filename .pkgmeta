@@ -10,6 +10,7 @@ ignore:
   - .github
   - .gitignore
   - .luacheckrc
+  - assets
   - CONTRIBUTING.md
   - README.md
   - scripts

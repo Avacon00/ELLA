@@ -11,8 +11,10 @@ local ManagerUI = {}
 ns.ManagerUI = ManagerUI
 
 local BACKDROP_TEMPLATE = _G.BackdropTemplateMixin and "BackdropTemplate" or nil
+local ICON_PATH = "Interface\\AddOns\\ELLA\\Media\\Icon"
 local managerFrame = nil
 local exportModal = nil
+local newProfileModal = nil
 local rowPool = {}
 local searchQuery = ""
 
@@ -125,6 +127,73 @@ local function OpenExportImportModal()
 end
 
 -- ============================================================================
+-- New / Copy Named Profile Modal (v1.1)
+-- ============================================================================
+local function OpenNewProfileModal()
+    if not newProfileModal then
+        local m = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
+        m:SetSize(420, 134)
+        m:SetPoint("CENTER", 0, 40)
+        m:SetFrameStrata("FULLSCREEN_DIALOG")
+        m:EnableMouse(true)
+        m:SetClampedToScreen(true)
+        StyleBox(m, 0.05, 0.06, 0.09, 0.98)
+
+        local prompt = m:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        prompt:SetPoint("TOPLEFT", 14, -14)
+        prompt:SetPoint("TOPRIGHT", -14, -14)
+        prompt:SetJustifyH("LEFT")
+        prompt:SetText(L["UI_PROFILE_PROMPT"])
+
+        local input = CreateFrame("EditBox", nil, m, BACKDROP_TEMPLATE)
+        input:SetSize(392, 28)
+        input:SetPoint("TOPLEFT", 14, -48)
+        input:SetAutoFocus(false)
+        input:SetMaxLetters(36)
+        input:SetFontObject("ChatFontNormal")
+        input:SetTextInsets(8, 8, 0, 0)
+        StyleBox(input, 0.02, 0.02, 0.04, 0.95)
+        m.input = input
+
+        local function SubmitNewProfile()
+            local txt = input:GetText() or ""
+            if Profiles:CreateOrCopyProfile(txt, true) then
+                input:SetText("")
+                input:ClearFocus()
+                m:Hide()
+                ManagerUI:RefreshList()
+            end
+        end
+
+        input:SetScript("OnEnterPressed", SubmitNewProfile)
+        input:SetScript("OnEscapePressed", function(self)
+            self:ClearFocus()
+            m:Hide()
+        end)
+
+        local createBtn = CreateFrame("Button", nil, m, "UIPanelButtonTemplate")
+        createBtn:SetSize(160, 24)
+        createBtn:SetPoint("BOTTOMLEFT", 14, 12)
+        createBtn:SetText(L["UI_PROFILE_CREATE_BTN"])
+        createBtn:SetScript("OnClick", SubmitNewProfile)
+
+        local closeBtn = CreateFrame("Button", nil, m, "UIPanelButtonTemplate")
+        closeBtn:SetSize(120, 24)
+        closeBtn:SetPoint("BOTTOMRIGHT", -14, 12)
+        closeBtn:SetText(L["UI_BTN_CLOSE"])
+        closeBtn:SetScript("OnClick", function()
+            m:Hide()
+        end)
+
+        newProfileModal = m
+    end
+
+    newProfileModal.input:SetText("")
+    newProfileModal:Show()
+    newProfileModal.input:SetFocus()
+end
+
+-- ============================================================================
 -- Window Row Factory
 -- ============================================================================
 local function GetOrCreateRow(parent, index)
@@ -146,8 +215,8 @@ local function GetOrCreateRow(parent, index)
         end
     end
 
-    local statusDot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    statusDot:SetPoint("LEFT", 8, 0)
+    local statusDot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    statusDot:SetPoint("LEFT", 10, 0)
     row.statusDot = statusDot
 
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -227,12 +296,18 @@ function ManagerUI:RefreshList()
         return
     end
 
-    -- Sync global checkboxes
+    -- Sync global checkboxes & active profile bar
     local s = ns.db.settings
     managerFrame.chkEnabled:SetChecked(s.enabled)
     managerFrame.chkBadges:SetChecked(s.showBadges)
     managerFrame.chkCtrlWheel:SetChecked(s.ctrlWheelZoom)
     managerFrame.chkClamp:SetChecked(s.clampToScreen)
+    managerFrame.chkDragOpacity:SetChecked(s.dragOpacity)
+    managerFrame.chkMagneticSnap:SetChecked(s.magneticSnap)
+
+    local activeProf = Profiles:GetActiveProfileName()
+    managerFrame.profCycleBtn:SetText("» " .. activeProf .. " «")
+    managerFrame.profDelBtn:SetEnabled(activeProf ~= "Default")
 
     local content = managerFrame.scrollChild
     local q = string.lower(searchQuery or "")
@@ -283,13 +358,13 @@ function ManagerUI:RefreshList()
         local pct = math.floor(((cfg and cfg.scale) or 1) * 100 + 0.5)
 
         if item.isOpen then
-            row.statusDot:SetText("|cff00ff96●|r")
+            row.statusDot:SetText("|cff00ff96•|r")
             row.catLabel:SetText(item.catTitle .. " • |cff00ff96" .. L["UI_STATUS_OPEN"] .. "|r")
         elseif item.isLoaded then
-            row.statusDot:SetText("|cffffd100●|r")
+            row.statusDot:SetText("|cffffd100•|r")
             row.catLabel:SetText(item.catTitle .. " • " .. L["UI_STATUS_LOADED"])
         else
-            row.statusDot:SetText("|cff777788○|r")
+            row.statusDot:SetText("|cff666677•|r")
             row.catLabel:SetText(item.catTitle .. " • " .. L["UI_STATUS_LOD"])
         end
 
@@ -307,7 +382,7 @@ function ManagerUI:RefreshList()
 end
 
 -- ============================================================================
--- Standalone Window Manager (/fscale)
+-- Standalone Window Manager (/ella)
 -- ============================================================================
 local function EnsureManagerFrame()
     if managerFrame then
@@ -315,7 +390,7 @@ local function EnsureManagerFrame()
     end
 
     local f = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    f:SetSize(720, 510)
+    f:SetSize(720, 580)
     f:SetPoint("CENTER", 0, 20)
     f:SetFrameStrata("DIALOG")
     f:EnableMouse(true)
@@ -327,9 +402,14 @@ local function EnsureManagerFrame()
     f:SetScript("OnDragStop", f.StopMovingOrSizing)
     f:Hide()
 
+    local iconTex = f:CreateTexture(nil, "ARTWORK")
+    iconTex:SetSize(24, 24)
+    iconTex:SetPoint("TOPLEFT", 16, -10)
+    iconTex:SetTexture(ICON_PATH)
+
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 16, -12)
-    title:SetText(L["UI_MANAGER_TITLE"])
+    title:SetPoint("LEFT", iconTex, "RIGHT", 8, 0)
+    title:SetText(L["UI_MANAGER_TITLE"] .. " |cff8899aa(v" .. ns.Version .. ")|r")
 
     local closeBtn = CreateFrame("Button", nil, f, "UIPanelCloseButton")
     closeBtn:SetPoint("TOPRIGHT", -4, -4)
@@ -337,7 +417,7 @@ local function EnsureManagerFrame()
         f:Hide()
     end)
 
-    -- Global Settings Toggles (2x2 compact grid)
+    -- Global Settings Toggles (3x2 compact grid)
     local function CreateToggle(label, x, y, getter, setter)
         local chk = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
         chk:SetSize(24, 24)
@@ -352,7 +432,7 @@ local function EnsureManagerFrame()
         return chk
     end
 
-    f.chkEnabled = CreateToggle(L["UI_GLOBAL_ENABLED"], 14, -38,
+    f.chkEnabled = CreateToggle(L["UI_GLOBAL_ENABLED"], 14, -40,
         function() return ns.db.settings.enabled end,
         function(val)
             ns.db.settings.enabled = val
@@ -361,7 +441,7 @@ local function EnsureManagerFrame()
         end
     )
 
-    f.chkBadges = CreateToggle(L["UI_SHOW_BADGES"], 350, -38,
+    f.chkBadges = CreateToggle(L["UI_SHOW_BADGES"], 350, -40,
         function() return ns.db.settings.showBadges end,
         function(val)
             ns.db.settings.showBadges = val
@@ -369,18 +449,86 @@ local function EnsureManagerFrame()
         end
     )
 
-    f.chkCtrlWheel = CreateToggle(L["UI_CTRL_WHEEL"], 14, -62,
+    f.chkCtrlWheel = CreateToggle(L["UI_CTRL_WHEEL"], 14, -64,
         function() return ns.db.settings.ctrlWheelZoom end,
         function(val) ns.db.settings.ctrlWheelZoom = val end
     )
 
-    f.chkClamp = CreateToggle(L["UI_CLAMP_SCREEN"], 350, -62,
+    f.chkClamp = CreateToggle(L["UI_CLAMP_SCREEN"], 350, -64,
         function() return ns.db.settings.clampToScreen end,
         function(val)
             ns.db.settings.clampToScreen = val
             Engine:ReapplyAllShown()
         end
     )
+
+    f.chkDragOpacity = CreateToggle(L["UI_DRAG_OPACITY"], 14, -88,
+        function() return ns.db.settings.dragOpacity end,
+        function(val) ns.db.settings.dragOpacity = val end
+    )
+
+    f.chkMagneticSnap = CreateToggle(L["UI_MAGNETIC_SNAP"], 350, -88,
+        function() return ns.db.settings.magneticSnap end,
+        function(val) ns.db.settings.magneticSnap = val end
+    )
+
+    -- Named Profile Bar (v1.1)
+    local profLabel = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    profLabel:SetPoint("TOPLEFT", 16, -124)
+    profLabel:SetText(L["UI_PROFILE_LABEL"])
+
+    local profCycleBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    profCycleBtn:SetSize(220, 24)
+    profCycleBtn:SetPoint("TOPLEFT", 68, -118)
+    ApplyCompactButtonFont(profCycleBtn)
+    profCycleBtn:SetScript("OnClick", function()
+        Profiles:CycleNextProfile()
+        ManagerUI:RefreshList()
+    end)
+    profCycleBtn:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["UI_PROFILE_LABEL"], 1, 0.82, 0)
+            local active = Profiles:GetActiveProfileName()
+            local all = Profiles:ListProfiles()
+            for i = 1, #all do
+                local pName = all[i]
+                if pName == active then
+                    GameTooltip:AddLine("» " .. pName, 0, 1, 0.59)
+                else
+                    GameTooltip:AddLine("• " .. pName, 0.8, 0.8, 0.8)
+                end
+            end
+            GameTooltip:Show()
+        end
+    end)
+    profCycleBtn:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+    f.profCycleBtn = profCycleBtn
+
+    local profNewBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    profNewBtn:SetSize(136, 24)
+    profNewBtn:SetPoint("LEFT", profCycleBtn, "RIGHT", 8, 0)
+    ApplyCompactButtonFont(profNewBtn)
+    profNewBtn:SetText(L["UI_PROFILE_NEW"])
+    profNewBtn:SetScript("OnClick", function()
+        OpenNewProfileModal()
+    end)
+    f.profNewBtn = profNewBtn
+
+    local profDelBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    profDelBtn:SetSize(106, 24)
+    profDelBtn:SetPoint("LEFT", profNewBtn, "RIGHT", 8, 0)
+    ApplyCompactButtonFont(profDelBtn)
+    profDelBtn:SetText(L["UI_PROFILE_DELETE"])
+    profDelBtn:SetScript("OnClick", function()
+        Profiles:DeleteProfile(Profiles:GetActiveProfileName())
+        ManagerUI:RefreshList()
+    end)
+    f.profDelBtn = profDelBtn
 
     -- Preset Bar (4 evenly spaced 168px buttons across 692px inner width)
     local presetDefs = {
@@ -393,7 +541,7 @@ local function EnsureManagerFrame()
         local pd = presetDefs[i]
         local pBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         pBtn:SetSize(168, 24)
-        pBtn:SetPoint("TOPLEFT", 14 + (i - 1) * 174, -94)
+        pBtn:SetPoint("TOPLEFT", 14 + (i - 1) * 174, -148)
         ApplyCompactButtonFont(pBtn)
         pBtn:SetText(pd.label)
         pBtn:SetScript("OnClick", function()
@@ -418,7 +566,7 @@ local function EnsureManagerFrame()
     -- Search Box + Utility Buttons (fits cleanly inside 692px inner width)
     local searchBox = CreateFrame("EditBox", nil, f, BACKDROP_TEMPLATE)
     searchBox:SetSize(232, 24)
-    searchBox:SetPoint("TOPLEFT", 14, -126)
+    searchBox:SetPoint("TOPLEFT", 14, -180)
     searchBox:SetAutoFocus(false)
     searchBox:SetFontObject("ChatFontNormal")
     searchBox:SetTextInsets(8, 8, 0, 0)
@@ -468,7 +616,7 @@ local function EnsureManagerFrame()
 
     -- Scrollable Window List
     local listBorder = CreateFrame("Frame", nil, f, BACKDROP_TEMPLATE)
-    listBorder:SetPoint("TOPLEFT", 14, -156)
+    listBorder:SetPoint("TOPLEFT", 14, -210)
     listBorder:SetPoint("BOTTOMRIGHT", -14, 14)
     StyleBox(listBorder, 0.03, 0.04, 0.06, 0.90)
 
@@ -507,6 +655,8 @@ ns:On("OnWindowBound", function() ManagerUI:RefreshList() end)
 ns:On("OnManagedFrameShown", function() ManagerUI:RefreshList() end)
 ns:On("OnManagedFrameHidden", function() ManagerUI:RefreshList() end)
 ns:On("OnPresetApplied", function() ManagerUI:RefreshList() end)
+ns:On("OnProfileSwitched", function() ManagerUI:RefreshList() end)
+ns:On("OnProfileImported", function() ManagerUI:RefreshList() end)
 ns:On("OnResetAll", function() ManagerUI:RefreshList() end)
 
 -- ============================================================================
@@ -521,17 +671,22 @@ local function RegisterBlizzardSettingsCanvas()
     local canvas = CreateFrame("Frame", nil, UIParent)
     canvas:Hide()
 
+    local icon = canvas:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(36, 36)
+    icon:SetPoint("TOPLEFT", 16, -16)
+    icon:SetTexture(ICON_PATH)
+
     local header = canvas:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    header:SetPoint("TOPLEFT", 16, -16)
+    header:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, -2)
     header:SetText(L["ADDON_TITLE"] .. " v" .. ns.Version)
 
     local sub = canvas:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    sub:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -6)
+    sub:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -4)
     sub:SetText(L["ADDON_SUBTITLE"])
 
     local openBtn = CreateFrame("Button", nil, canvas, "UIPanelButtonTemplate")
     openBtn:SetSize(260, 30)
-    openBtn:SetPoint("TOPLEFT", sub, "BOTTOMLEFT", 0, -20)
+    openBtn:SetPoint("TOPLEFT", 16, -68)
     openBtn:SetText(L["UI_OPEN_MANAGER"])
     openBtn:SetScript("OnClick", function()
         ManagerUI:Show()
@@ -574,7 +729,7 @@ local function RegisterMinimapCompartment()
 
     compartment:RegisterAddon({
         text = L["ADDON_TITLE"],
-        icon = "Interface\\Icons\\INV_Misc_Spyglass_03",
+        icon = ICON_PATH,
         notCheckable = true,
         registerForAnyClick = true,
         func = function(_, menuInputData)
@@ -618,7 +773,8 @@ _G.SLASH_ELLA1 = "/ella"
 _G.SLASH_ELLA2 = "/fscale"
 
 _G.SlashCmdList["ELLA"] = function(rawMsg)
-    local cmd = string.lower(string.match(rawMsg or "", "^%s*(%S*)") or "")
+    local cmd, rest = string.match(rawMsg or "", "^%s*(%S*)%s*(.-)%s*$")
+    cmd = string.lower(cmd or "")
     if cmd == "pick" or cmd == "inspect" then
         Picker:Start()
     elseif cmd == "compact" or cmd == "80" then
@@ -626,6 +782,12 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
     elseif cmd == "badges" or cmd == "badge" then
         ns.db.settings.showBadges = not ns.db.settings.showBadges
         BadgeUI:RefreshAll()
+    elseif cmd == "profile" or cmd == "prof" then
+        if rest and rest ~= "" then
+            Profiles:SwitchProfile(rest)
+        else
+            Profiles:CycleNextProfile()
+        end
     elseif cmd == "reset" then
         Profiles:ResetAll()
     elseif cmd == "help" or cmd == "?" then
@@ -634,6 +796,7 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         ns:Print(L["SLASH_HELP_PICK"])
         ns:Print(L["SLASH_HELP_PRESET"])
         ns:Print(L["SLASH_HELP_BADGES"])
+        ns:Print(L["SLASH_HELP_PROFILE"])
         ns:Print(L["SLASH_HELP_RESET"])
     else
         ManagerUI:Toggle()

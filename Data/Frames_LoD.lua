@@ -35,6 +35,7 @@ Registry:RegisterWindow("PROFESSIONS", {
     category = "CAT_CRAFT_ECON",
     defaultCompactScale = 0.76,
     protected = true,
+    linkedFrames = { "ProfessionsCustomerOrdersFrame" },
 })
 
 -- Classic-style TradeSkill / Craft fallbacks
@@ -61,6 +62,7 @@ Registry:RegisterWindow("AUCTION", {
     labelKey = "WIN_AUCTION",
     category = "CAT_CRAFT_ECON",
     defaultCompactScale = 0.78,
+    linkedFrames = { "AuctionDressUpFrame" },
 })
 
 -- Class & Profession Trainer
@@ -128,4 +130,5 @@ Registry:RegisterWindow("MACRO", {
     category = "CAT_CHARACTER",
     defaultCompactScale = 0.84,
     protected = true,
+    linkedFrames = { "MacroPopupFrame" },
 })
