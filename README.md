@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.7.0](https://img.shields.io/badge/Version-v1.7.0-ffaa00)
+![Version 1.7.3](https://img.shields.io/badge/Version-v1.7.3-ffaa00)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
@@ -19,9 +19,12 @@
 ## Deutsch (Übersicht & Bedienung)
 
 ### Highlights
-* **Screen-Grid Overlay (`v1.7`):** Schalte per Klick auf `[# Gitter]` im Manager oder per `/ella grid` ein dezentes Vollbild-Ausrichtungsgitter mit leuchtendem Zentrum-Kreuz (Cyan), Drittel-Achsen (Gold) und 32px-Raster ein, um dein Interface symmetrisch wie ein Profi-Streamer einzurichten.
-* **Profil-Sharing 2.0 mit Live-Vorschau (`v1.7`):** Teile deine Layouts blitzschnell via `!ELLA:v2:`-Codes. Beim Einfügen analysiert Ella den String sofort und zeigt eine Infobox mit Profilnamen und enthaltenen Fenstern an, bevor du ihn übernimmst.
-* **Boss-Key & Panik-Aktion (`v1.7`):** Ein einziger Tastendruck schließt alle aktuell offenen Fenster blitzschnell – ein zweiter Tastendruck stellt genau dieselben Fenster wieder an Ort und Stelle her! Frei belegbar in Blizzards Menü (*Tastenbelegung* -> *Ella*) oder per `/ella panic`.
+* **Minimap-Schnellauswahl & Shift+Klick (`v1.7.3`):** Eigenständiges, ausfallsicheres Popover direkt an der Minimap mit Profil-Schnellwechsler, 1-Klick-Presets und Schnellstartern (Picker, Gitter, Tutorial). Halte `Shift` gedrückt und klicke auf das Icon, um sofort zum nächsten Profil durchzuschalten!
+* **Erweitertes 13-Schritte Onboarding-Tutorial (`v1.7.2`):** Vollständig ausgebaute, geführte Tour (`/ella tour`) mit automatischer Reiter-Navigation und Scheinwerfer-Spotlight über alle 3 Hauptbereiche.
+* **Entzerrte 3-Reiter-Benutzeroberfläche (`v1.7.1`):** Übersichtliche Aufteilung des Managers in *Fenster & Skalierung*, *Einstellungen* und *Profile & Vorlagen* mit über 120px mehr vertikalem Platz (12–14 Fensterzeilen gleichzeitig ohne Scrollen sichtbar).
+* **Screen-Grid Overlay (`v1.7.0`):** Schalte per Klick auf `[# Gitter]` im Manager oder per `/ella grid` ein dezentes Vollbild-Ausrichtungsgitter mit leuchtendem Zentrum-Kreuz (Cyan), Drittel-Achsen (Gold) und 32px-Raster ein, um dein Interface symmetrisch wie ein Profi-Streamer einzurichten.
+* **Profil-Sharing 2.0 mit Live-Vorschau (`v1.7.0`):** Teile deine Layouts blitzschnell via `!ELLA:v2:`-Codes. Beim Einfügen analysiert Ella den String sofort und zeigt eine Infobox mit Profilnamen und enthaltenen Fenstern an, bevor du ihn übernimmst.
+* **Boss-Key & Panik-Aktion (`v1.7.0`):** Ein einziger Tastendruck schließt alle aktuell offenen Fenster blitzschnell – ein zweiter Tastendruck stellt genau dieselben Fenster wieder an Ort und Stelle her! Frei belegbar in Blizzards Menü (*Tastenbelegung* -> *Ella*) oder per `/ella panic`.
 * **Kampf- & Instanz-Schutz (`v1.6`):**
   * *Auto-Close im Kampf:* Schließt ungeschützte Menüs, Zauberbuch und Berufsfenster beim Kampfeintritt (`PLAYER_REGEN_DISABLED`) sofort automatisch.
   * *Instanz-Kompaktmodus:* Schaltet in Dungeons, Raids und PvP-Instanzen automatisch auf maximal 75 % Skalierung um. Beim Verlassen wird deine Wunschskalierung nahtlos wiederhergestellt.
@@ -35,8 +38,6 @@
 * **Fenster-Picker 2.0 (`v1.5`):** Visuelle Drittanbieter-Erkennung mit Live Hover-Highlighter, schwebendem Cursor-HUD und innovativer **Mausrad-Hierarchie-Navigation** (`Child` <-> `Parent`), um verschachtelte AddOns zielsicher aufzunehmen.
 * **Fenster-Deckkraft & Mouseover-Fade (`v1.4`):** Passe die Transparenz jedes Fensters stufenlos (30%–100%) an. Mit *Mouseover-Fade* bleiben Fenster dezent durchscheinend, bis du mit der Maus darüberfährst – dann schalten sie sofort auf 100% Sichtbarkeit (0,00 ms Leerlauf-CPU).
 * **Charakter-gebundene Profile & Handheld-Erkennung (`v1.4`):** Binde Layout-Profile direkt an deine Charaktere. Auf kompakten Displays wie dem Steam Deck (<= 1400x800) schlägt Ella automatisch das handliche 72%-Preset vor.
-* **Minimap-Button & Schnellmenü (`v1.3`):** Eleganter Kompass-Button an der Minimap für schnellen Zugriff auf Profile, Presets, Fenstervorschau und Filter.
-* **Interaktives Einsteiger-Tutorial (`v1.2`):** Fragt beim ersten Aufruf von `/ella` freundlich nach (*„Kleines Tutorial gefällig?“*) und führt in einer 8-Schritte-Tour mit abgedunkeltem Hintergrund und leuchtenden Scheinwerfer-Rahmen durch alle Kernfunktionen (jederzeit über `[?]` oder `/ella tour` wiederholbar).
 * **Einzel-Fenster-Skalierung (`50 %` – `150 %`):** Skaliere jedes Blizzard- und *WoW: Forever*-Fenster individuell über das dezente `%`-Badge in der Titelleiste, per `Strg + Mausrad` oder im `/ella`-Manager.
 * **Benannte Layout-Profile (`v1.1`):** Wechsle per Klick im `/ella`-Manager oder per `/ella profile <Name>` blitzschnell zwischen verschiedenen Setups (z. B. `Default`, `Laptop / Deck`, `Raid`, `Twink`).
 * **Magnetisches Einrasten & Live-Hilfslinien (`v1.1`):** Beim Ziehen richten sich Fenster sanft an der Bildschirmmitte sowie an Oberkanten und Seiten anderer offener Fenster aus (inklusive leuchtender Cyan-Hilfslinien, `Shift` = `10px`-Raster und optionaler Halbtransparenz beim Verschieben).
@@ -66,9 +67,12 @@
 ## English (Overview & Usage)
 
 ### Key Features
-* **Screen-Grid Overlay (`v1.7`):** Toggle a full-screen alignment grid (`[# Grid]` button or `/ella grid`) featuring a glowing cyan center crosshair, golden rule-of-thirds lines, and 32px precision grid lines to align your UI like a professional streamer.
-* **Profile-Sharing 2.0 with Live Preview (`v1.7`):** Share your window layouts with friends via `!ELLA:v2:` string codes. Pasting a string instantly previews the profile name and configured windows before importing.
-* **Boss-Key & Panic Restore (`v1.7`):** Instantly closes all open windows on a single key press, and pressing it again restores exactly those same windows. Bindable via standard WoW Keybindings (`Options` -> `Keybindings` -> `Ella`) or `/ella panic`.
+* **Minimap Quick Menu & Shift+Click Cycle (`v1.7.3`):** Native, zero-taint popover anchored to the Minimap button for quick profile switching, 1-click presets, and tool launchers (picker, grid, tutorial). Hold `Shift` and click the icon to instantly cycle through profiles!
+* **Expanded 13-Step Onboarding Tutorial (`v1.7.2`):** Comprehensive guided interactive walkthrough (`/ella tour`) featuring automatic tab switching and spotlighting across all 3 main areas.
+* **De-Cluttered 3-Tab Architecture (`v1.7.1`):** Clean separation into *Windows & Scale*, *Settings*, and *Profiles & Presets* with >120px more vertical height for up to 14 rows visible simultaneously.
+* **Screen-Grid Overlay (`v1.7.0`):** Toggle a full-screen alignment grid (`[# Grid]` button or `/ella grid`) featuring a glowing cyan center crosshair, golden rule-of-thirds lines, and 32px precision grid lines to align your UI like a professional streamer.
+* **Profile-Sharing 2.0 with Live Preview (`v1.7.0`):** Share your window layouts with friends via `!ELLA:v2:` string codes. Pasting a string instantly previews the profile name and configured windows before importing.
+* **Boss-Key & Panic Restore (`v1.7.0`):** Instantly closes all open windows on a single key press, and pressing it again restores exactly those same windows. Bindable via standard WoW Keybindings (`Options` -> `Keybindings` -> `Ella`) or `/ella panic`.
 * **Combat & Instance Protection (`v1.6`):**
   * *Combat Auto-Close:* Automatically closes open menus, spellbook, quests, and profession windows upon entering combat (`PLAYER_REGEN_DISABLED`) for a clear field of view.
   * *Instance Compact Mode:* Automatically caps open windows to 75% max scale inside dungeons, raids, and PvP instances. Seamlessly restores your custom sizes when exiting.
@@ -123,6 +127,11 @@ ELLA/
 ├── Media/
 │   └── Icon.tga             # Custom 256x256 Addon-Icon (Addon-Liste, Minimap & UI)
 ├── assets/                  # CurseForge Avatar (400x400) & Hero-Banner (nur Repo/Web)
+├── Libs/
+│   └── LibStub/             # Eingebettete Public-Domain Bibliothek
+├── Locales/
+│   ├── enUS.lua             # Englische Lokalisierung (Fallback)
+│   └── deDE.lua             # Deutsche Lokalisierung (100% Parität)
 ├── Core/
 │   ├── Init.lua             # Namespace, Konstanten, SavedVariables Schema v2 (ELLADB)
 │   ├── Guard.lua            # Anti-Taint-Wächter, EditMode-Blacklist & Combat-Queue
@@ -135,9 +144,12 @@ ELLA/
 │   └── Frames_Forever.lua   # WoW: Forever Spezialfenster (Camping, Legacy, Fraktionen)
 ├── UI/
 │   ├── Badge.lua            # UIParent-isoliertes Titelleisten-Badge (%) & Popover-Slider
+│   ├── GridOverlay.lua      # Bildschirm-Ausrichtungsgitter (Zentrum-Kreuz & Drittel-Achsen)
+│   ├── MinimapButton.lua    # Natives Minimap-QuickMenu & Shift+Klick Durchschaltung
 │   ├── Picker.lua           # Interaktiver "/ella pick" Inspektor + GitHub-Snippet-Generator
-│   ├── WelcomeDialog.lua    # Einmaliger Erststart-Dialog zur Preset-Wahl
-│   └── SettingsPanel.lua    # Fenster-Manager (/ella), Blizzard-Optionen & AddonCompartment
+│   ├── SettingsPanel.lua    # 3-Reiter Fenster-Manager (/ella) mit Profilen & Optionen
+│   ├── Tutorial.lua         # Interaktives 13-Schritte Onboarding-Tutorial (/ella tour)
+│   └── WelcomeDialog.lua    # Einmaliger Erststart-Dialog zur Preset-Wahl
 └── API/
     └── PublicAPI.lua        # Öffentliche Drittanbieter-API (ELLA_API & LibStub("ELLA-1.0"))
 ```
