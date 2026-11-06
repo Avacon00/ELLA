@@ -65,8 +65,12 @@ local function GetOrCreatePopover()
     p:SetFrameLevel(200)
     p:EnableMouse(true)
     p:EnableMouseWheel(true)
+    p:SetMovable(true)
+    p:RegisterForDrag("LeftButton")
     p:SetClampedToScreen(true)
     ApplyPillBackdrop(p, 0.96, 0.85, 0.70, 0.28)
+    p:SetScript("OnDragStart", p.StartMoving)
+    p:SetScript("OnDragStop", p.StopMovingOrSizing)
     p:Hide()
 
     local title = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -101,15 +105,27 @@ local function GetOrCreatePopover()
     thumb:SetTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
     thumb:SetSize(24, 24)
     slider:SetThumbTexture(thumb)
+    slider:SetScript("OnMouseDown", function(self)
+        self.isDraggingThumb = true
+    end)
+    slider:SetScript("OnMouseUp", function(self)
+        self.isDraggingThumb = false
+    end)
     p.slider = slider
 
     slider:SetScript("OnValueChanged", function(_, value)
-        if p.updating or not p.windowId then
+        if p.updating or p.inSliderCallback or not p.windowId then
             return
         end
         local pct = math.floor(value + 0.5)
         p.scaleLabel:SetText(string.format(L["POPOVER_SCALE"], pct))
+        if p.lastAppliedPct == pct then
+            return
+        end
+        p.lastAppliedPct = pct
+        p.inSliderCallback = true
         Engine:SetWindowScale(p.windowId, pct / 100, false)
+        p.inSliderCallback = false
     end)
 
     p:SetScript("OnMouseWheel", function(_, delta)
@@ -188,9 +204,13 @@ local function RefreshPopover()
     local pct = math.floor((cfg.scale or 1) * 100 + 0.5)
 
     popover.updating = true
+    popover.lastAppliedPct = pct
     popover.title:SetText(Registry:GetDisplayLabel(desc))
     popover.scaleLabel:SetText(string.format(L["POPOVER_SCALE"], pct))
-    popover.slider:SetValue(pct)
+    -- Avoid fighting the user's mouse while the slider is actively firing OnValueChanged
+    if not popover.inSliderCallback and not popover.slider.isDraggingThumb then
+        popover.slider:SetValue(pct)
+    end
     popover.scaleOnlyChk:SetChecked(cfg.mode == ns.MODE_SCALE_ONLY)
     popover.lockChk:SetChecked(cfg.locked and true or false)
     popover.updating = false
@@ -204,7 +224,13 @@ local function TogglePopoverForBadge(windowId, badge)
     end
     p.windowId = windowId
     p:ClearAllPoints()
-    p:SetPoint("TOPRIGHT", badge, "BOTTOMRIGHT", 0, -4)
+    -- Anchor popover to fixed UIParent coordinates (NOT to the moving badge!)
+    -- so resizing the window never shifts the slider underneath the user's cursor.
+    local uipScale = UIParent:GetEffectiveScale() or 1
+    local bScale = badge:GetEffectiveScale() or uipScale
+    local right = (badge:GetRight() or 400) * (bScale / uipScale)
+    local bottom = (badge:GetBottom() or 400) * (bScale / uipScale)
+    p:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", right, bottom - 4)
     p:Show()
     RefreshPopover()
 end

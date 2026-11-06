@@ -217,8 +217,10 @@ function Engine:SetWindowScale(windowId, requestedScale, pivotAroundCursor)
             return false
         end
 
-        local oldScale = frame:GetScale() or 1
-        local oldUipX, oldUipY = Engine:ReadUipTopLeft(frame)
+        local oldScale = (cfg.scale and cfg.scale > 0) and cfg.scale or (frame:GetScale() or 1)
+        local readX, readY = Engine:ReadUipTopLeft(frame)
+        local oldUipX = (cfg.pos and cfg.pos.uipX) or readX
+        local oldUipY = (cfg.pos and cfg.pos.uipY) or readY
 
         if cfg.mode == ns.MODE_SCALE_MOVE and oldUipX and oldUipY then
             if pivotAroundCursor then
@@ -232,9 +234,12 @@ function Engine:SetWindowScale(windowId, requestedScale, pivotAroundCursor)
                     uipX = cX - (cX - oldUipX) * ratio,
                     uipY = cY - (cY - oldUipY) * ratio,
                 }
-            elseif cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
-                cfg.pos.uipX = oldUipX
-                cfg.pos.uipY = oldUipY
+            elseif not cfg.pos or not cfg.pos.uipX or not cfg.pos.uipY then
+                -- Pin initial top-left position once so scaling via slider/+/- keeps top-left rock-steady
+                cfg.pos = {
+                    uipX = oldUipX,
+                    uipY = oldUipY,
+                }
             end
         end
 
