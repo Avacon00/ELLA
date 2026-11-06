@@ -245,3 +245,13 @@ L["HANDHELD_DIALOG_BODY"] = "Ella hat eine kompakte Bildschirmauflösung erkannt
 L["HANDHELD_DIALOG_ACCEPT"] = "Ja, 72%-Preset aktivieren"
 L["HANDHELD_DIALOG_DECLINE"] = "Nein, 100% belassen"
 L["SLASH_HELP_TEST"] = "/ella test - Fuehrt einen vollstaendigen internen In-Game-Selbsttest durch"
+
+-- v1.5.0 Fenster-Picker 2.0 (Hover-Highlighter & Hierarchie-Inspektor)
+L["PICKER_HUD_NAME"] = "Fenster: |cffffd100%s|r"
+L["PICKER_HUD_SIZE"] = "Groesse: %d x %d px  •  Ebene %d/%d"
+L["PICKER_HUD_CONTROLS"] = "|cff00ccffMausrad:|r Ebene  •  |cff00ff96Linksklick:|r Uebernehmen  •  |cffff8888Rechtsklick/ESC:|r Abbrechen"
+L["PICKER_HUD_SAFE"] = "|cff00ff96[Bereit zur Aufnahme]|r"
+L["PICKER_HUD_MANAGED"] = "|cffffd100[Bereits verwaltet (%s)]|r"
+L["PICKER_HUD_BLOCKED"] = "|cffff3333[Geschuetzt / Nicht unterstuetzt (%s)]|r"
+L["PICKER_LEVEL_UP"] = "Eine Ebene nach oben gewechselt: %s"
+L["PICKER_LEVEL_DOWN"] = "Eine Ebene nach unten gewechselt: %s"

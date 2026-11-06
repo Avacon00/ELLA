@@ -480,6 +480,20 @@ function BadgeUI:RefreshAll()
     RefreshPopover()
 end
 
+function BadgeUI:OpenPopoverForWindow(windowId)
+    local badge = badgesByWindow[windowId]
+    if badge and badge:IsShown() then
+        TogglePopoverForBadge(windowId, badge)
+    else
+        local p = GetOrCreatePopover()
+        p.windowId = windowId
+        p:ClearAllPoints()
+        p:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+        p:Show()
+        RefreshPopover()
+    end
+end
+
 ns:On("OnManagedFrameShown", function(windowId)
     local b = GetOrCreateBadge(windowId)
     UpdateBadgeVisual(windowId, b)

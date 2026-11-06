@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.5.0 – Fenster-Picker 2.0 (Hover-Highlighter & Hierarchie-Inspektor)
+* **Live Hover-Highlighter mit 3-Farben-Status:**
+  * Legt in Echtzeit eine Bounding-Box um das anvisierte Fenster:
+    * 🟢 **Smaragdgrün:** Sicheres Drittanbieter-Fenster, bereit zur Übernahme.
+    * 🟡 **Gold / Bernstein:** Bereits in Ella registriertes Fenster.
+    * 🔴 **Rubinrot:** Geschütztes Element (Aktionsleisten, EditMode, Nameplates) – zum Taint-Schutz gesperrt.
+* **Mausrad-Hierarchie-Navigation (`Child` <-> `Parent`):**
+  * Erkennt die vollständige Eltern-Kind-Kette verschachtelter AddOns (wie *Details!*, *Bagnon*, *Questie*, *WeakAuras*).
+  * Durch Scrollen mit dem Mausrad wandert der Fokus ebenenweise nach oben (`Scroll Up` = Eltern-Container) oder tiefer (`Scroll Down` = Kind-Element).
+  * 100 % Taint-frei über transparentes Overlay (`EnableMouse(false)`, `EnableMouseWheel(true)`).
+* **Schwebender Inspektions-HUD am Cursor:**
+  * Folgt dem Mauszeiger und zeigt Fensternamen, Pixelmaße ($B \times H$), Ebene ($X/Y$) und Status an.
+  * Automatische Kanten-Erkennung (dreht sich am Bildschirmrand um, um nie abgeschnitten zu werden).
+* **Direkte Sofort-Übernahme & Live-Test:**
+  * Nach Klick auf ein neues Fenster wird es registriert und das EĹLA-Popover öffnet sich sofort daran zum Skalieren und Einstellen der Deckkraft.
+* **Popover-Layout-Politur:**
+  * Saubere vertikale Ausrichtung aller drei Checkboxen (*Nur Skalieren*, *Mouseover-Fade*, *Position sperren*) ohne Text-Überlappung.
+
 ## v1.4.0 – Per-Window Opacity & Mouseover-Fade, Character-Bound Profiles & Handheld Auto-Detection
 * **Per-Window Opacity & Mouseover-Fade (Option A):**
   * Added a dedicated **Deckkraft (Opacity)** slider (30%–100%) to each window's quick popover badge.

@@ -248,3 +248,13 @@ L["HANDHELD_DIALOG_BODY"] = "Ella detected a compact display resolution (%dx%d �
 L["HANDHELD_DIALOG_ACCEPT"] = "Yes, activate 72% preset"
 L["HANDHELD_DIALOG_DECLINE"] = "No, keep 100%"
 L["SLASH_HELP_TEST"] = "/ella test - Runs a complete internal in-game self test"
+
+-- v1.5.0 Window Picker 2.0 (Hover Highlighter & Hierarchy Inspector)
+L["PICKER_HUD_NAME"] = "Window: |cffffd100%s|r"
+L["PICKER_HUD_SIZE"] = "Size: %d x %d px  •  Level %d/%d"
+L["PICKER_HUD_CONTROLS"] = "|cff00ccffMouse Wheel:|r Level  •  |cff00ff96Left-Click:|r Register  •  |cffff8888Right-Click/ESC:|r Cancel"
+L["PICKER_HUD_SAFE"] = "|cff00ff96[Ready to Register]|r"
+L["PICKER_HUD_MANAGED"] = "|cffffd100[Already Managed (%s)]|r"
+L["PICKER_HUD_BLOCKED"] = "|cffff3333[Protected / Unsupported (%s)]|r"
+L["PICKER_LEVEL_UP"] = "Moved one level up: %s"
+L["PICKER_LEVEL_DOWN"] = "Moved one level down: %s"

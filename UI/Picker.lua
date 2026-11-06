@@ -13,7 +13,15 @@ ns.Picker = Picker
 local BACKDROP_TEMPLATE = _G.BackdropTemplateMixin and "BackdropTemplate" or nil
 local bannerFrame = nil
 local highlightBox = nil
+local pickerHud = nil
+local pickerOverlay = nil
 local snippetModal = nil
+
+local currentHierarchyStack = {}
+local currentHierarchyIndex = 1
+local lastLeafFrame = nil
+local lastTopAncestor = nil
+
 local currentCandidate = nil
 local currentCandidateName = nil
 
@@ -24,43 +32,46 @@ local function GetTopMouseFrame()
         if type(foci) == "table" then
             for i = 1, #foci do
                 local f = foci[i]
-                if f and f ~= bannerFrame and f ~= highlightBox and not Guard:IsForbidden(f) then
+                if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and not Guard:IsForbidden(f) then
                     return f
                 end
             end
         end
     elseif type(_G.GetMouseFocus) == "function" then
         local f = _G.GetMouseFocus()
-        if f and f ~= bannerFrame and f ~= highlightBox and not Guard:IsForbidden(f) then
+        if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and not Guard:IsForbidden(f) then
             return f
         end
     end
     return nil
 end
 
--- Walks up parent chain to locate the top-level window right below UIParent
-local function ResolveTopWindow(leafFrame)
+-- Builds full ancestor chain of named frames from leaf up to UIParent
+local function BuildFrameHierarchy(leafFrame)
+    local stack = {}
     if not leafFrame or Guard:IsForbidden(leafFrame) then
-        return nil
+        return stack
     end
+
     local cursor = leafFrame
-    local lastNamed = nil
     local depth = 0
-    while cursor and cursor ~= _G.UIParent and cursor ~= _G.WorldFrame and depth < 18 do
+    while cursor and cursor ~= _G.UIParent and cursor ~= _G.WorldFrame and depth < 20 do
         if Guard:IsForbidden(cursor) then
-            return nil
+            break
+        end
+        local name = type(cursor.GetName) == "function" and cursor:GetName()
+        if name and name ~= "" and _G[name] == cursor then
+            stack[#stack + 1] = cursor
         end
         local parent = type(cursor.GetParent) == "function" and cursor:GetParent() or nil
-        if type(cursor.GetName) == "function" and cursor:GetName() then
-            lastNamed = cursor
-        end
-        if parent == _G.UIParent then
-            return cursor
+        if not parent or parent == _G.UIParent or parent == _G.WorldFrame then
+            break
         end
         cursor = parent
         depth = depth + 1
     end
-    return lastNamed
+
+    return stack
 end
 
 local function ShowSnippetModal(frameName)
@@ -153,7 +164,7 @@ local function EnsurePickerFrames()
     end
 
     highlightBox = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    highlightBox:SetFrameStrata("TOOLTIP")
+    highlightBox:SetFrameStrata("FULLSCREEN_DIALOG")
     highlightBox:EnableMouse(false)
     if highlightBox.SetBackdrop then
         highlightBox:SetBackdrop({
@@ -167,8 +178,76 @@ local function EnsurePickerFrames()
     end
     highlightBox:Hide()
 
+    -- Floating Cursor Inspection HUD Tooltip (Picker 2.0)
+    pickerHud = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
+    pickerHud:SetSize(340, 78)
+    pickerHud:SetFrameStrata("TOOLTIP")
+    pickerHud:SetFrameLevel(9000)
+    pickerHud:EnableMouse(false)
+    if pickerHud.SetBackdrop then
+        pickerHud:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true,
+            tileSize = 8,
+            edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 },
+        })
+        pickerHud:SetBackdropColor(0.05, 0.07, 0.11, 0.96)
+        pickerHud:SetBackdropBorderColor(0.0, 0.85, 1.0, 0.95)
+    end
+    pickerHud:Hide()
+
+    local hudName = pickerHud:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    hudName:SetPoint("TOPLEFT", 10, -8)
+    hudName:SetPoint("TOPRIGHT", -10, -8)
+    hudName:SetJustifyH("LEFT")
+    pickerHud.hudName = hudName
+
+    local hudSize = pickerHud:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    hudSize:SetPoint("TOPLEFT", 10, -25)
+    hudSize:SetPoint("TOPRIGHT", -10, -25)
+    hudSize:SetJustifyH("LEFT")
+    pickerHud.hudSize = hudSize
+
+    local hudStatus = pickerHud:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    hudStatus:SetPoint("TOPLEFT", 10, -41)
+    hudStatus:SetPoint("TOPRIGHT", -10, -41)
+    hudStatus:SetJustifyH("LEFT")
+    pickerHud.hudStatus = hudStatus
+
+    local hudControls = pickerHud:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    hudControls:SetPoint("TOPLEFT", 10, -58)
+    hudControls:SetPoint("TOPRIGHT", -10, -58)
+    hudControls:SetJustifyH("LEFT")
+    hudControls:SetText(L["PICKER_HUD_CONTROLS"])
+    pickerHud.hudControls = hudControls
+
+    -- Fullscreen mousewheel listener that never interferes with underlying frame scripts
+    pickerOverlay = CreateFrame("Frame", nil, UIParent)
+    pickerOverlay:SetAllPoints(UIParent)
+    pickerOverlay:SetFrameStrata("FULLSCREEN_DIALOG")
+    pickerOverlay:EnableMouse(false)
+    pickerOverlay:EnableMouseWheel(true)
+    pickerOverlay:Hide()
+
+    pickerOverlay:SetScript("OnMouseWheel", function(_, delta)
+        if not Picker.active or #currentHierarchyStack <= 1 then
+            return
+        end
+        if delta > 0 then
+            if currentHierarchyIndex < #currentHierarchyStack then
+                currentHierarchyIndex = currentHierarchyIndex + 1
+            end
+        elseif delta < 0 then
+            if currentHierarchyIndex > 1 then
+                currentHierarchyIndex = currentHierarchyIndex - 1
+            end
+        end
+    end)
+
     bannerFrame = CreateFrame("Button", nil, UIParent, BACKDROP_TEMPLATE)
-    bannerFrame:SetSize(500, 68)
+    bannerFrame:SetSize(520, 68)
     bannerFrame:SetPoint("TOP", UIParent, "TOP", 0, -24)
     bannerFrame:SetFrameStrata("FULLSCREEN_DIALOG")
     bannerFrame:EnableMouse(true)
@@ -183,12 +262,12 @@ local function EnsurePickerFrames()
             insets = { left = 3, right = 3, top = 3, bottom = 3 },
         })
         bannerFrame:SetBackdropColor(0.06, 0.08, 0.12, 0.95)
-        bannerFrame:SetBackdropBorderColor(0.0, 0.80, 1.0, 0.95)
+        bannerFrame:SetBackdropBorderColor(0.0, 0.85, 1.0, 0.95)
     end
 
     local title = bannerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -10)
-    title:SetText(L["PICKER_BANNER_TITLE"])
+    title:SetText(L["PICKER_BANNER_TITLE"] .. " 2.0")
 
     local help = bannerFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     help:SetPoint("TOP", title, "BOTTOM", 0, -4)
@@ -206,6 +285,68 @@ local function EnsurePickerFrames()
     bannerFrame:Hide()
 end
 
+local function UpdateFloatingHud(targetFrame, winName, ok, reason, existingDesc)
+    if not pickerHud or not targetFrame then
+        return
+    end
+
+    local curX, curY = GetCursorPosition()
+    local uipScale = UIParent:GetEffectiveScale() or 1
+    local uipW = UIParent:GetWidth() or 1920
+    local uipH = UIParent:GetHeight() or 1080
+
+    local cX = curX / uipScale
+    local cY = (curY / uipScale) - uipH
+
+    local hudW, hudH = 340, 78
+    local targetX = cX + 22
+    local targetY = cY - 20
+
+    if (targetX + hudW) > (uipW - 12) then
+        targetX = cX - hudW - 22
+    end
+    if (targetY - hudH) < (-uipH + 12) then
+        targetY = cY + hudH + 20
+    end
+
+    pickerHud:ClearAllPoints()
+    pickerHud:SetPoint("TOPLEFT", UIParent, "TOPLEFT", targetX, targetY)
+
+    local fW = math.floor((targetFrame:GetWidth() or 0) + 0.5)
+    local fH = math.floor((targetFrame:GetHeight() or 0) + 0.5)
+
+    pickerHud.hudName:SetText(string.format(L["PICKER_HUD_NAME"], winName or "<anonymous>"))
+    pickerHud.hudSize:SetText(string.format(L["PICKER_HUD_SIZE"], fW, fH, currentHierarchyIndex, #currentHierarchyStack))
+
+    if existingDesc then
+        pickerHud.hudStatus:SetText(string.format(L["PICKER_HUD_MANAGED"], Registry:GetDisplayLabel(existingDesc)))
+        pickerHud:SetBackdropBorderColor(1.0, 0.82, 0.15, 0.95)
+        if highlightBox.SetBackdropColor then
+            highlightBox:SetBackdropColor(0.95, 0.75, 0.10, 0.18)
+            highlightBox:SetBackdropBorderColor(1.0, 0.82, 0.15, 0.95)
+        end
+        bannerFrame.status:SetText(string.format(L["PICKER_ALREADY_MANAGED"], winName, Registry:GetDisplayLabel(existingDesc)))
+    elseif ok then
+        pickerHud.hudStatus:SetText(L["PICKER_HUD_SAFE"])
+        pickerHud:SetBackdropBorderColor(0.0, 0.95, 0.50, 0.95)
+        if highlightBox.SetBackdropColor then
+            highlightBox:SetBackdropColor(0.0, 0.85, 0.45, 0.18)
+            highlightBox:SetBackdropBorderColor(0.0, 0.95, 0.50, 0.95)
+        end
+        bannerFrame.status:SetText(string.format(L["PICKER_SAFE"], winName))
+    else
+        pickerHud.hudStatus:SetText(string.format(L["PICKER_HUD_BLOCKED"], tostring(reason or "")))
+        pickerHud:SetBackdropBorderColor(0.95, 0.25, 0.25, 0.95)
+        if highlightBox.SetBackdropColor then
+            highlightBox:SetBackdropColor(0.90, 0.15, 0.15, 0.18)
+            highlightBox:SetBackdropBorderColor(0.95, 0.25, 0.25, 0.95)
+        end
+        bannerFrame.status:SetText(string.format(L["PICKER_BLOCKED"], tostring(winName or "<anonymous>"), tostring(reason or "")))
+    end
+
+    pickerHud:Show()
+end
+
 local function OnPickerUpdate()
     if not Picker.active then
         bannerFrame:SetScript("OnUpdate", nil)
@@ -218,49 +359,66 @@ local function OnPickerUpdate()
     end
 
     local leaf = GetTopMouseFrame()
-    local topWin = ResolveTopWindow(leaf)
+    if leaf ~= lastLeafFrame then
+        lastLeafFrame = leaf
+        local newStack = BuildFrameHierarchy(leaf)
+        if #newStack > 0 then
+            local newTop = newStack[#newStack]
+            if newTop ~= lastTopAncestor then
+                lastTopAncestor = newTop
+                currentHierarchyStack = newStack
+                currentHierarchyIndex = #newStack
+            else
+                currentHierarchyStack = newStack
+                if currentHierarchyIndex > #newStack then
+                    currentHierarchyIndex = #newStack
+                end
+            end
+        else
+            currentHierarchyStack = {}
+            currentHierarchyIndex = 1
+            lastTopAncestor = nil
+        end
+    end
 
-    if not topWin then
+    local targetWin = currentHierarchyStack[currentHierarchyIndex]
+
+    if not targetWin then
         currentCandidate = nil
         currentCandidateName = nil
         highlightBox:Hide()
-        bannerFrame.status:SetText("—")
+        pickerHud:Hide()
+        bannerFrame.status:SetText("-")
         return
     end
 
-    local winName = type(topWin.GetName) == "function" and topWin:GetName() or nil
-    local ok, reason = Guard:ValidateTarget(topWin)
-    if ok and (not winName or winName == "" or _G[winName] ~= topWin) then
+    local winName = type(targetWin.GetName) == "function" and targetWin:GetName() or nil
+    local ok, reason = Guard:ValidateTarget(targetWin)
+    if ok and (not winName or winName == "" or _G[winName] ~= targetWin) then
         ok = false
         reason = L["GUARD_ERR_UNSAFE"]
     end
 
+    local existingId, existingDesc = nil, nil
+    if winName then
+        existingId, existingDesc = Registry:FindByFrameName(winName)
+    end
+
     highlightBox:ClearAllPoints()
-    highlightBox:SetAllPoints(topWin)
+    highlightBox:SetAllPoints(targetWin)
     highlightBox:Show()
 
-    if ok then
-        currentCandidate = topWin
-        currentCandidateName = winName
-        if highlightBox.SetBackdropColor then
-            highlightBox:SetBackdropColor(0.0, 0.85, 0.45, 0.18)
-            highlightBox:SetBackdropBorderColor(0.0, 0.95, 0.50, 0.95)
-        end
-        bannerFrame.status:SetText(string.format(L["PICKER_SAFE"], winName))
+    currentCandidate = targetWin
+    currentCandidateName = winName
 
-        if IsMouseButtonDown("LeftButton") and not bannerFrame:IsMouseOver() then
-            local pickedName = currentCandidateName
+    UpdateFloatingHud(targetWin, winName, ok, reason, existingDesc)
+
+    if IsMouseButtonDown("LeftButton") and not bannerFrame:IsMouseOver() then
+        if winName and winName ~= "" then
+            local pickedName = winName
             Picker:Stop()
             Picker:RegisterPickedWindow(pickedName)
         end
-    else
-        currentCandidate = nil
-        currentCandidateName = nil
-        if highlightBox.SetBackdropColor then
-            highlightBox:SetBackdropColor(0.90, 0.15, 0.15, 0.18)
-            highlightBox:SetBackdropBorderColor(0.95, 0.25, 0.25, 0.95)
-        end
-        bannerFrame.status:SetText(string.format(L["PICKER_BLOCKED"], tostring(winName or "<anonymous>"), tostring(reason or "")))
     end
 end
 
@@ -272,6 +430,9 @@ function Picker:RegisterPickedWindow(frameName)
     local existingId, existingDesc = Registry:FindByFrameName(frameName)
     if existingId and existingDesc then
         ns:Print(string.format(L["PICKER_ALREADY_MANAGED"], frameName, Registry:GetDisplayLabel(existingDesc)))
+        if ns.BadgeUI and ns.BadgeUI.OpenPopoverForWindow then
+            ns.BadgeUI:OpenPopoverForWindow(existingId)
+        end
         return
     end
 
@@ -288,6 +449,16 @@ function Picker:RegisterPickedWindow(frameName)
         source = "UserPicker",
     })
     ns:Print(string.format(L["PICKER_ADDED"], frameName))
+
+    if ns.BadgeUI then
+        if ns.BadgeUI.RefreshAll then
+            ns.BadgeUI:RefreshAll()
+        end
+        if ns.BadgeUI.OpenPopoverForWindow then
+            ns.BadgeUI:OpenPopoverForWindow(windowId)
+        end
+    end
+
     ShowSnippetModal(frameName)
 end
 
@@ -297,7 +468,13 @@ function Picker:Start(reopenManager)
     Picker.reopenManager = (reopenManager == true)
     currentCandidate = nil
     currentCandidateName = nil
+    lastLeafFrame = nil
+    lastTopAncestor = nil
+    currentHierarchyStack = {}
+    currentHierarchyIndex = 1
+
     bannerFrame:Show()
+    pickerOverlay:Show()
     -- Golden Rule #8: OnUpdate runs ONLY while interactive picker mode is open
     bannerFrame:SetScript("OnUpdate", OnPickerUpdate)
 end
@@ -306,12 +483,24 @@ function Picker:Stop()
     Picker.active = false
     local shouldReopen = Picker.reopenManager
     Picker.reopenManager = false
+    currentCandidate = nil
+    currentCandidateName = nil
+    lastLeafFrame = nil
+    lastTopAncestor = nil
+    wipe(currentHierarchyStack)
+
     if bannerFrame then
         bannerFrame:SetScript("OnUpdate", nil)
         bannerFrame:Hide()
     end
+    if pickerOverlay then
+        pickerOverlay:Hide()
+    end
     if highlightBox then
         highlightBox:Hide()
+    end
+    if pickerHud then
+        pickerHud:Hide()
     end
     if shouldReopen and ns.ManagerUI and type(ns.ManagerUI.Show) == "function" then
         ns.ManagerUI:Show()
