@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.1.2](https://img.shields.io/badge/Version-v1.1.2-ffaa00)
+![Version 1.2.0](https://img.shields.io/badge/Version-v1.2.0-ffaa00)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
@@ -19,6 +19,7 @@
 ## Deutsch (Übersicht & Bedienung)
 
 ### Highlights
+* **Interaktives Einsteiger-Tutorial (`v1.2`):** Fragt beim ersten Aufruf von `/ella` freundlich nach (*„Kleines Tutorial gefällig?“*) und führt in einer 8-Schritte-Tour mit abgedunkeltem Hintergrund und leuchtenden Scheinwerfer-Rahmen durch alle Kernfunktionen (jederzeit über `[?]` oder `/ella tour` wiederholbar).
 * **Einzel-Fenster-Skalierung (`50 %` – `150 %`):** Skaliere jedes Blizzard- und *WoW: Forever*-Fenster individuell über das dezente `%`-Badge in der Titelleiste, per `Strg + Mausrad` oder im `/ella`-Manager.
 * **Benannte Layout-Profile (`v1.1`):** Wechsle per Klick im `/ella`-Manager oder per `/ella profile <Name>` blitzschnell zwischen verschiedenen Setups (z. B. `Default`, `Laptop / Deck`, `Raid`, `Twink`).
 * **Magnetisches Einrasten & Live-Hilfslinien (`v1.1`):** Beim Ziehen richten sich Fenster sanft an der Bildschirmmitte sowie an Oberkanten und Seiten anderer offener Fenster aus (inklusive leuchtender Cyan-Hilfslinien, `Shift` = `10px`-Raster und optionaler Halbtransparenz beim Verschieben).
@@ -34,6 +35,7 @@
 | Befehl | Funktion |
 | :--- | :--- |
 | `/ella` | Öffnet bzw. schließt den durchsuchbaren **Ella Fenster-Manager** |
+| `/ella tour` | Startet das interaktive **Schritt-für-Schritt-Tutorial** |
 | `/ella profile <Name>` | Wechselt zum angegebenen Layout-Profil (ohne Namen: nächstes Profil durchschalten) |
 | `/ella compact` | Aktiviert sofort das **Classic Kompakt (80 %)**-Preset |
 | `/ella pick` | Startet den interaktiven **Frame-Inspektor** für Drittanbieter-Fenster |

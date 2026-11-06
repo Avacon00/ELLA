@@ -168,8 +168,46 @@ L["COMPARTMENT_RIGHT"] = "|cffffd100Right-Click:|r Toggle Titlebar Badges"
 L["COMPARTMENT_MIDDLE"] = "|cffffd100Middle-Click:|r Start Custom Window Picker"
 L["SLASH_HELP_HEADER"] = "Commands:"
 L["SLASH_HELP_OPEN"] = "|cffffd100/ella|r – Open the Ella Window Manager"
+L["SLASH_HELP_TOUR"] = "|cffffd100/ella tour|r – Start the interactive tutorial"
 L["SLASH_HELP_PICK"] = "|cffffd100/ella pick|r – Inspect & add any custom third-party window"
 L["SLASH_HELP_PRESET"] = "|cffffd100/ella compact|r – Apply Classic Compact (80%) preset"
 L["SLASH_HELP_BADGES"] = "|cffffd100/ella badges|r – Toggle titlebar % badges"
 L["SLASH_HELP_PROFILE"] = "|cffffd100/ella profile <Name>|r – Switch or create a named layout profile"
 L["SLASH_HELP_RESET"] = "|cffffd100/ella reset|r – Emergency reset of all scales & positions"
+
+-- Interactive Tutorial (v1.2.0)
+L["TUTORIAL_PROMPT_TITLE"] = "Quick Tutorial?"
+L["TUTORIAL_PROMPT_BODY"] = "Would you like a quick 2-minute tour through Ella's most important features?\n\nYou can exit anytime or restart it later via the [?] icon in the titlebar."
+L["TUTORIAL_PROMPT_START"] = "Yes, please! (Start Tour)"
+L["TUTORIAL_PROMPT_LATER"] = "Maybe later"
+L["TUTORIAL_STEP_COUNTER"] = "Step %d of %d"
+L["TUTORIAL_BTN_PREV"] = "‹ Back"
+L["TUTORIAL_BTN_NEXT"] = "Next ›"
+L["TUTORIAL_BTN_FINISH"] = "Finish"
+L["TUTORIAL_BTN_EXIT"] = "Exit Tour (ESC)"
+L["TUTORIAL_HELP_BUTTON_TIP"] = "Start Interactive Tutorial (/ella tour)"
+L["TUTORIAL_FINISHED_MSG"] = "Tutorial completed! You can restart it anytime via the |cffffd100[?]|r icon or |cffffd100/ella tour|r."
+
+L["TUTORIAL_STEP1_TITLE"] = "Welcome to Ella!"
+L["TUTORIAL_STEP1_BODY"] = "Ella (Easy Layout & Location Assistant) solves a major issue in WoW: Forever:\n\nScale down oversized panels like Spellbook, Quest Log, or Professions and move them anywhere—without shrinking your chat, action bars, or Blizzard Edit Mode."
+
+L["TUTORIAL_STEP2_TITLE"] = "1-Click Presets"
+L["TUTORIAL_STEP2_BODY"] = "At the top you'll find instant presets:\n\n• |cffffd100Classic Compact (80%)|r: Flagship classic Vanilla proportion.\n• |cffffd100WQHD / 4K (85%)|r: Balanced for high-resolution monitors.\n• |cffffd100Laptop / Deck (72%)|r: Tailored for handhelds & smaller displays.\n• |cffffd100Default (100%)|r: Restores all windows to original size."
+
+L["TUTORIAL_STEP3_TITLE"] = "Window List & Scaling"
+L["TUTORIAL_STEP3_BODY"] = "This list displays all supported windows.\n\n• Click |cff00ff96+|r or |cffff6060-|r to adjust a window in 5% steps (|cffffd100Shift|r = fine 1% steps).\n• The |cffffd100100%|r button resets just that single window.\n• Currently open windows automatically appear at the very top!"
+
+L["TUTORIAL_STEP4_TITLE"] = "The 3 Window Modes"
+L["TUTORIAL_STEP4_BODY"] = "Each window has a mode toggle button:\n\n• |cff00ff96Scale + Move|r: Freely draggable with saved position.\n• |cffffd100Scale Only|r: Blizzard's auto side-by-side push layout stays active, but panels open at your chosen scale!\n• |cff888888Disabled|r: Leaves the window completely unmanaged."
+
+L["TUTORIAL_STEP5_TITLE"] = "Profiles & Safety Net"
+L["TUTORIAL_STEP5_BODY"] = "Experiment without fear:\n\n• |cff00ff96Revert Profile|r: Discards experiments and immediately restores your saved layout.\n• |cffffd100Undo|r: Steps back through your last 25 changes.\n• |cffffd100Save Profile *|r: Permanently saves your new layout into the active profile."
+
+L["TUTORIAL_STEP6_TITLE"] = "Magnetic Snapping"
+L["TUTORIAL_STEP6_BODY"] = "When moving windows:\n\n• Windows gently snap to the |cff00ccffscreen center|r and edges of neighboring open windows (with cyan alignment guides).\n• Hold |cffffd100Shift|r while dragging for a crisp 10px grid.\n• Dragged windows become semi-transparent so you see underneath!"
+
+L["TUTORIAL_STEP7_TITLE"] = "Titlebar % Badge"
+L["TUTORIAL_STEP7_BODY"] = "You don't always need to open `/ella`:\n\n• Every window gets a subtle |cffffd100% badge|r in its titlebar.\n• Scroll your |cffffd100Mouse Wheel|r over the badge to zoom (cursor-pivot math keeps it stationary!).\n• |cff00ff96Left-Click|r for a slider, position lock & the |cff00ff96Undo|r button."
+
+L["TUTORIAL_STEP8_TITLE"] = "Finish & Tips"
+L["TUTORIAL_STEP8_BODY"] = "You are all set!\n\n• Use |cff00ff96+ Pick Window|r to register any custom third-party window with a single click.\n• Drag the bottom-right corner of Ella to expand the window manager.\n• You can restart this tutorial anytime by clicking |cffffd100[?]|r in the titlebar!"

@@ -540,6 +540,34 @@ local function EnsureManagerFrame()
     selfScaleBtn.text = selfScaleTxt
     f.selfScaleBtn = selfScaleBtn
 
+    -- Tutorial Help Button [?]
+    local helpBtn = CreateFrame("Button", nil, f, BACKDROP_TEMPLATE)
+    helpBtn:SetSize(24, 20)
+    helpBtn:SetPoint("RIGHT", selfScaleBtn, "LEFT", -4, 0)
+    StyleBox(helpBtn, 0.10, 0.12, 0.16, 0.94)
+    local helpTxt = helpBtn:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    helpTxt:SetPoint("CENTER", 0, 0)
+    helpTxt:SetText("?")
+    helpBtn.text = helpTxt
+    helpBtn:SetScript("OnClick", function()
+        if ns.Tutorial and ns.Tutorial.Start then
+            ns.Tutorial:Start(1)
+        end
+    end)
+    helpBtn:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["TUTORIAL_HELP_BUTTON_TIP"], 1, 0.82, 0)
+            GameTooltip:Show()
+        end
+    end)
+    helpBtn:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+    f.helpBtn = helpBtn
+
     selfScaleBtn:SetScript("OnMouseWheel", function(_, delta)
         local step = IsShiftKeyDown() and 0.01 or 0.05
         SetManagerScale((ns.db.settings.managerScale or 1.00) + (delta * step))
@@ -810,6 +838,7 @@ local function EnsureManagerFrame()
         f:Hide()
         Picker:Start(true)
     end)
+    f.pickBtn = pickBtn
 
     local expBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     expBtn:SetSize(148, 24)
@@ -855,6 +884,7 @@ local function EnsureManagerFrame()
     scrollChild:SetWidth(654)
     scrollChild:SetHeight(300)
     scrollFrame:SetScrollChild(scrollChild)
+    f.scrollFrame = scrollFrame
     f.scrollChild = scrollChild
 
     -- Bottom-Right Corner Resize Grip (Drag = resize width/height, Right-Click = default 720x580)
@@ -909,10 +939,17 @@ local function EnsureManagerFrame()
     return f
 end
 
+function ManagerUI:GetFrame()
+    return managerFrame
+end
+
 function ManagerUI:Show()
     local f = EnsureManagerFrame()
     f:Show()
     ManagerUI:RefreshList()
+    if ns.Tutorial and ns.Tutorial.PromptIfFirstOpen then
+        ns.Tutorial:PromptIfFirstOpen()
+    end
 end
 
 function ManagerUI:Toggle()
@@ -1050,7 +1087,11 @@ _G.SLASH_ELLA2 = "/fscale"
 _G.SlashCmdList["ELLA"] = function(rawMsg)
     local cmd, rest = string.match(rawMsg or "", "^%s*(%S*)%s*(.-)%s*$")
     cmd = string.lower(cmd or "")
-    if cmd == "pick" or cmd == "inspect" then
+    if cmd == "tour" or cmd == "tutorial" then
+        if ns.Tutorial and ns.Tutorial.Start then
+            ns.Tutorial:Start(1)
+        end
+    elseif cmd == "pick" or cmd == "inspect" then
         Picker:Start()
     elseif cmd == "compact" or cmd == "80" then
         Profiles:ApplyPreset("COMPACT_80")
@@ -1074,6 +1115,7 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
     elseif cmd == "help" or cmd == "?" then
         ns:Print(L["SLASH_HELP_HEADER"])
         ns:Print(L["SLASH_HELP_OPEN"])
+        ns:Print(L["SLASH_HELP_TOUR"])
         ns:Print(L["SLASH_HELP_PICK"])
         ns:Print(L["SLASH_HELP_PRESET"])
         ns:Print(L["SLASH_HELP_BADGES"])

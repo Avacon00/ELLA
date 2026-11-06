@@ -165,8 +165,46 @@ L["COMPARTMENT_RIGHT"] = "|cffffd100Rechtsklick:|r Titelleisten-Badges ein-/ausb
 L["COMPARTMENT_MIDDLE"] = "|cffffd100Mittelklick:|r Eigenes Fenster per Mausklick aufnehmen"
 L["SLASH_HELP_HEADER"] = "Befehle:"
 L["SLASH_HELP_OPEN"] = "|cffffd100/ella|r – Ella Fenster-Manager öffnen"
+L["SLASH_HELP_TOUR"] = "|cffffd100/ella tour|r – Startet das interaktive Tutorial"
 L["SLASH_HELP_PICK"] = "|cffffd100/ella pick|r – Drittanbieter-/Spezialfenster per Klick aufnehmen"
 L["SLASH_HELP_PRESET"] = "|cffffd100/ella compact|r – Classic-Kompakt-Preset (80%) aktivieren"
 L["SLASH_HELP_BADGES"] = "|cffffd100/ella badges|r – %-Badges in Titelleisten umschalten"
 L["SLASH_HELP_PROFILE"] = "|cffffd100/ella profile <Name>|r – Layout-Profil wechseln oder neu anlegen"
 L["SLASH_HELP_RESET"] = "|cffffd100/ella reset|r – Notfall-Reset aller Größen & Positionen"
+
+-- Interaktives Tutorial (v1.2.0)
+L["TUTORIAL_PROMPT_TITLE"] = "Kleines Tutorial gefällig?"
+L["TUTORIAL_PROMPT_BODY"] = "Möchtest du eine kurze 2-Minuten-Tour durch die wichtigsten Funktionen von Ella machen?\n\nDu kannst die Tour jederzeit abbrechen oder später über das [?]-Symbol im Fenstertitel erneut starten."
+L["TUTORIAL_PROMPT_START"] = "Ja, gerne! (Tour starten)"
+L["TUTORIAL_PROMPT_LATER"] = "Später vielleicht"
+L["TUTORIAL_STEP_COUNTER"] = "Schritt %d von %d"
+L["TUTORIAL_BTN_PREV"] = "‹ Zurück"
+L["TUTORIAL_BTN_NEXT"] = "Weiter ›"
+L["TUTORIAL_BTN_FINISH"] = "Fertigstellen"
+L["TUTORIAL_BTN_EXIT"] = "Tour beenden (ESC)"
+L["TUTORIAL_HELP_BUTTON_TIP"] = "Interaktives Tutorial starten (/ella tour)"
+L["TUTORIAL_FINISHED_MSG"] = "Tutorial abgeschlossen! Du kannst es jederzeit über das |cffffd100[?]|r-Symbol oder |cffffd100/ella tour|r erneut aufrufen."
+
+L["TUTORIAL_STEP1_TITLE"] = "Willkommen bei Ella!"
+L["TUTORIAL_STEP1_BODY"] = "Ella (Easy Layout & Location Assistant) löst ein großes Problem in WoW: Forever:\n\nDu kannst klobige Menüfenster wie Zauberbuch, Questlog oder Berufe stufenlos verkleinern und frei platzieren – ganz ohne deinen Chat, deine Aktionsleisten oder Blizzards Edit Mode zu verändern."
+
+L["TUTORIAL_STEP2_TITLE"] = "1-Klick-Presets"
+L["TUTORIAL_STEP2_BODY"] = "Oben in der Leiste findest du fertige Presets:\n\n• |cffffd100Classic Kompakt (80%)|r: Das Flaggschiff für den klassischen Vanilla-Look.\n• |cffffd100WQHD / 4K (85%)|r: Ideal für hochauflösende Monitore.\n• |cffffd100Laptop / Deck (72%)|r: Perfekt für Handhelds & kleine Displays.\n• |cffffd100Standard (100%)|r: Setzt alle Fenster auf Originalgröße."
+
+L["TUTORIAL_STEP3_TITLE"] = "Fensterliste & Skalierung"
+L["TUTORIAL_STEP3_BODY"] = "In dieser Liste siehst du alle unterstützten Fenster.\n\n• Klicke auf |cff00ff96+|r oder |cffff6060-|r, um ein Fenster in 5%-Schritten anzupassen (|cffffd100Shift|r = feine 1%-Schritte).\n• Der Button |cffffd100100%|r setzt nur dieses einzelne Fenster zurück.\n• Offene Fenster stehen automatisch ganz oben!"
+
+L["TUTORIAL_STEP4_TITLE"] = "Die 3 Fenstermodi"
+L["TUTORIAL_STEP4_BODY"] = "Jedes Fenster hat eine Modus-Schaltfläche:\n\n• |cff00ff96Skalieren + Bewegen|r: Freies Ziehen & Position merken.\n• |cffffd100Nur Skalieren|r: Blizzards automatisches Nebeneinander-Layout bleibt aktiv, öffnet aber in deiner Wunschgröße!\n• |cff888888Deaktiviert|r: Fenster bleibt völlig unberührt."
+
+L["TUTORIAL_STEP5_TITLE"] = "Profile & Sicherheitsnetz"
+L["TUTORIAL_STEP5_BODY"] = "Keine Angst vor Fehlern:\n\n• |cff00ff96Auf Profil-Stand|r: Verwirft alle Experimente und stellt dein gespeichertes Profil sofort wieder her.\n• |cffffd100Rückgängig|r: Geht bis zu 25 Änderungen Schritt für Schritt zurück.\n• |cffffd100Speichern *|r: Sichert dein neues Wunschlayout fest im Profil ab."
+
+L["TUTORIAL_STEP6_TITLE"] = "Magnetisches Einrasten"
+L["TUTORIAL_STEP6_BODY"] = "Beim Bewegen von Fenstern:\n\n• Rasten Fenster sanft an der |cff00ccffBildschirmmitte|r sowie an Kanten anderer offener Fenster ein (mit leuchtenden Cyan-Hilfslinien).\n• Halte |cffffd100Shift|r gedrückt für ein pixelgenaues 10px-Raster.\n• Fenster werden beim Ziehen halbtransparent!"
+
+L["TUTORIAL_STEP7_TITLE"] = "Titelleisten-%-Badge"
+L["TUTORIAL_STEP7_BODY"] = "Du musst nicht immer `/ella` öffnen:\n\n• Jedes Fenster hat oben rechts ein dezentes |cffffd100%-Badge|r.\n• Drehe das |cffffd100Mausrad|r auf dem Badge zum schnellen Zoomen (bleibt pixelgenau unterm Cursor!).\n• Klicke mit |cff00ff96Links|r für Schieberegler, Positionssperre & den |cff00ff96Zurück|r-Button."
+
+L["TUTORIAL_STEP8_TITLE"] = "Fertig & Tipps"
+L["TUTORIAL_STEP8_BODY"] = "Du bist startklar!\n\n• Mit |cff00ff96+ Fenster-Picker|r kannst du jedes unbekannte Drittanbieter-Fenster per Mausklick aufnehmen.\n• Ziehe die Ecke unten rechts an Ella, um dieses Fenster zu vergrößern.\n• Du kannst dieses Tutorial jederzeit über das |cffffd100[?]|r oben rechts erneut starten!"

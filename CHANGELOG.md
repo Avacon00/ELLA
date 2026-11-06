@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.2.0 – Interactive In-Game Tutorial Tour & Onboarding
+* **First-Run Tutorial Opt-In Prompt:**
+  * When opening `/ella` for the first time, players are politely asked (*"Kleines Tutorial gefällig?"*) with options to start right away (`Ja, gerne!`) or postpone (`Später vielleicht`), never getting in the way of experienced users.
+* **8-Step Interactive Walkthrough Tour:**
+  * Displays a semi-transparent screen dimmer and cyan glowing spotlight box around the active feature being explained.
+  * Features a movable, dark obsidian callout card with step indicator (*Schritt X von 8*), clear explanations, and navigation buttons (`‹ Zurück`, `Weiter ›`, `Fertigstellen`, `Tour beenden (ESC)`).
+* **Always Replayable & Combat-Safe:**
+  * A dedicated **`[?]`** button in the Ella titlebar (and `/ella tour` slash command) lets players replay the tour anytime.
+  * Automatically closes cleanly if combat begins (`PLAYER_REGEN_DISABLED`) to protect game performance and guarantee zero taint.
+
 ## v1.1.2 – Profile Checkpoints (`Speichern` / `Auf Profil-Stand`) & Multi-Step `Rückgängig` (`Undo`)
 * **Protected Profile Checkpoints (`savedSnapshot`):**
   * Experimenting with window sizes or dragging windows no longer silently destroys your saved profile layout.
