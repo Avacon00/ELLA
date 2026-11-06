@@ -1,7 +1,7 @@
 local AddonName, ns = ...
 
 ns.AddonName = AddonName
-ns.Version = "1.1.0"
+ns.Version = "1.1.1"
 
 -- Internal Project Camelot (WoW: Forever) constant is 18
 ns.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
@@ -65,6 +65,9 @@ local DEFAULT_SETTINGS = {
     defaultScaleOnly = false,
     welcomeShown = false,
     activePreset = nil,
+    managerScale = 1.00,
+    managerWidth = 720,
+    managerHeight = 580,
 }
 
 function ns:InitDatabase()

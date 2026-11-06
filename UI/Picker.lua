@@ -6,6 +6,7 @@ local Registry = ns.Registry
 
 local Picker = {
     active = false,
+    reopenManager = false,
 }
 ns.Picker = Picker
 
@@ -267,6 +268,13 @@ function Picker:RegisterPickedWindow(frameName)
     if not frameName or frameName == "" then
         return
     end
+
+    local existingId, existingDesc = Registry:FindByFrameName(frameName)
+    if existingId and existingDesc then
+        ns:Print(string.format(L["PICKER_ALREADY_MANAGED"], frameName, Registry:GetDisplayLabel(existingDesc)))
+        return
+    end
+
     ns.db.customWindows[frameName] = {
         label = frameName,
     }
@@ -283,9 +291,10 @@ function Picker:RegisterPickedWindow(frameName)
     ShowSnippetModal(frameName)
 end
 
-function Picker:Start()
+function Picker:Start(reopenManager)
     EnsurePickerFrames()
     Picker.active = true
+    Picker.reopenManager = (reopenManager == true)
     currentCandidate = nil
     currentCandidateName = nil
     bannerFrame:Show()
@@ -295,11 +304,16 @@ end
 
 function Picker:Stop()
     Picker.active = false
+    local shouldReopen = Picker.reopenManager
+    Picker.reopenManager = false
     if bannerFrame then
         bannerFrame:SetScript("OnUpdate", nil)
         bannerFrame:Hide()
     end
     if highlightBox then
         highlightBox:Hide()
+    end
+    if shouldReopen and ns.ManagerUI and type(ns.ManagerUI.Show) == "function" then
+        ns.ManagerUI:Show()
     end
 end

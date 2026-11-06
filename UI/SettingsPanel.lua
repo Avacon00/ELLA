@@ -193,6 +193,85 @@ local function OpenNewProfileModal()
     newProfileModal.input:SetFocus()
 end
 
+local DEFAULT_MANAGER_W = 720
+local DEFAULT_MANAGER_H = 580
+local MIN_MANAGER_W = 680
+local MAX_MANAGER_W = 1080
+local MIN_MANAGER_H = 440
+local MAX_MANAGER_H = 860
+local MIN_MANAGER_SCALE = 0.60
+local MAX_MANAGER_SCALE = 1.40
+
+local function ApplyRowResponsiveWidth(row, childW)
+    local labelW = math.max(206, childW - 408)
+    row.label:SetWidth(labelW)
+    row.catLabel:SetWidth(labelW)
+    row.modeBtn:ClearAllPoints()
+    row.modeBtn:SetPoint("LEFT", labelW + 32, 0)
+end
+
+local function SetManagerScale(requestedScale)
+    local s = tonumber(requestedScale) or 1.00
+    if s < MIN_MANAGER_SCALE then
+        s = MIN_MANAGER_SCALE
+    elseif s > MAX_MANAGER_SCALE then
+        s = MAX_MANAGER_SCALE
+    end
+    s = math.floor(s * 100 + 0.5) / 100
+    ns.db.settings.managerScale = s
+    if managerFrame then
+        managerFrame:SetScale(s)
+        if managerFrame.selfScaleBtn then
+            local pct = math.floor(s * 100 + 0.5)
+            managerFrame.selfScaleBtn.text:SetText(pct .. "%")
+            if math.abs(s - 1.00) > 0.005 then
+                managerFrame.selfScaleBtn.text:SetTextColor(1.0, 0.84, 0.15)
+            else
+                managerFrame.selfScaleBtn.text:SetTextColor(0.85, 0.87, 0.90)
+            end
+        end
+    end
+end
+
+local function ApplyManagerResponsiveLayout(f)
+    if not f then
+        return
+    end
+    local w = f:GetWidth() or DEFAULT_MANAGER_W
+    local innerW = w - 28
+    local rightColX = math.max(336, math.floor(w * 0.486))
+
+    if f.chkBadges then f.chkBadges:SetPoint("TOPLEFT", rightColX, -40) end
+    if f.chkClamp then f.chkClamp:SetPoint("TOPLEFT", rightColX, -64) end
+    if f.chkMagneticSnap then f.chkMagneticSnap:SetPoint("TOPLEFT", rightColX, -88) end
+
+    if f.presetBtns then
+        local gap = 6
+        local btnW = math.floor((innerW - (3 * gap)) / 4)
+        for i = 1, #f.presetBtns do
+            local b = f.presetBtns[i]
+            b:SetSize(btnW, 24)
+            b:ClearAllPoints()
+            b:SetPoint("TOPLEFT", 14 + (i - 1) * (btnW + gap), -148)
+        end
+    end
+
+    if f.searchBox then
+        -- 152 (pick) + 148 (export) + 136 (reset) + 24 (3x8px gaps) = 460
+        f.searchBox:SetWidth(math.max(190, innerW - 460))
+    end
+
+    if f.scrollChild then
+        local childW = math.max(614, w - 66)
+        f.scrollChild:SetWidth(childW)
+        for i = 1, #rowPool do
+            if rowPool[i] then
+                ApplyRowResponsiveWidth(rowPool[i], childW)
+            end
+        end
+    end
+end
+
 -- ============================================================================
 -- Window Row Factory
 -- ============================================================================
@@ -236,6 +315,8 @@ local function GetOrCreateRow(parent, index)
     modeBtn:SetPoint("LEFT", 278, 0)
     ApplyCompactButtonFont(modeBtn)
     row.modeBtn = modeBtn
+
+    ApplyRowResponsiveWidth(row, parent:GetWidth() or 654)
 
     local minusBtn = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
     minusBtn:SetSize(26, 22)
@@ -382,24 +463,41 @@ function ManagerUI:RefreshList()
 end
 
 -- ============================================================================
--- Standalone Window Manager (/ella)
+-- Standalone Window Manager (/ella) – Movable, Resizable & Self-Scalable!
 -- ============================================================================
 local function EnsureManagerFrame()
     if managerFrame then
         return managerFrame
     end
 
+    local initW = math.min(MAX_MANAGER_W, math.max(MIN_MANAGER_W, tonumber(ns.db.settings.managerWidth) or DEFAULT_MANAGER_W))
+    local initH = math.min(MAX_MANAGER_H, math.max(MIN_MANAGER_H, tonumber(ns.db.settings.managerHeight) or DEFAULT_MANAGER_H))
+
     local f = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    f:SetSize(720, 580)
+    f:SetSize(initW, initH)
     f:SetPoint("CENTER", 0, 20)
     f:SetFrameStrata("DIALOG")
     f:EnableMouse(true)
+    f:EnableMouseWheel(true)
     f:SetMovable(true)
+    f:SetResizable(true)
+    if type(f.SetResizeBounds) == "function" then
+        f:SetResizeBounds(MIN_MANAGER_W, MIN_MANAGER_H, MAX_MANAGER_W, MAX_MANAGER_H)
+    elseif type(f.SetMinResize) == "function" then
+        f:SetMinResize(MIN_MANAGER_W, MIN_MANAGER_H)
+        f:SetMaxResize(MAX_MANAGER_W, MAX_MANAGER_H)
+    end
     f:RegisterForDrag("LeftButton")
     f:SetClampedToScreen(true)
     StyleBox(f, 0.05, 0.06, 0.09, 0.96)
     f:SetScript("OnDragStart", f.StartMoving)
     f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    f:SetScript("OnMouseWheel", function(_, delta)
+        if IsControlKeyDown() then
+            local step = IsShiftKeyDown() and 0.01 or 0.05
+            SetManagerScale((ns.db.settings.managerScale or 1.00) + (delta * step))
+        end
+    end)
     f:Hide()
 
     local iconTex = f:CreateTexture(nil, "ARTWORK")
@@ -415,6 +513,58 @@ local function EnsureManagerFrame()
     closeBtn:SetPoint("TOPRIGHT", -4, -4)
     closeBtn:SetScript("OnClick", function()
         f:Hide()
+    end)
+
+    -- Ella Manager's own Titlebar Scale Pill ([100%])
+    local selfScaleBtn = CreateFrame("Button", nil, f, BACKDROP_TEMPLATE)
+    selfScaleBtn:SetSize(48, 20)
+    selfScaleBtn:SetPoint("RIGHT", closeBtn, "LEFT", -4, 0)
+    selfScaleBtn:EnableMouse(true)
+    selfScaleBtn:EnableMouseWheel(true)
+    selfScaleBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    StyleBox(selfScaleBtn, 0.10, 0.12, 0.16, 0.94)
+
+    local selfScaleTxt = selfScaleBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    selfScaleTxt:SetPoint("CENTER", 0, 0)
+    selfScaleTxt:SetText("100%")
+    selfScaleBtn.text = selfScaleTxt
+    f.selfScaleBtn = selfScaleBtn
+
+    selfScaleBtn:SetScript("OnMouseWheel", function(_, delta)
+        local step = IsShiftKeyDown() and 0.01 or 0.05
+        SetManagerScale((ns.db.settings.managerScale or 1.00) + (delta * step))
+    end)
+    selfScaleBtn:SetScript("OnClick", function(_, btn)
+        if btn == "RightButton" then
+            SetManagerScale(1.00)
+        else
+            -- Handy trackpad / click cycle: 100% -> 90% -> 80% -> 110% -> 100%
+            local cur = math.floor((ns.db.settings.managerScale or 1.00) * 100 + 0.5)
+            local nextScale = 1.00
+            if cur >= 98 and cur <= 102 then
+                nextScale = 0.90
+            elseif cur > 85 and cur < 98 then
+                nextScale = 0.80
+            elseif cur <= 85 then
+                nextScale = 1.10
+            end
+            SetManagerScale(nextScale)
+        end
+    end)
+    selfScaleBtn:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            local pct = math.floor((ns.db.settings.managerScale or 1.00) * 100 + 0.5)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(string.format(L["UI_MANAGER_SCALE_TIP_TITLE"], pct), 1, 0.82, 0)
+            GameTooltip:AddLine(L["UI_MANAGER_SCALE_TIP_SCROLL"], 0.9, 0.9, 0.9)
+            GameTooltip:AddLine(L["UI_MANAGER_SCALE_TIP_RCLICK"], 0.9, 0.9, 0.9)
+            GameTooltip:Show()
+        end
+    end)
+    selfScaleBtn:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
     end)
 
     -- Global Settings Toggles (3x2 compact grid)
@@ -478,7 +628,7 @@ local function EnsureManagerFrame()
     profLabel:SetText(L["UI_PROFILE_LABEL"])
 
     local profCycleBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profCycleBtn:SetSize(220, 24)
+    profCycleBtn:SetSize(196, 24)
     profCycleBtn:SetPoint("TOPLEFT", 68, -118)
     ApplyCompactButtonFont(profCycleBtn)
     profCycleBtn:SetScript("OnClick", function()
@@ -510,7 +660,7 @@ local function EnsureManagerFrame()
     f.profCycleBtn = profCycleBtn
 
     local profNewBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    profNewBtn:SetSize(136, 24)
+    profNewBtn:SetSize(214, 24)
     profNewBtn:SetPoint("LEFT", profCycleBtn, "RIGHT", 8, 0)
     ApplyCompactButtonFont(profNewBtn)
     profNewBtn:SetText(L["UI_PROFILE_NEW"])
@@ -530,13 +680,14 @@ local function EnsureManagerFrame()
     end)
     f.profDelBtn = profDelBtn
 
-    -- Preset Bar (4 evenly spaced 168px buttons across 692px inner width)
+    -- Preset Bar (4 evenly spaced responsive buttons)
     local presetDefs = {
         { id = "DEFAULT_100", label = L["PRESET_DEFAULT_NAME"], desc = L["PRESET_DEFAULT_DESC"] },
         { id = "COMPACT_80", label = L["PRESET_COMPACT80_NAME"], desc = L["PRESET_COMPACT80_DESC"] },
         { id = "WQHD_85", label = L["PRESET_WQHD85_NAME"], desc = L["PRESET_WQHD85_DESC"] },
         { id = "LAPTOP_72", label = L["PRESET_LAPTOP72_NAME"], desc = L["PRESET_LAPTOP72_DESC"] },
     }
+    f.presetBtns = {}
     for i = 1, #presetDefs do
         local pd = presetDefs[i]
         local pBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -561,9 +712,10 @@ local function EnsureManagerFrame()
                 GameTooltip:Hide()
             end
         end)
+        f.presetBtns[i] = pBtn
     end
 
-    -- Search Box + Utility Buttons (fits cleanly inside 692px inner width)
+    -- Search Box + Utility Buttons
     local searchBox = CreateFrame("EditBox", nil, f, BACKDROP_TEMPLATE)
     searchBox:SetSize(232, 24)
     searchBox:SetPoint("TOPLEFT", 14, -180)
@@ -574,6 +726,7 @@ local function EnsureManagerFrame()
     local placeholder = searchBox:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     placeholder:SetPoint("LEFT", 8, 0)
     placeholder:SetText(L["UI_SEARCH_PLACEHOLDER"])
+    f.searchBox = searchBox
 
     searchBox:SetScript("OnTextChanged", function(self)
         local txt = self:GetText() or ""
@@ -592,7 +745,7 @@ local function EnsureManagerFrame()
     pickBtn:SetText(L["UI_START_PICKER"])
     pickBtn:SetScript("OnClick", function()
         f:Hide()
-        Picker:Start()
+        Picker:Start(true)
     end)
 
     local expBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -617,12 +770,23 @@ local function EnsureManagerFrame()
     -- Scrollable Window List
     local listBorder = CreateFrame("Frame", nil, f, BACKDROP_TEMPLATE)
     listBorder:SetPoint("TOPLEFT", 14, -210)
-    listBorder:SetPoint("BOTTOMRIGHT", -14, 14)
+    listBorder:SetPoint("BOTTOMRIGHT", -14, 18)
     StyleBox(listBorder, 0.03, 0.04, 0.06, 0.90)
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, listBorder, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", 6, -6)
     scrollFrame:SetPoint("BOTTOMRIGHT", -28, 6)
+    local origScrollWheel = scrollFrame:GetScript("OnMouseWheel")
+    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        if IsControlKeyDown() then
+            local step = IsShiftKeyDown() and 0.01 or 0.05
+            SetManagerScale((ns.db.settings.managerScale or 1.00) + (delta * step))
+            return
+        end
+        if origScrollWheel then
+            origScrollWheel(self, delta)
+        end
+    end)
 
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetWidth(654)
@@ -630,7 +794,55 @@ local function EnsureManagerFrame()
     scrollFrame:SetScrollChild(scrollChild)
     f.scrollChild = scrollChild
 
+    -- Bottom-Right Corner Resize Grip (Drag = resize width/height, Right-Click = default 720x580)
+    local resizeGrip = CreateFrame("Button", nil, f)
+    resizeGrip:SetSize(16, 16)
+    resizeGrip:SetPoint("BOTTOMRIGHT", -2, 2)
+    resizeGrip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    resizeGrip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    resizeGrip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    resizeGrip:RegisterForClicks("RightButtonUp")
+    resizeGrip:SetScript("OnMouseDown", function(_, btn)
+        if btn == "LeftButton" then
+            f:StartSizing("BOTTOMRIGHT")
+        end
+    end)
+    resizeGrip:SetScript("OnMouseUp", function(_, btn)
+        if btn == "LeftButton" then
+            f:StopMovingOrSizing()
+            ns.db.settings.managerWidth = math.floor((f:GetWidth() or DEFAULT_MANAGER_W) + 0.5)
+            ns.db.settings.managerHeight = math.floor((f:GetHeight() or DEFAULT_MANAGER_H) + 0.5)
+            ApplyManagerResponsiveLayout(f)
+        end
+    end)
+    resizeGrip:SetScript("OnClick", function(_, btn)
+        if btn == "RightButton" then
+            f:SetSize(DEFAULT_MANAGER_W, DEFAULT_MANAGER_H)
+            ns.db.settings.managerWidth = DEFAULT_MANAGER_W
+            ns.db.settings.managerHeight = DEFAULT_MANAGER_H
+            ApplyManagerResponsiveLayout(f)
+        end
+    end)
+    resizeGrip:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
+            GameTooltip:AddLine(L["UI_MANAGER_RESIZE_TIP"], 0.9, 0.9, 0.9)
+            GameTooltip:Show()
+        end
+    end)
+    resizeGrip:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+
+    f:SetScript("OnSizeChanged", function(self)
+        ApplyManagerResponsiveLayout(self)
+    end)
+
     managerFrame = f
+    SetManagerScale(ns.db.settings.managerScale or 1.00)
+    ApplyManagerResponsiveLayout(f)
     return f
 end
 

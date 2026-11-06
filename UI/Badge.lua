@@ -60,7 +60,7 @@ local function GetOrCreatePopover()
     end
 
     local p = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    p:SetSize(230, 146)
+    p:SetSize(268, 148)
     p:SetFrameStrata("DIALOG")
     p:SetFrameLevel(200)
     p:EnableMouse(true)
@@ -87,7 +87,7 @@ local function GetOrCreatePopover()
     p.scaleLabel = scaleLabel
 
     local slider = CreateFrame("Slider", nil, p, BACKDROP_TEMPLATE)
-    slider:SetSize(204, 14)
+    slider:SetSize(242, 14)
     slider:SetPoint("TOPLEFT", 12, -48)
     slider:SetOrientation("HORIZONTAL")
     slider:SetMinMaxValues(50, 150)
@@ -156,7 +156,7 @@ local function GetOrCreatePopover()
 
     -- Bottom Reset Buttons
     local resetScaleBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetScaleBtn:SetSize(98, 22)
+    resetScaleBtn:SetSize(116, 22)
     resetScaleBtn:SetPoint("BOTTOMLEFT", 12, 10)
     resetScaleBtn:SetText(L["POPOVER_RESET_SCALE"])
     resetScaleBtn:SetScript("OnClick", function()
@@ -166,7 +166,7 @@ local function GetOrCreatePopover()
     end)
 
     local resetPosBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetPosBtn:SetSize(98, 22)
+    resetPosBtn:SetSize(116, 22)
     resetPosBtn:SetPoint("BOTTOMRIGHT", -12, 10)
     resetPosBtn:SetText(L["POPOVER_RESET_POS"])
     resetPosBtn:SetScript("OnClick", function()

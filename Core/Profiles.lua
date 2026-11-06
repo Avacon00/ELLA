@@ -264,15 +264,21 @@ function Profiles:RestoreCustomWindows()
         return
     end
     for frameName, meta in pairs(ns.db.customWindows) do
-        local windowId = "CUSTOM_" .. frameName
-        Registry:RegisterWindow(windowId, {
-            frame = frameName,
-            label = meta.label or frameName,
-            category = "CAT_CUSTOM",
-            defaultCompactScale = 0.85,
-            isCustom = true,
-            source = "UserPicker",
-        })
+        local existingId, existingDesc = Registry:FindByFrameName(frameName)
+        if existingId and existingDesc and not existingDesc.isCustom then
+            -- Clean up legacy duplicate if a built-in descriptor already manages this frame
+            ns.db.customWindows[frameName] = nil
+        else
+            local windowId = "CUSTOM_" .. frameName
+            Registry:RegisterWindow(windowId, {
+                frame = frameName,
+                label = meta.label or frameName,
+                category = "CAT_CUSTOM",
+                defaultCompactScale = 0.85,
+                isCustom = true,
+                source = "UserPicker",
+            })
+        end
     end
 end
 

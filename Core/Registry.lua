@@ -169,6 +169,37 @@ function Registry:GetDescriptor(windowId)
     return Registry.windows[windowId]
 end
 
+-- Finds an existing descriptor managing the given global frame name (built-in preferred over custom)
+function Registry:FindByFrameName(frameName)
+    if type(frameName) ~= "string" or frameName == "" then
+        return nil, nil
+    end
+    local fallbackId, fallbackDesc = nil, nil
+    for i = 1, #Registry.windowOrder do
+        local id = Registry.windowOrder[i]
+        local desc = Registry.windows[id]
+        if desc then
+            local matches = (desc.frame == frameName) or (desc.resolvedFrameName == frameName)
+            if not matches and type(desc.candidates) == "table" then
+                for c = 1, #desc.candidates do
+                    if desc.candidates[c] == frameName then
+                        matches = true
+                        break
+                    end
+                end
+            end
+            if matches then
+                if not desc.isCustom then
+                    return id, desc
+                elseif not fallbackId then
+                    fallbackId, fallbackDesc = id, desc
+                end
+            end
+        end
+    end
+    return fallbackId, fallbackDesc
+end
+
 function Registry:GetDisplayLabel(desc)
     if not desc then
         return ""
