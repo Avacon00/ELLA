@@ -188,26 +188,26 @@ L["TUTORIAL_FINISHED_MSG"] = "Tutorial abgeschlossen! Du kannst es jederzeit üb
 L["TUTORIAL_STEP1_TITLE"] = "Willkommen bei Ella!"
 L["TUTORIAL_STEP1_BODY"] = "Ella (Easy Layout & Location Assistant) löst ein großes Problem in WoW: Forever:\n\nDu kannst klobige Menüfenster wie Zauberbuch, Questlog oder Berufe stufenlos verkleinern und frei platzieren – ganz ohne deinen Chat, deine Aktionsleisten oder Blizzards Edit Mode zu verändern."
 
-L["TUTORIAL_STEP2_TITLE"] = "1-Klick-Presets"
-L["TUTORIAL_STEP2_BODY"] = "Oben in der Leiste findest du fertige Presets:\n\n• |cffffd100Classic Kompakt (80%)|r: Das Flaggschiff für den klassischen Vanilla-Look.\n• |cffffd100WQHD / 4K (85%)|r: Ideal für hochauflösende Monitore.\n• |cffffd100Laptop / Deck (72%)|r: Perfekt für Handhelds & kleine Displays.\n• |cffffd100Standard (100%)|r: Setzt alle Fenster auf Originalgröße."
+L["TUTORIAL_STEP2_TITLE"] = "1-Klick-Presets & Handheld-Erkennung"
+L["TUTORIAL_STEP2_BODY"] = "Oben in der Leiste findest du fertige Presets:\n\n• |cffffd100Classic Kompakt (80%)|r: Flaggschiff für klassischen Vanilla-Look.\n• |cffffd100WQHD / 4K (85%)|r: Ideal für hochauflösende Monitore.\n• |cffffd100Laptop / Deck (72%)|r: Perfekt für Handhelds & Laptops.\n• |cffffd100Standard (100%)|r: Setzt alle Fenster auf Originalgröße.\n\n|cff00ff96Tipp:|r Ella erkennt Handhelds (z. B. Steam Deck) beim Login automatisch!"
 
-L["TUTORIAL_STEP3_TITLE"] = "Fensterliste & Skalierung"
-L["TUTORIAL_STEP3_BODY"] = "In dieser Liste siehst du alle unterstützten Fenster.\n\n• Klicke auf |cff00ff96+|r oder |cffff6060-|r, um ein Fenster in 5%-Schritten anzupassen (|cffffd100Shift|r = feine 1%-Schritte).\n• Der Button |cffffd100100%|r setzt nur dieses einzelne Fenster zurück.\n• Offene Fenster stehen automatisch ganz oben!"
+L["TUTORIAL_STEP3_TITLE"] = "Fensterliste, Vorschau & Filter"
+L["TUTORIAL_STEP3_BODY"] = "In der Liste siehst du alle Menüs:\n\n• |cff00ff96+|r und |cffff6060-|r: Stufenlos in 5%-Schritten anpassen (|cffffd100Shift|r = 1%).\n• |cff00ff96[Auge]|r: Öffnet das Fenster sofort zur Live-Vorschau – kein NPC-Besuch nötig!\n• |cffffd100Filter-Pills|r oben filtern blitzschnell auf [Offen], [Berufe] oder [Quests]."
 
 L["TUTORIAL_STEP4_TITLE"] = "Die 3 Fenstermodi"
 L["TUTORIAL_STEP4_BODY"] = "Jedes Fenster hat eine Modus-Schaltfläche:\n\n• |cff00ff96Skalieren + Bewegen|r: Freies Ziehen & Position merken.\n• |cffffd100Nur Skalieren|r: Blizzards automatisches Nebeneinander-Layout bleibt aktiv, öffnet aber in deiner Wunschgröße!\n• |cff888888Deaktiviert|r: Fenster bleibt völlig unberührt."
 
-L["TUTORIAL_STEP5_TITLE"] = "Profile & Sicherheitsnetz"
-L["TUTORIAL_STEP5_BODY"] = "Keine Angst vor Fehlern:\n\n• |cff00ff96Auf Profil-Stand|r: Verwirft alle Experimente und stellt dein gespeichertes Profil sofort wieder her.\n• |cffffd100Rückgängig|r: Geht bis zu 25 Änderungen Schritt für Schritt zurück.\n• |cffffd100Speichern *|r: Sichert dein neues Wunschlayout fest im Profil ab."
+L["TUTORIAL_STEP5_TITLE"] = "Profile & Charakter-Bindung"
+L["TUTORIAL_STEP5_BODY"] = "Layouts sichern & verwalten:\n\n• |cff00ff96Profil an Charakter binden|r: Lädt dein Setup beim Einloggen dieses Charakters automatisch!\n• |cffffd100Auf Profil-Stand|r: Verwirft Experimente und stellt den Speicherstand her.\n• |cffffd100Rückgängig|r: Bis zu 25 Änderungen schrittweise zurücknehmen."
 
 L["TUTORIAL_STEP6_TITLE"] = "Magnetisches Einrasten"
 L["TUTORIAL_STEP6_BODY"] = "Beim Bewegen von Fenstern:\n\n• Rasten Fenster sanft an der |cff00ccffBildschirmmitte|r sowie an Kanten anderer offener Fenster ein (mit leuchtenden Cyan-Hilfslinien).\n• Halte |cffffd100Shift|r gedrückt für ein pixelgenaues 10px-Raster.\n• Fenster werden beim Ziehen halbtransparent!"
 
-L["TUTORIAL_STEP7_TITLE"] = "Titelleisten-%-Badge"
-L["TUTORIAL_STEP7_BODY"] = "Du musst nicht immer `/ella` öffnen:\n\n• Jedes Fenster hat oben rechts ein dezentes |cffffd100%-Badge|r.\n• Drehe das |cffffd100Mausrad|r auf dem Badge zum schnellen Zoomen (bleibt pixelgenau unterm Cursor!).\n• Klicke mit |cff00ff96Links|r für Schieberegler, Positionssperre & den |cff00ff96Zurück|r-Button."
+L["TUTORIAL_STEP7_TITLE"] = "Titelleisten-Badge & Deckkraft"
+L["TUTORIAL_STEP7_BODY"] = "Du musst nicht immer /ella öffnen:\n\n• Jedes Fenster hat oben rechts ein dezentes |cffffd100%-Badge|r.\n• |cffffd100Mausrad|r auf dem Badge zoomt direkt unterm Cursor.\n• |cff00ff96Linksklick|r öffnet das Popover: Steuere hier stufenlos |cff00ff96Deckkraft (Transparenz)|r und aktiviere |cffffd100Mouseover-Fade|r!"
 
-L["TUTORIAL_STEP8_TITLE"] = "Fertig & Tipps"
-L["TUTORIAL_STEP8_BODY"] = "Du bist startklar!\n\n• Mit |cff00ff96+ Fenster-Picker|r kannst du jedes unbekannte Drittanbieter-Fenster per Mausklick aufnehmen.\n• Ziehe die Ecke unten rechts an Ella, um dieses Fenster zu vergrößern.\n• Du kannst dieses Tutorial jederzeit über das |cffffd100[?]|r oben rechts erneut starten!"
+L["TUTORIAL_STEP8_TITLE"] = "Fertig, Minimap & Picker 2.0"
+L["TUTORIAL_STEP8_BODY"] = "Du bist startklar!\n\n• |cff00ff96Minimap-Icon|r: Klicke links für Ella, rechts für das Schnellmenü.\n• |cff00ff96+ Fenster-Picker 2.0|r: Nimm jedes Drittanbieter-Fenster per Klick auf (Mausrad navigiert durch verschachtelte Ebenen!).\n• Wiederhole diese Tour jederzeit über das |cffffd100[?]|r oben rechts!"
 
 -- v1.3.0 Minimap, Filter Pills & Window Preview
 L["MINIMAP_TOOLTIP_TITLE"] = "Ella - Layout & Location Assistant"

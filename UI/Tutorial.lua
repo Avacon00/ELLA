@@ -310,6 +310,11 @@ end
 -- ============================================================================
 -- 3. Step Definitions & Target Anchoring
 -- ============================================================================
+-- NOTE FOR DEVELOPERS & CONTRIBUTORS:
+-- When adding new major user-facing features or UI controls (e.g. presets,
+-- opacity, profiles, picker upgrades), ALWAYS verify and update these 8 steps
+-- and their locale strings to keep in-game onboarding perfectly synchronized!
+-- ============================================================================
 local STEPS = {
     [1] = {
         titleKey = "TUTORIAL_STEP1_TITLE",
@@ -334,8 +339,8 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP3_BODY",
         getTarget = function()
             local row = ns.ManagerUI and ns.ManagerUI.GetRow and ns.ManagerUI:GetRow(1)
-            if row and row.minusBtn and row.resetBtn then
-                return { tl = row.minusBtn, br = row.resetBtn }
+            if row and row.minusBtn and (row.eyeBtn or row.resetBtn) then
+                return { tl = row.minusBtn, br = (row.eyeBtn and row.eyeBtn:IsShown() and row.eyeBtn) or row.resetBtn }
             end
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
             return mf and mf.scrollFrame
@@ -354,7 +359,9 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP5_BODY",
         getTarget = function()
             local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()
-            if mf and mf.profCycleBtn and mf.profDelBtn then
+            if mf and mf.chkBindChar and mf.profDelBtn then
+                return { tl = mf.chkBindChar, br = mf.profDelBtn }
+            elseif mf and mf.profCycleBtn and mf.profDelBtn then
                 return { tl = mf.profCycleBtn, br = mf.profDelBtn }
             end
             return mf and mf.profCycleBtn

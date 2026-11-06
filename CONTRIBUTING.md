@@ -78,3 +78,17 @@ Jeder Commit wird automatisiert gegen diese Regeln geprüft (`python3 tests/vali
 6. **Null globale Leaks:** Jede `.lua`-Datei startet mit `local AddonName, ns = ...`. Keine unregistrierten globalen Variablen.
 7. **Sicherheitsgrenzen:** Skalierung strikt auf `[0.50, 1.50]` begrenzt + Bildschirm-Clamping + `/ella reset` Notausgang.
 8. **0,00 ms Ruhe-CPU:** Keine dauerhaften `OnUpdate`-Schleifen! `OnUpdate` darf ausschließlich während eines aktiven Maus-Ziehens oder aktiven Frame-Pickers laufen.
+
+---
+
+## 4. Feature- & Release-Checkliste (Tutorial-Pflege)
+
+Wann immer ein neues Core-Feature oder sichtbares UI-Element ergänzt wird:
+1. **Tutorial-Synchronisation (`UI/Tutorial.lua`):**
+   * Prüfe die 8 Schritte des interaktiven In-Game-Tutorials (`/ella tour`).
+   * Müssen Erklärungen in `Locales/deDE.lua` & `Locales/enUS.lua` aktualisiert werden?
+   * Passen die Spotlight-Rahmen (`STEPS[x].getTarget`) noch zu den Bedienelementen?
+2. **Lokalisierungs-Vollständigkeit:**
+   * Jeder Text-Key muss in beiden Lokalisierungsdateien exakt übereinstimmen.
+3. **Automatisierte Validierung:**
+   * `python3 tests/validate_addon.py` muss vor jedem Git-Tag und Release 100 % grün sein.
