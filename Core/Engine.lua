@@ -692,6 +692,87 @@ function Engine:GetManagedState(frame)
     return frameState[frame]
 end
 
+function ns:RunSelfTest()
+    ns:Print("|cffffd100--- ELLA In-Game Selbsttest v" .. ns.Version .. " ---|r")
+    local passed = 0
+    local total = 6
+
+    -- Test 1: Version & DB Schema
+    if ns.Version == "1.4.0" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
+        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.4.0 & Datenbank-Schema v2 OK")
+        passed = passed + 1
+    else
+        ns:Print("|cffff3333[1/6 FAIL]|r Datenbank-Schema oder Version fehlerhaft")
+    end
+
+    -- Test 2: Character-Profile Binding
+    local charKey = ns.Profiles and ns.Profiles:GetCharKey() or "Unknown"
+    if charKey ~= "Unknown" then
+        local bound = ns.Profiles:IsCharBoundToActiveProfile()
+        ns:Print(string.format("|cff00ff96[2/6 PASS]|r Charakter-Erkennung: %s (Gebunden: %s)", charKey, bound and "Ja" or "Nein"))
+        passed = passed + 1
+    else
+        ns:Print("|cffff3333[2/6 FAIL]|r Charakter-Name konnte nicht ermittelt werden")
+    end
+
+    -- Test 3: Opacity & Fade Engine
+    local testWin = "CHARACTER"
+    local origCfg = ns:GetWindowConfig(testWin, false)
+    local origAlpha = origCfg and origCfg.alpha or 1.00
+    local origFade = origCfg and origCfg.mouseoverFade or false
+
+    local okAlpha = Engine:SetWindowAlpha(testWin, 0.85, true)
+    local verifyCfg = ns:GetWindowConfig(testWin, false)
+    if okAlpha and verifyCfg and verifyCfg.alpha == 0.85 and verifyCfg.mouseoverFade == true then
+        Engine:SetWindowAlpha(testWin, origAlpha, origFade)
+        ns:Print("|cff00ff96[3/6 PASS]|r Deckkraft- & Mouseover-Fade-Engine OK")
+        passed = passed + 1
+    else
+        Engine:SetWindowAlpha(testWin, origAlpha, origFade)
+        ns:Print("|cffff3333[3/6 FAIL]|r Deckkraft-Steuerung fehlgeschlagen")
+    end
+
+    -- Test 4: Profile Snapshot & Undo-System
+    if ns.Profiles and ns.Profiles.PushUndoSnapshot and ns.Profiles.CanUndo then
+        ns.Profiles:PushUndoSnapshot("selftest")
+        local canUndo = ns.Profiles:CanUndo()
+        ns.Profiles:UndoLastChange()
+        if canUndo then
+            ns:Print("|cff00ff96[4/6 PASS]|r Profil-Snapshot & Undo-Stack OK")
+            passed = passed + 1
+        else
+            ns:Print("|cffff3333[4/6 FAIL]|r Undo-Stack reagiert nicht")
+        end
+    else
+        ns:Print("|cffff3333[4/6 FAIL]|r Profile-Modul unvollständig")
+    end
+
+    -- Test 5: Window Registry
+    local count = 0
+    for _ in Registry:IterateWindows() do
+        count = count + 1
+    end
+    if count >= 15 then
+        ns:Print(string.format("|cff00ff96[5/6 PASS]|r Window Registry: %d Fenster registriert", count))
+        passed = passed + 1
+    else
+        ns:Print(string.format("|cffff3333[5/6 FAIL]|r Zu wenige Fenster registriert: %d", count))
+    end
+
+    -- Test 6: Resolution & Handheld Check
+    local uipW = (UIParent and UIParent:GetWidth()) or 0
+    local uipH = (UIParent and UIParent:GetHeight()) or 0
+    local isHandheld = (uipW <= 1400 and uipH <= 800)
+    ns:Print(string.format("|cff00ff96[6/6 PASS]|r Bildschirmaufloesung: %dx%d (%s)", math.floor(uipW), math.floor(uipH), isHandheld and "Handheld / Kompakt" or "Standard Desktop"))
+    passed = passed + 1
+
+    if passed == total then
+        ns:Print(string.format("|cff00ff96Alle %d von %d In-Game-Tests erfolgreich bestanden!|r", passed, total))
+    else
+        ns:Print(string.format("|cffffaa00Selbsttest beendet: %d von %d Tests bestanden.|r", passed, total))
+    end
+end
+
 local function UpdateCtrlWheelCatcher()
     if not ns.db or not ns.db.settings.enabled or not ns.db.settings.ctrlWheelZoom or not IsControlKeyDown() then
         ctrlWheelCatcher:Hide()

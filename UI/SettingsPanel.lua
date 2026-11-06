@@ -1280,6 +1280,10 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         Profiles:RevertToSavedProfile()
     elseif cmd == "save" then
         Profiles:SaveActiveProfileSnapshot(false)
+    elseif cmd == "test" or cmd == "selftest" then
+        if ns.RunSelfTest then
+            ns:RunSelfTest()
+        end
     elseif cmd == "reset" then
         Profiles:ResetAll()
     elseif cmd == "help" or cmd == "?" then
@@ -1290,6 +1294,7 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         ns:Print(L["SLASH_HELP_PRESET"])
         ns:Print(L["SLASH_HELP_BADGES"])
         ns:Print(L["SLASH_HELP_PROFILE"])
+        ns:Print(L["SLASH_HELP_TEST"])
         ns:Print(L["SLASH_HELP_RESET"])
     else
         ManagerUI:Toggle()
