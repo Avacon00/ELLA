@@ -9,6 +9,7 @@ local Registry = {
     pendingByAddon = {},
     presets = {},
     presetOrder = {},
+    readyToBind = false,
 }
 ns.Registry = Registry
 
@@ -37,7 +38,7 @@ end
 function Registry:ResolveDescriptorFrame(desc)
     if desc.frame then
         local f = Registry:ResolveFramePath(desc.frame)
-        if f then
+        if f and Guard:ValidateTarget(f) then
             return f, desc.frame
         end
     end
@@ -45,7 +46,7 @@ function Registry:ResolveDescriptorFrame(desc)
         for i = 1, #desc.candidates do
             local candidateName = desc.candidates[i]
             local f = Registry:ResolveFramePath(candidateName)
-            if f then
+            if f and Guard:ValidateTarget(f) then
                 return f, candidateName
             end
         end
@@ -54,16 +55,14 @@ function Registry:ResolveDescriptorFrame(desc)
 end
 
 local function TryBindDescriptor(desc)
+    if not Registry.readyToBind then
+        return false
+    end
     if desc.boundFrame then
         return true
     end
     local frame, resolvedName = Registry:ResolveDescriptorFrame(desc)
     if not frame then
-        return false
-    end
-
-    local valid = Guard:ValidateTarget(frame)
-    if not valid then
         return false
     end
 
@@ -99,6 +98,7 @@ function Registry:RegisterWindow(windowId, spec)
     desc.badgeOffsetX = tonumber(spec.badgeOffsetX) or desc.badgeOffsetX or -28
     desc.badgeOffsetY = tonumber(spec.badgeOffsetY) or desc.badgeOffsetY or -5
     desc.isCustom = (spec.isCustom == true)
+    desc.isCommunityAddon = (spec.isCommunityAddon == true) or (desc.isCommunityAddon == true)
     desc.source = spec.source or desc.source or AddonName
 
     if not existing then
@@ -106,20 +106,33 @@ function Registry:RegisterWindow(windowId, spec)
         Registry.windowOrder[#Registry.windowOrder + 1] = windowId
     end
 
-    -- Attempt immediate bind if already in memory
-    if not TryBindDescriptor(desc) and desc.addon then
+    -- Attempt immediate bind only after SavedVariables (ELLADB) are initialized
+    local boundNow = Registry.readyToBind and TryBindDescriptor(desc) or false
+    if not boundNow and desc.addon then
         local bucket = Registry.pendingByAddon[desc.addon]
         if not bucket then
             bucket = {}
             Registry.pendingByAddon[desc.addon] = bucket
 
             if _G.EventUtil and type(_G.EventUtil.ContinueOnAddOnLoaded) == "function" then
-                _G.EventUtil.ContinueOnAddOnLoaded(desc.addon, function()
-                    Registry:OnAddOnLoaded(desc.addon)
+                local addonToWatch = desc.addon
+                _G.EventUtil.ContinueOnAddOnLoaded(addonToWatch, function()
+                    if Registry.readyToBind then
+                        Registry:OnAddOnLoaded(addonToWatch)
+                    end
                 end)
             end
         end
-        bucket[#bucket + 1] = desc
+        local alreadyQueued = false
+        for i = 1, #bucket do
+            if bucket[i] == desc then
+                alreadyQueued = true
+                break
+            end
+        end
+        if not alreadyQueued then
+            bucket[#bucket + 1] = desc
+        end
     end
 
     ns:Fire("OnWindowRegistered", windowId, desc)
@@ -140,6 +153,9 @@ function Registry:RegisterBatch(addonNameOrNil, entries)
 end
 
 function Registry:OnAddOnLoaded(loadedAddonName)
+    if not Registry.readyToBind then
+        return
+    end
     local bucket = Registry.pendingByAddon[loadedAddonName]
     if bucket then
         for i = 1, #bucket do
@@ -157,12 +173,20 @@ function Registry:OnAddOnLoaded(loadedAddonName)
 end
 
 function Registry:ScanUnboundWindows()
+    if not Registry.readyToBind then
+        return
+    end
     for i = 1, #Registry.windowOrder do
         local desc = Registry.windows[Registry.windowOrder[i]]
         if desc and not desc.boundFrame then
             TryBindDescriptor(desc)
         end
     end
+end
+
+function Registry:EnableBindingAndScan()
+    Registry.readyToBind = true
+    Registry:ScanUnboundWindows()
 end
 
 function Registry:GetDescriptor(windowId)
@@ -239,6 +263,21 @@ function Registry:GetPreset(presetId)
     return Registry.presets[presetId]
 end
 
+local NPC_REQUIRED_WINDOWS = {
+    BANK = true,
+    MERCHANT = true,
+    MAIL = true,
+    GOSSIP = true,
+    QUEST_DIALOG = true,
+    AUCTION = true,
+    LOOT = true,
+    TRAINER = true,
+    TABARD = true,
+    TAXI = true,
+    ITEMTEXT = true,
+    INSPECT = true,
+}
+
 function Registry:ToggleWindowPreview(windowId)
     local desc = Registry:GetDescriptor(windowId)
     if not desc then
@@ -249,19 +288,38 @@ function Registry:ToggleWindowPreview(windowId)
     end
     local f = desc.boundFrame
     if f and f.IsShown and f:IsShown() then
+        if _G.HideUIPanel then
+            local ok = pcall(_G.HideUIPanel, f)
+            if ok and not f:IsShown() then
+                return true, "hidden"
+            end
+        end
         if f.Hide then
             f:Hide()
             return true, "hidden"
         end
     end
 
-    -- Known Blizzard panel toggles
+    -- Known Blizzard panel toggles (Interface 16001 + Classic fallbacks)
     if windowId == "CHARACTER" and _G.ToggleCharacter then
         _G.ToggleCharacter("PaperDollFrame")
         return true, "toggled"
-    elseif windowId == "SPELLBOOK" and _G.ToggleSpellBook then
-        _G.ToggleSpellBook(_G.BOOKTYPE_SPELL or 1)
-        return true, "toggled"
+    elseif windowId == "SPELLBOOK" then
+        if _G.PlayerSpellsUtil and type(_G.PlayerSpellsUtil.ToggleSpellBookFrame) == "function" then
+            _G.PlayerSpellsUtil.ToggleSpellBookFrame()
+            return true, "toggled"
+        elseif _G.ToggleSpellBook then
+            _G.ToggleSpellBook(_G.BOOKTYPE_SPELL or 1)
+            return true, "toggled"
+        end
+    elseif windowId == "TALENTS" then
+        if _G.PlayerSpellsUtil and type(_G.PlayerSpellsUtil.ToggleClassTalentFrame) == "function" then
+            _G.PlayerSpellsUtil.ToggleClassTalentFrame()
+            return true, "toggled"
+        elseif _G.ToggleTalentFrame then
+            _G.ToggleTalentFrame()
+            return true, "toggled"
+        end
     elseif windowId == "QUESTLOG" and _G.ToggleQuestLog then
         _G.ToggleQuestLog()
         return true, "toggled"
@@ -271,25 +329,45 @@ function Registry:ToggleWindowPreview(windowId)
     elseif windowId == "FRIENDS" and _G.ToggleFriendsFrame then
         _G.ToggleFriendsFrame(1)
         return true, "toggled"
-    elseif windowId == "GUILD" and _G.ToggleGuildFrame then
-        _G.ToggleGuildFrame()
-        return true, "toggled"
+    elseif (windowId == "COMMUNITIES" or windowId == "GUILD") then
+        if _G.ToggleGuildFrame then
+            _G.ToggleGuildFrame()
+            return true, "toggled"
+        elseif _G.ToggleCommunitiesFrame then
+            _G.ToggleCommunitiesFrame()
+            return true, "toggled"
+        end
     elseif windowId == "DRESSUP" and _G.DressUpFrame then
         if _G.DressUpFrame:IsShown() then _G.DressUpFrame:Hide() else _G.DressUpFrame:Show() end
         return true, "toggled"
-    elseif windowId == "LFG" and _G.ToggleLFDParentFrame then
-        _G.ToggleLFDParentFrame()
+    elseif (windowId == "GROUP_FINDER" or windowId == "LFG") then
+        if _G.PVEFrame_ToggleFrame then
+            _G.PVEFrame_ToggleFrame()
+            return true, "toggled"
+        elseif _G.ToggleLFDParentFrame then
+            _G.ToggleLFDParentFrame()
+            return true, "toggled"
+        end
+    elseif windowId == "COLLECTIONS" and _G.ToggleCollectionsJournal then
+        _G.ToggleCollectionsJournal()
+        return true, "toggled"
+    elseif windowId == "ENCOUNTER_JOURNAL" and _G.ToggleEncounterJournal then
+        _G.ToggleEncounterJournal()
+        return true, "toggled"
+    elseif windowId == "MACRO" and _G.ShowMacroFrame then
+        _G.ShowMacroFrame()
+        return true, "toggled"
+    elseif windowId == "CALENDAR" and _G.ToggleCalendar then
+        _G.ToggleCalendar()
         return true, "toggled"
     end
 
+    if NPC_REQUIRED_WINDOWS[windowId] then
+        ns:Print(L["UI_ROW_TOGGLE_NPC_REQ"])
+        return false, "npc_required"
+    end
+
     if f and f.Show then
-        -- Frames requiring physical world interactables (Bank, Mail, Merchant, Gossip, Quest NPC)
-        if windowId == "BANK" or windowId == "MERCHANT" or windowId == "MAIL" or windowId == "GOSSIP" or windowId == "QUEST" then
-            if not f:IsShown() then
-                ns:Print(L["UI_ROW_TOGGLE_NPC_REQ"])
-                return false, "npc_required"
-            end
-        end
         f:Show()
         return true, "shown"
     end

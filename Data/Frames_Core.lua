@@ -17,7 +17,7 @@ Registry:RegisterBatch(nil, {
         linkedFrames = { "TokenFramePopup", "GearManagerDialogPopup", "ReputationDetailFrame" },
     },
     QUESTLOG = {
-        candidates = { "QuestLogFrame", "QuestLogPopupDetailFrame" },
+        candidates = { "QuestLogFrame" },
         labelKey = "WIN_QUESTLOG",
         category = "CAT_QUEST_WORLD",
         defaultCompactScale = 0.82,
@@ -89,7 +89,8 @@ Registry:RegisterBatch(nil, {
         defaultCompactScale = 0.85,
     },
     TAXI = {
-        candidates = { "TaxiFrame", "FlightMapFrame" },
+        candidates = { "FlightMapFrame", "TaxiFrame" },
+        linkedFrames = { "FlightMapFrame", "TaxiFrame" },
         labelKey = "WIN_TAXI",
         category = "CAT_QUEST_WORLD",
         defaultCompactScale = 0.85,

@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.9.0 – Design-System-Politur, Deutsche Typografie, Engine-Härtung & UX-Feinschliff
+* **Dark-Slate UI-Überarbeitung & Visuelle Hierarchie (`SettingsPanel`, `Badge`, `MinimapButton`, `Tutorial`):**
+  * **Maßgeschneiderte Flat-Controls in der Fensterliste:** Ersetzt die repetitiven knallroten Blizzard-Buttons pro Zeile durch ruhige Dark-Slate-Steuerelemente (`CreateFlatButton`) mit subtilen Hover-Rahmen und Zeilenglanz.
+  * **Semantische Modus-Farben & Skalen-Akzente:** Der Modus-Button signalisiert seinen Zustand nun sofort farblich (**Smaragdgrün** für *Skalieren + Bewegen*, **Bernsteingold** für *Nur Skalieren*, **Schiefergrau** für *Deaktiviert*). Veränderte Skalierungen leuchten in Gold (bzw. Cyan bei aktiver 75%-Instanzbegrenzung).
+  * **8 Kategorie-Filter & Kontextsensitive Leerzustände:** Neuer Filter-Tab **`Forever`** für *WoW: Forever*-Systeme, exakter `Custom (X)`-Zähler (ruhende, nicht installierte Community-AddOns blähen die Liste nicht mehr auf) sowie hilfreiche Leerzustands-Hinweise inklusive `[Alle Fenster anzeigen]`-Schnellbutton.
+  * **Suchfeld mit Fokus-Ring & `[×]`-Reset:** Eingelassenes Suchfeld mit Cyan-Fokusrahmen und Ein-Klick-Löschbutton.
+  * **Persistentes Ausrichtungsgitter:** Das Vollbild-Gitter bleibt beim Schließen des Managers bewusst aktiv, damit Spielfenster frei ausgerichtet werden können; `[# Gitter]` zeigt im Manager und Minimap-QuickMenu einen leuchtenden Cyan-Aktivstatus und nutzt eigene Ein-/Ausschalt-Sounds (`HIGH`-Strata für sichtbare Leitlinien auch über Standardfenstern).
+  * **2-Klick-Sicherheitsbestätigung:** Schutz vor Fehlklicks bei `Alle Reset` und `Profil löschen` durch direkte Inline-Bestätigung (`Sicher? Klick!`).
+  * **Symmetrisches Einstellungs-Grid & Neuer Standardmodus-Schalter:** Die Karte *Maus- & Bewegungsverhalten* bildet nun ein symmetrisches 3×2-Raster inklusive der bisher versteckten Option *Neue Fenster standardmäßig „Nur Skalieren“* sowie vollflächig klickbaren Checkbox-Beschriftungen und lückenlosen Tooltips.
+  * **Popover-, Minimap- & Tutorial-Feinschliff:** Verbreitertes Badge-Popover (`304×224`) mit intelligentem Rand-Flip, eigener Mausrad-Steuerung auf dem Deckkraft-Slider und Sperr-/Instanz-Hinweisen; dynamische QuickMenu-Breite mit Außenklick-Schließung; überlappungsfreier Tutorial-Header (`434px`) mit dynamischer Texthöhe und `ESC`-Schließung für alle Popups & Dialoge.
+* **100 % Saubere Deutsche Typografie & Ehrliches Copywriting (`deDE` & `enUS`):**
+  * **Echte Umlaute überall:** Alle über 30 verbliebenen ASCII-Ersatzschreibweisen (`ae`, `oe`, `ue`, `ss`) in Einstellungen, Tooltips, Picker, Presets und allen 13 Tutorial-Schritten wurden durch saubere deutsche Umlaute (`ä`, `ö`, `ü`, `ß`) ersetzt; Tippfehler in `ELLA.toc` behoben.
+  * **Kritischer Format-Crash-Fix (`HANDHELD_DIALOG_BODY`):** Unmaskiertes `(72%)` in `string.format` auf kompakten Auflösungen ($\le 1400 \times 800$, z. B. Steam Deck) behoben (`72%%`) und Erststart-Doppel-Popup verhindert.
+  * **Ehrliches Export-Copywriting & Vollständige Lokalisierung:** Da WoWs Lua-Sandbox kein automatisches Beschreiben der Zwischenablage ohne Tastendruck erlaubt, heißt der Button nun transparent *Code markieren* / *Highlight String* mit klarem `Strg+C`-Hinweis; `/ella test` und alle UI-Strings sind nun zu 100 % zweisprachig lokalisiert.
+* **Engine-, Taint- & Registry-Härtung (`Core/`, `Data/`, `Bindings.xml`):**
+  * **Picker-Validierung & EditMode-Container-Schutz:** Kritischer Bug im Fenster-Picker behoben, durch den gesperrte Blizzard-Container (wie `RightManagedFrameContainer`) trotz roter Warnung per Linksklick registriert werden konnten; `Guard`-Blacklist umfassend erweitert und bestehende Fehl-Einträge in `SavedVariables` werden beim Start automatisch bereinigt.
+  * **Verzögerte Frame-Bindung & Sichere Alpha-Grenzen:** Frühes Frame-Binding vor `ADDON_LOADED` verhindert; `MODE_DISABLED` wird auch in `HookFrameFade`/`ApplyAlphaToFrame` strikt respektiert; Mindest-Deckkraft einheitlich auf `30 %` abgesichert.
+  * **Starres Gruppen-Clamping & Cursor-Pivot im Kompaktmodus:** Angedockte Sticky-Window-Gruppen stoppen am Bildschirmrand nun als starrer Verbund ohne Relativversatz; Cursor-Pivot-Zoom arbeitet auch unter aktivem 75%-Instanz-Deckel ohne Koordinaten-Drift; `SyncLinkedFrames` beachtet den 75%-Deckel und überspringt `boundFrame`.
+  * **16001-Vorschau, Keybindings & Daten-Fixes:** Live-Vorschau (`ToggleWindowPreview`) für moderne 16001-Module (`Gilde & Communitys`, `Gruppensuche`, `Talente`, `Sammlungen`, `Abenteuerführer`, `Makros`, `Kalender`) repariert; `category="ADDONS"` in `Bindings.xml` ergänzt; Kandidaten-Konflikt zwischen `QUESTLOG` und `QUESTMAP` sowie `_detalhes`-Tabellenreferenz in `COMM_DETAILS` behoben; Validierungs-Suite (`tests/validate_addon.py`) auf Format-Strings, `Bindings.xml` und `cp1252`-Glyphen erweitert.
+
 ## v1.8.0 – Audio-Feedback & Dynamische Echtzeit-Filterzähler
 * **Haptisches & Akustisches Feedback (Native Blizzard Sound-Engine):**
   * **Magnetisches Einrasten (Snap-Sound):** Sanfter, haptischer Klick (`SOUNDKIT.UI_BAG_SORTING_01`), sobald ein Fenster an Hilfslinien oder Nachbarfenstern einrastet. Intelligente Flankenerkennung mit Cooldown verhindert Sound-Spam während des Ziehens.
@@ -62,6 +82,7 @@
 * **Tutorial-Synchronisation:**
   * Das interaktive Ingame-Tutorial (`/ella tour`) steuert während der einzelnen Erklärschritte automatisch den passenden Reiter an, sodass der Spotlight-Rahmen immer exakt auf das erklärte Element zeigt.
 
+## v1.7.0 – Screen-Grid, Profil-Sharing 2.0 & Boss-Key
 * **Option A: Visuelles UI-Ausrichtungs-Gitter (Screen-Grid Overlay):**
   * Neues dezent transparentes Vollbild-Raster zur millimetergenauen Fenster-Ausrichtung.
   * **Zentrum-Kreuz:** Cyan-leuchtende Leitlinien durch den exakten Bildschirmmittelpunkt (`UIParent`).

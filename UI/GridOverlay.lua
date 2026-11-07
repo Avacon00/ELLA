@@ -6,9 +6,11 @@ ns.GridOverlay = GridOverlay
 local gridFrame = nil
 local gridLines = {}
 local GRID_STEP = 32
+local lastBuiltW = 0
+local lastBuiltH = 0
 
 local function CreateLine(parent)
-    local line = parent:CreateTexture(nil, "BACKGROUND")
+    local line = parent:CreateTexture(nil, "ARTWORK")
     line:SetColorTexture(1, 1, 1, 1)
     return line
 end
@@ -17,8 +19,9 @@ local function BuildGrid()
     if not gridFrame then
         gridFrame = CreateFrame("Frame", "EllaGridOverlay", UIParent)
         gridFrame:SetAllPoints(UIParent)
-        gridFrame:SetFrameStrata("BACKGROUND")
-        gridFrame:SetFrameLevel(1)
+        -- HIGH strata (click-through) keeps center crosshairs & thirds visible over managed panels
+        gridFrame:SetFrameStrata("HIGH")
+        gridFrame:SetFrameLevel(900)
         gridFrame:EnableMouse(false)
         gridFrame:Hide()
     end
@@ -30,6 +33,8 @@ local function BuildGrid()
 
     local uipW = UIParent:GetWidth() or 1920
     local uipH = UIParent:GetHeight() or 1080
+    lastBuiltW = uipW
+    lastBuiltH = uipH
     local midX = uipW * 0.5
     local midY = uipH * 0.5
 
@@ -84,20 +89,25 @@ local function BuildGrid()
 end
 
 function GridOverlay:Show()
-    if not gridFrame or #gridLines == 0 then
+    local uipW = UIParent:GetWidth() or 1920
+    local uipH = UIParent:GetHeight() or 1080
+    if not gridFrame or #gridLines == 0 or math.abs(uipW - lastBuiltW) > 1 or math.abs(uipH - lastBuiltH) > 1 then
         BuildGrid()
     end
+    local wasShown = gridFrame:IsShown()
     gridFrame:Show()
-    ns:PlaySound("GRID_TOGGLE")
-    ns:Fire("OnGridOverlayToggled", true)
+    if not wasShown then
+        ns:PlaySound("GRID_ON")
+        ns:Fire("OnGridOverlayToggled", true)
+    end
 end
 
 function GridOverlay:Hide()
-    if gridFrame then
+    if gridFrame and gridFrame:IsShown() then
         gridFrame:Hide()
-        ns:PlaySound("GRID_TOGGLE")
+        ns:PlaySound("GRID_OFF")
+        ns:Fire("OnGridOverlayToggled", false)
     end
-    ns:Fire("OnGridOverlayToggled", false)
 end
 
 function GridOverlay:Toggle()

@@ -48,14 +48,17 @@ local function EnsurePromptDialog()
         return promptDialog
     end
 
-    local f = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    f:SetSize(450, 210)
+    local f = CreateFrame("Frame", "EllaTutorialPrompt", UIParent, BACKDROP_TEMPLATE)
+    f:SetSize(450, 214)
     f:SetPoint("CENTER", 0, 40)
     f:SetFrameStrata("FULLSCREEN_DIALOG")
     f:EnableMouse(true)
     f:SetClampedToScreen(true)
     StyleBox(f, 0.05, 0.06, 0.09, 0.98, 0.88, 0.72, 0.25)
     f:Hide()
+    if _G.UISpecialFrames then
+        table.insert(_G.UISpecialFrames, "EllaTutorialPrompt")
+    end
 
     local icon = f:CreateTexture(nil, "ARTWORK")
     icon:SetSize(28, 28)
@@ -70,6 +73,7 @@ local function EnsurePromptDialog()
     closeBtn:SetPoint("TOPRIGHT", -4, -4)
     closeBtn:SetScript("OnClick", function()
         ns.db.settings.tutorialPromptShown = true
+        ns:PlaySound("CLICK")
         f:Hide()
     end)
 
@@ -79,12 +83,14 @@ local function EnsurePromptDialog()
     body:SetJustifyH("LEFT")
     body:SetSpacing(4)
     body:SetText(L["TUTORIAL_PROMPT_BODY"])
+    f.body = body
 
     local startBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     startBtn:SetSize(210, 28)
     startBtn:SetPoint("BOTTOMLEFT", 18, 16)
     startBtn:SetText(L["TUTORIAL_PROMPT_START"])
     startBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         f:Hide()
         Tutorial:Start(1)
     end)
@@ -95,8 +101,12 @@ local function EnsurePromptDialog()
     laterBtn:SetText(L["TUTORIAL_PROMPT_LATER"])
     laterBtn:SetScript("OnClick", function()
         ns.db.settings.tutorialPromptShown = true
+        ns:PlaySound("CLICK")
         f:Hide()
     end)
+
+    local bodyH = body:GetStringHeight() or 70
+    f:SetHeight(math.max(214, math.ceil(bodyH + 114)))
 
     promptDialog = f
     return f
@@ -216,7 +226,7 @@ local function EnsureTutorialFrames()
 
     -- Interactive Tutorial Card (Draggable Callout)
     local c = CreateFrame("Frame", "EllaTutorialCard", UIParent, BACKDROP_TEMPLATE)
-    c:SetSize(400, 195)
+    c:SetSize(434, 200)
     c:SetPoint("CENTER", 0, -40)
     c:SetFrameStrata("FULLSCREEN_DIALOG")
     c:SetFrameLevel(200)
@@ -246,19 +256,24 @@ local function EnsureTutorialFrames()
     icon:SetPoint("TOPLEFT", 12, -10)
     icon:SetTexture(ICON_PATH)
 
-    local title = c:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("LEFT", icon, "RIGHT", 8, 0)
-    c.title = title
-
     local stepCounter = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    stepCounter:SetPoint("TOPRIGHT", -32, -12)
+    stepCounter:SetPoint("TOPRIGHT", -30, -13)
+    stepCounter:SetJustifyH("RIGHT")
     stepCounter:SetTextColor(0.0, 0.85, 1.0)
     c.stepCounter = stepCounter
+
+    local title = c:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("LEFT", icon, "RIGHT", 8, 0)
+    title:SetPoint("RIGHT", stepCounter, "LEFT", -8, 0)
+    title:SetJustifyH("LEFT")
+    title:SetWordWrap(false)
+    c.title = title
 
     local closeBtn = CreateFrame("Button", nil, c, "UIPanelCloseButton")
     closeBtn:SetSize(24, 24)
     closeBtn:SetPoint("TOPRIGHT", -2, -2)
     closeBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         Tutorial:Stop()
     end)
 
@@ -271,31 +286,34 @@ local function EnsureTutorialFrames()
 
     -- Navigation Buttons
     local btnPrev = CreateFrame("Button", nil, c, "UIPanelButtonTemplate")
-    btnPrev:SetSize(84, 22)
+    btnPrev:SetSize(88, 22)
     btnPrev:SetPoint("BOTTOMLEFT", 12, 10)
     ApplyCompactButtonFont(btnPrev)
     btnPrev:SetText(L["TUTORIAL_BTN_PREV"])
     btnPrev:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         Tutorial:ShowStep(Tutorial.currentStep - 1)
     end)
     c.btnPrev = btnPrev
 
     local btnExit = CreateFrame("Button", nil, c, "UIPanelButtonTemplate")
-    btnExit:SetSize(130, 22)
+    btnExit:SetSize(136, 22)
     btnExit:SetPoint("LEFT", btnPrev, "RIGHT", 6, 0)
     ApplyCompactButtonFont(btnExit)
     btnExit:SetText(L["TUTORIAL_BTN_EXIT"])
     btnExit:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         Tutorial:Stop()
     end)
     c.btnExit = btnExit
 
     local btnNext = CreateFrame("Button", nil, c, "UIPanelButtonTemplate")
-    btnNext:SetSize(110, 22)
+    btnNext:SetSize(116, 22)
     btnNext:SetPoint("BOTTOMRIGHT", -12, 10)
     ApplyCompactButtonFont(btnNext)
     btnNext:SetText(L["TUTORIAL_BTN_NEXT"])
     btnNext:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         if Tutorial.currentStep >= Tutorial.TOTAL_STEPS then
             Tutorial:Stop()
         else
@@ -312,7 +330,7 @@ end
 -- ============================================================================
 -- NOTE FOR DEVELOPERS & CONTRIBUTORS:
 -- When adding new major user-facing features or UI controls (e.g. presets,
--- opacity, profiles, picker upgrades), ALWAYS verify and update these 8 steps
+-- opacity, profiles, picker upgrades), ALWAYS verify and update these 13 steps
 -- and their locale strings to keep in-game onboarding perfectly synchronized!
 -- ============================================================================
 local STEPS = {
@@ -460,9 +478,11 @@ function Tutorial:ShowStep(index)
         ns.ManagerUI:SelectTab(s.tab)
     end
 
+    cardFrame.stepCounter:SetText(string.format(L["TUTORIAL_STEP_COUNTER"], index, Tutorial.TOTAL_STEPS))
     cardFrame.title:SetText(L[s.titleKey])
     cardFrame.body:SetText(L[s.bodyKey])
-    cardFrame.stepCounter:SetText(string.format(L["TUTORIAL_STEP_COUNTER"], index, Tutorial.TOTAL_STEPS))
+    local bodyH = cardFrame.body:GetStringHeight() or 92
+    cardFrame:SetHeight(math.max(198, math.ceil(bodyH + 84)))
 
     cardFrame.btnPrev:SetEnabled(index > 1)
     if index == Tutorial.TOTAL_STEPS then
@@ -480,7 +500,9 @@ function Tutorial:ShowStep(index)
     if target then
         local tl = target.tl or target
         local br = target.br or target
-        if tl and tl:IsShown() and br and br:IsShown() then
+        local tlVis = tl and tl:IsShown() and (not tl.IsVisible or tl:IsVisible())
+        local brVis = br and br:IsShown() and (not br.IsVisible or br:IsVisible())
+        if tlVis and brVis then
             spotlightBox:ClearAllPoints()
             spotlightBox:SetPoint("TOPLEFT", tl, "TOPLEFT", -6, 6)
             spotlightBox:SetPoint("BOTTOMRIGHT", br, "BOTTOMRIGHT", 6, -6)
@@ -515,6 +537,9 @@ function Tutorial:Start(stepIndex)
 
     if ns.ManagerUI and ns.ManagerUI.Show then
         ns.ManagerUI:Show()
+    end
+    if ns.ManagerUI and ns.ManagerUI.PrepareForTutorial then
+        ns.ManagerUI:PrepareForTutorial()
     end
 
     local mf = ns.ManagerUI and ns.ManagerUI.GetFrame and ns.ManagerUI:GetFrame()

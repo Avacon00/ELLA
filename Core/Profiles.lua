@@ -58,6 +58,11 @@ local function WindowConfigsEqual(a, b)
     if fA ~= fB then
         return false
     end
+    local lA = (a and a.locked) and true or false
+    local lB = (b and b.locked) and true or false
+    if lA ~= lB then
+        return false
+    end
     local defMode = (ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly) and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
     local mA = (a and a.mode) or defMode
     local mB = (b and b.mode) or defMode
@@ -322,12 +327,21 @@ function Profiles:ListProfiles()
     return names
 end
 
-function Profiles:SwitchProfile(profileName, silent)
-    if type(profileName) ~= "string" then
-        return false
+local function SanitizeProfileName(rawName)
+    if type(rawName) ~= "string" then
+        return nil
     end
-    local clean = string.match(profileName, "^%s*(.-)%s*$")
+    local stripped = string.gsub(rawName, "[;:]", "")
+    local clean = string.match(stripped, "^%s*(.-)%s*$")
     if not clean or clean == "" then
+        return nil
+    end
+    return clean
+end
+
+function Profiles:SwitchProfile(profileName, silent)
+    local clean = SanitizeProfileName(profileName)
+    if not clean then
         return false
     end
     if not ns.db then
@@ -371,11 +385,8 @@ function Profiles:CycleNextProfile()
 end
 
 function Profiles:CreateOrCopyProfile(newName, copyFromCurrent)
-    if type(newName) ~= "string" then
-        return false
-    end
-    local clean = string.match(newName, "^%s*(.-)%s*$")
-    if not clean or clean == "" then
+    local clean = SanitizeProfileName(newName)
+    if not clean then
         return false
     end
     if not ns.db then
@@ -426,13 +437,14 @@ end
 -- ============================================================================
 function Profiles:GetCharKey()
     local name = _G.UnitName and _G.UnitName("player")
-    local realm = _G.GetRealmName and _G.GetRealmName()
-    if name and realm and name ~= "" and realm ~= "" then
-        return name .. " - " .. realm
-    elseif name and name ~= "" then
-        return name
+    if not name or name == "" or name == "Unknown" or (_G.UNKNOWNOBJECT and name == _G.UNKNOWNOBJECT) then
+        return nil
     end
-    return "Unknown"
+    local realm = _G.GetRealmName and _G.GetRealmName()
+    if realm and realm ~= "" then
+        return name .. " - " .. realm
+    end
+    return name
 end
 
 function Profiles:IsCharBoundToActiveProfile()
@@ -440,6 +452,9 @@ function Profiles:IsCharBoundToActiveProfile()
         return false
     end
     local charKey = Profiles:GetCharKey()
+    if not charKey then
+        return false
+    end
     local boundProfile = ns.db.charProfiles[charKey]
     local currentProfile = Profiles:GetActiveProfileName()
     return boundProfile ~= nil and boundProfile == currentProfile
@@ -453,6 +468,9 @@ function Profiles:SetCharProfileBinding(enabled)
         ns.db.charProfiles = {}
     end
     local charKey = Profiles:GetCharKey()
+    if not charKey then
+        return
+    end
     local currentProfile = Profiles:GetActiveProfileName()
     if enabled then
         ns.db.charProfiles[charKey] = currentProfile
@@ -469,6 +487,9 @@ function Profiles:AutoLoadCharProfile()
         return false
     end
     local charKey = Profiles:GetCharKey()
+    if not charKey then
+        return false
+    end
     local targetProfile = ns.db.charProfiles[charKey]
     if targetProfile and ns.db.profiles and ns.db.profiles[targetProfile] then
         if ns.db.activeProfile ~= targetProfile then
@@ -542,10 +563,24 @@ function Profiles:RestoreCustomWindows()
         return
     end
     for frameName, meta in pairs(ns.db.customWindows) do
+        local isBlacklisted = (ns.Guard and ns.Guard.IsBlacklistedName and ns.Guard:IsBlacklistedName(frameName)) or false
         local existingId, existingDesc = Registry:FindByFrameName(frameName)
-        if existingId and existingDesc and not existingDesc.isCustom then
-            -- Clean up legacy duplicate if a built-in descriptor already manages this frame
+        if isBlacklisted or (existingId and existingDesc and not existingDesc.isCustom) then
+            -- Purge blacklisted HUD/EditMode containers or legacy built-in duplicates
             ns.db.customWindows[frameName] = nil
+            local customKey = "CUSTOM_" .. tostring(frameName)
+            if type(ns.db.profiles) == "table" then
+                for _, prof in pairs(ns.db.profiles) do
+                    if type(prof) == "table" then
+                        if type(prof.windows) == "table" then
+                            prof.windows[customKey] = nil
+                        end
+                        if type(prof.savedSnapshot) == "table" then
+                            prof.savedSnapshot[customKey] = nil
+                        end
+                    end
+                end
+            end
         else
             local windowId = "CUSTOM_" .. frameName
             Registry:RegisterWindow(windowId, {
@@ -576,7 +611,7 @@ function Profiles:ExportString()
     if not ns.db then
         return "!ELLA:v2:Default"
     end
-    local profName = Profiles:GetActiveProfileName() or "Default"
+    local profName = SanitizeProfileName(Profiles:GetActiveProfileName()) or "Default"
     local parts = { "!ELLA:v2:" .. profName }
     for windowId in Registry:IterateWindows() do
         local cfg = ns.db.windows[windowId]
@@ -617,12 +652,15 @@ function Profiles:InspectImportString(raw)
     local names = {}
     for token in string.gmatch(trimmed, "[^;]+") do
         if not string.match(token, "^!ELLA") and not string.match(token, "^ELLA") and not string.match(token, "^FSCALE") then
-            local winId = string.match(token, "^([%w_%-]+)=")
-            if winId and Registry:GetDescriptor(winId) then
-                count = count + 1
-                if #names < 4 then
-                    local desc = Registry:GetDescriptor(winId)
-                    names[#names + 1] = Registry:GetDisplayLabel(desc)
+            local winId, payload = string.match(token, "^([%w_%-]+)=(.+)$")
+            if winId and payload and Registry:GetDescriptor(winId) then
+                local sStr, mStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?)$")
+                if sStr and mStr then
+                    count = count + 1
+                    if #names < 4 then
+                        local desc = Registry:GetDescriptor(winId)
+                        names[#names + 1] = Registry:GetDisplayLabel(desc)
+                    end
                 end
             end
         end
@@ -630,7 +668,7 @@ function Profiles:InspectImportString(raw)
 
     local nameSummary = table.concat(names, ", ")
     if count > #names then
-        nameSummary = nameSummary .. " + " .. (count - #names) .. " weitere"
+        nameSummary = nameSummary .. string.format(L["UI_EXPORT_MORE_WINDOWS"], count - #names)
     end
 
     return (count > 0), count, nameSummary, profileName
@@ -669,7 +707,7 @@ function Profiles:ImportString(raw)
                     if aStr and aStr ~= "" then
                         local numA = tonumber(aStr)
                         if numA then
-                            cfg.alpha = math.min(1.0, math.max(0.2, numA / 100))
+                            cfg.alpha = math.min(ns.MAX_ALPHA, math.max(ns.MIN_ALPHA, numA / 100))
                         end
                     end
                     if fStr and fStr ~= "" then

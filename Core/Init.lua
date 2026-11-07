@@ -1,7 +1,7 @@
 local AddonName, ns = ...
 
 ns.AddonName = AddonName
-ns.Version = "1.8.0"
+ns.Version = "1.9.0"
 
 -- Internal Project Camelot (WoW: Forever) constant is 18
 ns.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
@@ -13,6 +13,8 @@ ns.MAX_SCALE = 1.50
 ns.DEFAULT_SCALE = 1.00
 ns.STEP_COARSE = 0.05
 ns.STEP_FINE = 0.01
+ns.MIN_ALPHA = 0.30
+ns.MAX_ALPHA = 1.00
 
 -- Window Modes
 ns.MODE_SCALE_MOVE = "SCALE_AND_MOVE"
@@ -137,6 +139,9 @@ end
 
 function ns:GetWindowConfig(windowId, createIfMissing)
     if not ns.db then
+        if not createIfMissing then
+            return nil
+        end
         ns:InitDatabase()
     end
     local winTbl = ns.db.windows[windowId]
@@ -178,8 +183,10 @@ function ns:PlaySound(soundType)
         soundId = (SOUNDKIT and SOUNDKIT.GS_TITLE_OPTION_OK) or 844
     elseif soundType == "PRESET_APPLY" then
         soundId = (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPEN) or 850
-    elseif soundType == "GRID_TOGGLE" then
+    elseif soundType == "GRID_ON" or soundType == "GRID_TOGGLE" then
         soundId = (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) or 856
+    elseif soundType == "GRID_OFF" then
+        soundId = (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) or 857
     elseif soundType == "CLICK" then
         soundId = (SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) or 856
     end
@@ -188,4 +195,3 @@ function ns:PlaySound(soundType)
         pcall(_G.PlaySound, soundId, "SFX")
     end
 end
-

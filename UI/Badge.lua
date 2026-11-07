@@ -54,35 +54,56 @@ end
 -- ============================================================================
 -- Shared Quick Popover (Slider + Lock + Scale-Only Toggle)
 -- ============================================================================
+local function AttachTooltip(widget, titleKey, bodyKey)
+    widget:SetScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L[titleKey], 1, 0.82, 0)
+            GameTooltip:AddLine(L[bodyKey], 0.9, 0.9, 0.9, true)
+            GameTooltip:Show()
+        end
+    end)
+    widget:SetScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+end
+
 local function GetOrCreatePopover()
     if popover then
         return popover
     end
 
-    local p = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    p:SetSize(276, 218)
+    local p = CreateFrame("Frame", "EllaBadgePopover", UIParent, BACKDROP_TEMPLATE)
+    p:SetSize(304, 224)
     p:SetFrameStrata("DIALOG")
-    p:SetFrameLevel(200)
+    p:SetFrameLevel(220)
     p:EnableMouse(true)
     p:EnableMouseWheel(true)
     p:SetMovable(true)
     p:RegisterForDrag("LeftButton")
     p:SetClampedToScreen(true)
-    ApplyPillBackdrop(p, 0.96, 0.85, 0.70, 0.28)
+    ApplyPillBackdrop(p, 0.97, 0.85, 0.70, 0.28)
     p:SetScript("OnDragStart", p.StartMoving)
     p:SetScript("OnDragStop", p.StopMovingOrSizing)
     p:Hide()
+    if _G.UISpecialFrames then
+        table.insert(_G.UISpecialFrames, "EllaBadgePopover")
+    end
 
     local title = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOPLEFT", 12, -10)
     title:SetPoint("TOPRIGHT", -28, -10)
     title:SetJustifyH("LEFT")
+    title:SetWordWrap(false)
     p.title = title
 
     local closeBtn = CreateFrame("Button", nil, p, "UIPanelCloseButton")
     closeBtn:SetSize(22, 22)
     closeBtn:SetPoint("TOPRIGHT", -2, -2)
     closeBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         p:Hide()
     end)
 
@@ -91,15 +112,16 @@ local function GetOrCreatePopover()
     p.scaleLabel = scaleLabel
 
     local slider = CreateFrame("Slider", nil, p, BACKDROP_TEMPLATE)
-    slider:SetSize(252, 14)
+    slider:SetSize(280, 14)
     slider:SetPoint("TOPLEFT", 12, -46)
     slider:SetOrientation("HORIZONTAL")
     slider:SetMinMaxValues(50, 150)
     slider:SetValueStep(1)
+    slider:EnableMouseWheel(true)
     if slider.SetObeyStepOnDrag then
         slider:SetObeyStepOnDrag(true)
     end
-    ApplyPillBackdrop(slider, 0.85, 0.45, 0.45, 0.50)
+    ApplyPillBackdrop(slider, 0.85, 0.32, 0.36, 0.46)
 
     local thumb = slider:CreateTexture(nil, "OVERLAY")
     thumb:SetTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -110,6 +132,12 @@ local function GetOrCreatePopover()
     end)
     slider:SetScript("OnMouseUp", function(self)
         self.isDraggingThumb = false
+    end)
+    slider:SetScript("OnMouseWheel", function(_, delta)
+        if not p.windowId then
+            return
+        end
+        Engine:StepWindowScale(p.windowId, delta, IsShiftKeyDown(), false)
     end)
     p.slider = slider
 
@@ -133,15 +161,16 @@ local function GetOrCreatePopover()
     p.alphaLabel = alphaLabel
 
     local alphaSlider = CreateFrame("Slider", nil, p, BACKDROP_TEMPLATE)
-    alphaSlider:SetSize(252, 14)
+    alphaSlider:SetSize(280, 14)
     alphaSlider:SetPoint("TOPLEFT", 12, -82)
     alphaSlider:SetOrientation("HORIZONTAL")
     alphaSlider:SetMinMaxValues(30, 100)
     alphaSlider:SetValueStep(1)
+    alphaSlider:EnableMouseWheel(true)
     if alphaSlider.SetObeyStepOnDrag then
         alphaSlider:SetObeyStepOnDrag(true)
     end
-    ApplyPillBackdrop(alphaSlider, 0.85, 0.45, 0.45, 0.50)
+    ApplyPillBackdrop(alphaSlider, 0.85, 0.32, 0.36, 0.46)
 
     local aThumb = alphaSlider:CreateTexture(nil, "OVERLAY")
     aThumb:SetTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
@@ -152,6 +181,15 @@ local function GetOrCreatePopover()
     end)
     alphaSlider:SetScript("OnMouseUp", function(self)
         self.isDraggingThumb = false
+    end)
+    alphaSlider:SetScript("OnMouseWheel", function(_, delta)
+        if not p.windowId then
+            return
+        end
+        local cfg = ns:GetWindowConfig(p.windowId, true)
+        local curA = cfg.alpha or 1.00
+        local step = IsShiftKeyDown() and 0.01 or 0.05
+        Engine:SetWindowAlpha(p.windowId, curA + (delta * step), nil)
     end)
     p.alphaSlider = alphaSlider
 
@@ -181,6 +219,7 @@ local function GetOrCreatePopover()
     local scaleOnlyChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
     scaleOnlyChk:SetSize(22, 22)
     scaleOnlyChk:SetPoint("TOPLEFT", 10, -104)
+    scaleOnlyChk:SetHitRectInsets(0, -210, 0, 0)
     local soText = scaleOnlyChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     soText:SetPoint("LEFT", scaleOnlyChk, "RIGHT", 4, 0)
     soText:SetText(L["POPOVER_SCALE_ONLY"])
@@ -190,14 +229,17 @@ local function GetOrCreatePopover()
         if not p.windowId then
             return
         end
+        ns:PlaySound("CLICK")
         local newMode = self:GetChecked() and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
         Engine:SetWindowMode(p.windowId, newMode)
     end)
+    AttachTooltip(scaleOnlyChk, "POPOVER_SCALE_ONLY", "POPOVER_SCALE_ONLY_TIP")
 
     -- Mouseover Fade Checkbox
     local fadeChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
     fadeChk:SetSize(22, 22)
     fadeChk:SetPoint("TOPLEFT", 10, -126)
+    fadeChk:SetHitRectInsets(0, -210, 0, 0)
     local fadeText = fadeChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     fadeText:SetPoint("LEFT", fadeChk, "RIGHT", 4, 0)
     fadeText:SetText(L["POPOVER_MOUSEOVER_FADE"])
@@ -207,26 +249,16 @@ local function GetOrCreatePopover()
         if not p.windowId then
             return
         end
+        ns:PlaySound("CLICK")
         Engine:SetWindowAlpha(p.windowId, nil, self:GetChecked() and true or false)
     end)
-    fadeChk:SetScript("OnEnter", function(self)
-        if _G.GameTooltip then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            GameTooltip:AddLine(L["POPOVER_MOUSEOVER_FADE"], 1, 0.82, 0)
-            GameTooltip:AddLine(L["POPOVER_MOUSEOVER_FADE_TIP"], 0.9, 0.9, 0.9, true)
-            GameTooltip:Show()
-        end
-    end)
-    fadeChk:SetScript("OnLeave", function()
-        if _G.GameTooltip then
-            GameTooltip:Hide()
-        end
-    end)
+    AttachTooltip(fadeChk, "POPOVER_MOUSEOVER_FADE", "POPOVER_MOUSEOVER_FADE_TIP")
 
     -- Lock Position Checkbox
     local lockChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
     lockChk:SetSize(22, 22)
     lockChk:SetPoint("TOPLEFT", 10, -148)
+    lockChk:SetHitRectInsets(0, -210, 0, 0)
     local lockText = lockChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     lockText:SetPoint("LEFT", lockChk, "RIGHT", 4, 0)
     lockText:SetText(L["POPOVER_LOCK_POS"])
@@ -236,10 +268,12 @@ local function GetOrCreatePopover()
         if not p.windowId then
             return
         end
+        ns:PlaySound("CLICK")
         local cfg = ns:GetWindowConfig(p.windowId, true)
         cfg.locked = self:GetChecked() and true or false
         ns:Fire("OnWindowConfigChanged", p.windowId, cfg)
     end)
+    AttachTooltip(lockChk, "POPOVER_LOCK_POS", "POPOVER_LOCK_POS_TIP")
 
     -- Bottom Action Buttons: [Zurück / Undo] [100% Reset] [Pos. Reset]
     local function ApplySmallBtnFont(btn)
@@ -251,52 +285,45 @@ local function GetOrCreatePopover()
     end
 
     local undoBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    undoBtn:SetSize(80, 22)
+    undoBtn:SetSize(88, 22)
     undoBtn:SetPoint("BOTTOMLEFT", 12, 12)
     ApplySmallBtnFont(undoBtn)
     undoBtn:SetText(L["POPOVER_UNDO"])
     undoBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         if p.windowId and ns.Profiles and ns.Profiles.RestoreWindowToSavedOrUndo then
             ns.Profiles:RestoreWindowToSavedOrUndo(p.windowId)
         end
     end)
-    undoBtn:SetScript("OnEnter", function(self)
-        if _G.GameTooltip then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            GameTooltip:AddLine(L["POPOVER_UNDO"], 1, 0.82, 0)
-            GameTooltip:AddLine(L["POPOVER_UNDO_TIP"], 0.9, 0.9, 0.9, true)
-            GameTooltip:Show()
-        end
-    end)
-    undoBtn:SetScript("OnLeave", function()
-        if _G.GameTooltip then
-            GameTooltip:Hide()
-        end
-    end)
+    AttachTooltip(undoBtn, "POPOVER_UNDO", "POPOVER_UNDO_TIP")
     p.undoBtn = undoBtn
 
     local resetScaleBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetScaleBtn:SetSize(80, 22)
+    resetScaleBtn:SetSize(88, 22)
     resetScaleBtn:SetPoint("BOTTOM", 0, 12)
     ApplySmallBtnFont(resetScaleBtn)
     resetScaleBtn:SetText(L["POPOVER_RESET_SCALE"])
     resetScaleBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         if p.windowId then
             Engine:SetWindowScale(p.windowId, 1.00, false)
             Engine:SetWindowAlpha(p.windowId, 1.00, false)
         end
     end)
+    AttachTooltip(resetScaleBtn, "POPOVER_RESET_SCALE", "POPOVER_RESET_SCALE_TIP")
 
     local resetPosBtn = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
-    resetPosBtn:SetSize(80, 22)
+    resetPosBtn:SetSize(88, 22)
     resetPosBtn:SetPoint("BOTTOMRIGHT", -12, 12)
     ApplySmallBtnFont(resetPosBtn)
     resetPosBtn:SetText(L["POPOVER_RESET_POS"])
     resetPosBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         if p.windowId then
             Engine:ResetWindow(p.windowId, true)
         end
     end)
+    AttachTooltip(resetPosBtn, "POPOVER_RESET_POS", "POPOVER_RESET_POS_TIP")
 
     popover = p
     return p
@@ -308,14 +335,20 @@ local function RefreshPopover()
     end
     local desc = Registry:GetDescriptor(popover.windowId)
     local cfg = ns:GetWindowConfig(popover.windowId, true)
-    local pct = math.floor((cfg.scale or 1) * 100 + 0.5)
+    local effScale, savedScale, isCapped = Engine:GetEffectiveWindowScale(popover.windowId, desc)
+    local pct = math.floor(savedScale * 100 + 0.5)
+    local effPct = math.floor(effScale * 100 + 0.5)
     local aVal = (cfg.alpha ~= nil) and math.floor(cfg.alpha * 100 + 0.5) or 100
 
     popover.updating = true
     popover.lastAppliedPct = pct
     popover.lastAppliedAlphaPct = aVal
     popover.title:SetText(Registry:GetDisplayLabel(desc))
-    popover.scaleLabel:SetText(string.format(L["POPOVER_SCALE"], pct))
+    if isCapped then
+        popover.scaleLabel:SetText(string.format(L["POPOVER_SCALE"], effPct) .. " |cff00d8ff(" .. pct .. "%)|r")
+    else
+        popover.scaleLabel:SetText(string.format(L["POPOVER_SCALE"], pct))
+    end
     -- Avoid fighting the user's mouse while the slider is actively firing OnValueChanged
     if not popover.inSliderCallback and not popover.slider.isDraggingThumb then
         popover.slider:SetValue(pct)
@@ -324,27 +357,60 @@ local function RefreshPopover()
     if not popover.inAlphaCallback and not popover.alphaSlider.isDraggingThumb then
         popover.alphaSlider:SetValue(aVal)
     end
-    popover.scaleOnlyChk:SetChecked(cfg.mode == ns.MODE_SCALE_ONLY)
+    local effMode = Engine:GetEffectiveWindowMode(popover.windowId, desc)
+    popover.scaleOnlyChk:SetChecked(effMode == ns.MODE_SCALE_ONLY)
     popover.fadeChk:SetChecked(cfg.mouseoverFade and true or false)
     popover.lockChk:SetChecked(cfg.locked and true or false)
     popover.updating = false
 end
 
+local function AnchorPopoverNearBadge(p, badge)
+    p:ClearAllPoints()
+    if not badge or not badge:IsShown() then
+        p:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+        return
+    end
+
+    -- Anchor popover to fixed UIParent coordinates (NOT to the moving badge!)
+    -- with smart horizontal/vertical edge-flip so it never covers the badge.
+    local uipScale = UIParent:GetEffectiveScale() or 1
+    local bScale = badge:GetEffectiveScale() or uipScale
+    local ratio = bScale / uipScale
+    local uipW = UIParent:GetWidth() or 1920
+    local uipH = UIParent:GetHeight() or 1080
+    local popW = p:GetWidth() or 304
+    local popH = p:GetHeight() or 224
+
+    local bLeft = (badge:GetLeft() or 400) * ratio
+    local bRight = (badge:GetRight() or 444) * ratio
+    local bTop = (badge:GetTop() or 420) * ratio
+    local bBottom = (badge:GetBottom() or 400) * ratio
+
+    local targetLeft = bRight - popW
+    if targetLeft < 12 then
+        targetLeft = math.min(bLeft, uipW - popW - 12)
+    end
+    if (targetLeft + popW) > (uipW - 12) then
+        targetLeft = uipW - popW - 12
+    end
+
+    local targetTop = bBottom - 4
+    if (targetTop - popH) < 12 then
+        targetTop = math.min(bTop + popH + 4, uipH - 12)
+    end
+
+    p:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", targetLeft, targetTop)
+end
+
 local function TogglePopoverForBadge(windowId, badge)
     local p = GetOrCreatePopover()
+    ns:PlaySound("CLICK")
     if p:IsShown() and p.windowId == windowId then
         p:Hide()
         return
     end
     p.windowId = windowId
-    p:ClearAllPoints()
-    -- Anchor popover to fixed UIParent coordinates (NOT to the moving badge!)
-    -- so resizing the window never shifts the slider underneath the user's cursor.
-    local uipScale = UIParent:GetEffectiveScale() or 1
-    local bScale = badge:GetEffectiveScale() or uipScale
-    local right = (badge:GetRight() or 400) * (bScale / uipScale)
-    local bottom = (badge:GetBottom() or 400) * (bScale / uipScale)
-    p:SetPoint("TOPRIGHT", UIParent, "BOTTOMLEFT", right, bottom - 4)
+    AnchorPopoverNearBadge(p, badge)
     p:Show()
     RefreshPopover()
 end
@@ -363,12 +429,14 @@ local function UpdateBadgeVisual(windowId, badge)
         return
     end
 
-    local cfg = ns:GetWindowConfig(windowId, false)
-    local scale = (cfg and cfg.mode ~= ns.MODE_DISABLED and cfg.scale) or 1.00
-    local pct = math.floor(scale * 100 + 0.5)
+    local effScale, _, isCapped = Engine:GetEffectiveWindowScale(windowId, desc)
+    local pct = math.floor(effScale * 100 + 0.5)
 
     badge.text:SetText(pct .. "%")
-    if math.abs(scale - 1.00) > 0.005 then
+    if isCapped then
+        badge.text:SetTextColor(0.20, 0.92, 1.0)
+        ApplyPillBackdrop(badge, 0.92, 0.0, 0.82, 1.0)
+    elseif math.abs(effScale - 1.00) > 0.005 then
         badge.text:SetTextColor(1.0, 0.84, 0.15)
         ApplyPillBackdrop(badge, 0.92, 0.90, 0.72, 0.20)
     else
@@ -429,10 +497,17 @@ local function GetOrCreateBadge(windowId)
         ApplyPillBackdrop(self, 0.98, 1.0, 0.86, 0.35)
         local desc = Registry:GetDescriptor(windowId)
         local cfg = ns:GetWindowConfig(windowId, false)
-        local pct = math.floor(((cfg and cfg.scale) or 1) * 100 + 0.5)
+        local effScale, savedScale, isCapped = Engine:GetEffectiveWindowScale(windowId, desc)
+        local effPct = math.floor(effScale * 100 + 0.5)
+        local savedPct = math.floor(savedScale * 100 + 0.5)
         if _G.GameTooltip then
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-            GameTooltip:AddLine(string.format(L["BADGE_TOOLTIP_TITLE"], Registry:GetDisplayLabel(desc), pct), 1, 0.82, 0)
+            GameTooltip:AddLine(string.format(L["BADGE_TOOLTIP_TITLE"], Registry:GetDisplayLabel(desc), effPct), 1, 0.82, 0)
+            if isCapped then
+                GameTooltip:AddLine(string.format(L["UI_COMPACT_CAP_HINT"], savedPct), 0.20, 0.90, 1.0)
+            end
+            GameTooltip:AddLine((cfg and cfg.locked) and L["BADGE_LOCKED"] or L["BADGE_UNLOCKED"], 0.85, 0.85, 0.85)
+            GameTooltip:AddLine(" ")
             GameTooltip:AddLine(L["BADGE_TOOLTIP_SCROLL"], 0.9, 0.9, 0.9)
             GameTooltip:AddLine(L["BADGE_TOOLTIP_LCLICK"], 0.9, 0.9, 0.9)
             GameTooltip:AddLine(L["BADGE_TOOLTIP_RCLICK"], 0.9, 0.9, 0.9)
@@ -456,6 +531,7 @@ local function GetOrCreateBadge(windowId)
         if mouseButton == "LeftButton" then
             TogglePopoverForBadge(windowId, self)
         elseif mouseButton == "RightButton" then
+            ns:PlaySound("CLICK")
             if IsShiftKeyDown() then
                 Engine:ResetWindow(windowId, true)
             else
@@ -477,21 +553,20 @@ function BadgeUI:RefreshAll()
             badgesByWindow[windowId]:Hide()
         end
     end
-    RefreshPopover()
+    if popover and popover:IsShown() and (not ns.db or not ns.db.settings.enabled) then
+        popover:Hide()
+    else
+        RefreshPopover()
+    end
 end
 
 function BadgeUI:OpenPopoverForWindow(windowId)
+    local p = GetOrCreatePopover()
+    p.windowId = windowId
     local badge = badgesByWindow[windowId]
-    if badge and badge:IsShown() then
-        TogglePopoverForBadge(windowId, badge)
-    else
-        local p = GetOrCreatePopover()
-        p.windowId = windowId
-        p:ClearAllPoints()
-        p:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
-        p:Show()
-        RefreshPopover()
-    end
+    AnchorPopoverNearBadge(p, badge)
+    p:Show()
+    RefreshPopover()
 end
 
 ns:On("OnManagedFrameShown", function(windowId)
@@ -505,6 +580,12 @@ ns:On("OnManagedFrameHidden", function(windowId)
         b:Hide()
     end
     if popover and popover.windowId == windowId then
+        popover:Hide()
+    end
+end)
+
+ns:On("OnWindowDragStarted", function()
+    if popover and popover:IsShown() then
         popover:Hide()
     end
 end)
@@ -526,6 +607,18 @@ ns:On("OnWindowConfigChanged", function(windowId)
 end)
 
 ns:On("OnPresetApplied", function()
+    BadgeUI:RefreshAll()
+end)
+
+ns:On("OnProfileSwitched", function()
+    BadgeUI:RefreshAll()
+end)
+
+ns:On("OnProfileImported", function()
+    BadgeUI:RefreshAll()
+end)
+
+ns:On("OnInstanceCompactChanged", function()
     BadgeUI:RefreshAll()
 end)
 

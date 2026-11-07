@@ -5,7 +5,7 @@ local Engine = ns.Engine
 local Profiles = ns.Profiles
 
 -- ============================================================================
--- EĹLA (Easy Layout & Location Assistant) Public API (v1)
+-- ELLA (Easy Layout & Location Assistant) Public API (v2)
 -- Allows third-party WoW: Forever addons & community plugin packs to register
 -- custom windows, presets, and listen to lifecycle callbacks taint-free.
 --
@@ -122,7 +122,9 @@ end
 
 function API:ToggleGrid()
     if ns.GridOverlay and ns.GridOverlay.Toggle then
-        return ns.GridOverlay:Toggle()
+        local active = ns.GridOverlay:Toggle()
+        ns:Print(active and ns.L["MSG_GRID_ENABLED"] or ns.L["MSG_GRID_DISABLED"])
+        return active
     end
 end
 

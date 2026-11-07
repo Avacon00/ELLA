@@ -11,7 +11,6 @@ local BORDER_PATH = "Interface\\Minimap\\MiniMap-TrackingBorder"
 
 local btn = nil
 local isDragging = false
-local menuFrame = nil
 
 local function GetMinimapRadius()
     if _G.Minimap then
@@ -99,19 +98,44 @@ local function ApplyCompactButtonFont(btn)
 end
 
 local quickMenuFrame = nil
+local quickMenuCatcher = nil
+
+function MinimapButton:HideQuickMenu()
+    if quickMenuFrame and quickMenuFrame:IsShown() then
+        quickMenuFrame:Hide()
+    end
+    if quickMenuCatcher and quickMenuCatcher:IsShown() then
+        quickMenuCatcher:Hide()
+    end
+end
 
 local function GetOrCreateQuickMenu()
     if quickMenuFrame then
         return quickMenuFrame
     end
 
+    quickMenuCatcher = CreateFrame("Frame", nil, UIParent)
+    quickMenuCatcher:SetAllPoints(UIParent)
+    quickMenuCatcher:SetFrameStrata("DIALOG")
+    quickMenuCatcher:SetFrameLevel(245)
+    quickMenuCatcher:EnableMouse(true)
+    quickMenuCatcher:Hide()
+    quickMenuCatcher:SetScript("OnMouseDown", function()
+        MinimapButton:HideQuickMenu()
+    end)
+
     local qm = CreateFrame("Frame", "EllaMinimapQuickMenuFrame", UIParent, BACKDROP_TEMPLATE)
-    qm:SetSize(220, 320)
+    qm:SetSize(252, 320)
     qm:SetFrameStrata("DIALOG")
     qm:SetFrameLevel(250)
     qm:EnableMouse(true)
     qm:SetClampedToScreen(true)
     StyleBox(qm, 0.05, 0.06, 0.09, 0.98, 0.78, 0.65, 0.25, 0.95)
+    qm:SetScript("OnHide", function()
+        if quickMenuCatcher then
+            quickMenuCatcher:Hide()
+        end
+    end)
 
     if _G.UISpecialFrames then
         table.insert(_G.UISpecialFrames, "EllaMinimapQuickMenuFrame")
@@ -119,7 +143,7 @@ local function GetOrCreateQuickMenu()
 
     local title = qm:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOPLEFT", 12, -10)
-    title:SetText(L["QUICKMENU_TITLE"] or "Ella Schnellauswahl")
+    title:SetText(L["QUICKMENU_TITLE"])
     title:SetTextColor(1.0, 0.82, 0.25)
     qm.title = title
 
@@ -127,33 +151,34 @@ local function GetOrCreateQuickMenu()
     closeBtn:SetSize(20, 20)
     closeBtn:SetPoint("TOPRIGHT", -2, -2)
     closeBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         qm:Hide()
     end)
 
     local profHeader = qm:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     profHeader:SetPoint("TOPLEFT", 12, -34)
-    profHeader:SetText("» " .. (L["QUICKMENU_PROFILES"] or "Profile") .. ":")
+    profHeader:SetText("» " .. L["QUICKMENU_PROFILES"] .. ":")
     profHeader:SetTextColor(0.0, 0.85, 1.0)
     qm.profHeader = profHeader
 
     qm.profileButtons = {}
 
     local presetHeader = qm:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    presetHeader:SetText("» " .. (L["QUICKMENU_PRESETS"] or "Presets") .. ":")
+    presetHeader:SetText("» " .. L["QUICKMENU_PRESETS"] .. ":")
     presetHeader:SetTextColor(0.0, 0.85, 1.0)
     qm.presetHeader = presetHeader
 
     local presetDefs = {
-        { id = "DEFAULT_100", label = L["PRESET_DEFAULT_NAME"] or "Standard (100%)" },
-        { id = "COMPACT_80", label = L["PRESET_COMPACT80_NAME"] or "Classic (80%)" },
-        { id = "WQHD_85", label = L["PRESET_WQHD85_NAME"] or "WQHD / 4K (85%)" },
-        { id = "LAPTOP_72", label = L["PRESET_LAPTOP72_NAME"] or "Laptop / Deck (72%)" },
+        { id = "DEFAULT_100", label = L["PRESET_DEFAULT_NAME"] },
+        { id = "COMPACT_80", label = L["PRESET_COMPACT80_NAME"] },
+        { id = "WQHD_85", label = L["PRESET_WQHD85_NAME"] },
+        { id = "LAPTOP_72", label = L["PRESET_LAPTOP72_NAME"] },
     }
     qm.presetButtons = {}
     for i = 1, #presetDefs do
         local pd = presetDefs[i]
         local pBtn = CreateFrame("Button", nil, qm, "UIPanelButtonTemplate")
-        pBtn:SetSize(196, 20)
+        pBtn:SetSize(228, 20)
         ApplyCompactButtonFont(pBtn)
         pBtn:SetText(pd.label)
         pBtn:SetScript("OnClick", function()
@@ -169,14 +194,14 @@ local function GetOrCreateQuickMenu()
     end
 
     local toolsHeader = qm:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    toolsHeader:SetText("» " .. (L["UI_SEC_DISPLAY_SYSTEM"] or "Werkzeuge") .. ":")
+    toolsHeader:SetText("» " .. L["QUICKMENU_TOOLS"] .. ":")
     toolsHeader:SetTextColor(0.0, 0.85, 1.0)
     qm.toolsHeader = toolsHeader
 
     local pickerBtn = CreateFrame("Button", nil, qm, "UIPanelButtonTemplate")
-    pickerBtn:SetSize(196, 20)
+    pickerBtn:SetSize(228, 20)
     ApplyCompactButtonFont(pickerBtn)
-    pickerBtn:SetText(L["QUICKMENU_PICKER"] or "Fenster-Picker...")
+    pickerBtn:SetText(L["QUICKMENU_PICKER"])
     pickerBtn:SetScript("OnClick", function()
         qm:Hide()
         if ns.Picker and ns.Picker.Start then
@@ -186,9 +211,9 @@ local function GetOrCreateQuickMenu()
     qm.pickerBtn = pickerBtn
 
     local gridBtn = CreateFrame("Button", nil, qm, "UIPanelButtonTemplate")
-    gridBtn:SetSize(196, 20)
+    gridBtn:SetSize(228, 20)
     ApplyCompactButtonFont(gridBtn)
-    gridBtn:SetText(L["UI_BTN_GRID"] or "# Bildschirm-Gitter")
+    gridBtn:SetText(L["UI_BTN_GRID"])
     gridBtn:SetScript("OnClick", function()
         qm:Hide()
         if ns.GridOverlay then
@@ -199,10 +224,11 @@ local function GetOrCreateQuickMenu()
     qm.gridBtn = gridBtn
 
     local tourBtn = CreateFrame("Button", nil, qm, "UIPanelButtonTemplate")
-    tourBtn:SetSize(196, 20)
+    tourBtn:SetSize(228, 20)
     ApplyCompactButtonFont(tourBtn)
-    tourBtn:SetText(L["QUICKMENU_TUTORIAL"] or "Tutorial Tour starten...")
+    tourBtn:SetText(L["QUICKMENU_TUTORIAL"])
     tourBtn:SetScript("OnClick", function()
+        ns:PlaySound("CLICK")
         qm:Hide()
         if ns.Tutorial and ns.Tutorial.Start then
             ns.Tutorial:Start(1)
@@ -212,7 +238,7 @@ local function GetOrCreateQuickMenu()
 
     local hint = qm:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     hint:SetPoint("BOTTOM", 0, 8)
-    hint:SetText(L["MINIMAP_TOOLTIP_SHIFT"] or "Shift + Klick: Nächstes Profil")
+    hint:SetText(L["MINIMAP_TOOLTIP_SHIFT"])
     qm.hint = hint
 
     quickMenuFrame = qm
@@ -224,15 +250,23 @@ local function RefreshQuickMenu()
     local activeProf = (Profiles and Profiles.GetActiveProfileName and Profiles:GetActiveProfileName()) or "Default"
     local allProfs = (Profiles and Profiles.ListProfiles and Profiles:ListProfiles()) or { "Default" }
 
+    local hintW = (qm.hint and qm.hint:GetStringWidth()) or 210
+    local titleW = ((qm.title and qm.title:GetStringWidth()) or 160) + 48
+    local menuW = math.max(252, math.ceil(math.max(hintW + 28, titleW)))
+    local btnW = menuW - 24
+    qm:SetWidth(menuW)
+
     local curY = -50
     for i = 1, #allProfs do
         local pName = allProfs[i]
         local pBtn = qm.profileButtons[i]
         if not pBtn then
             pBtn = CreateFrame("Button", nil, qm, "UIPanelButtonTemplate")
-            pBtn:SetSize(196, 22)
+            pBtn:SetSize(btnW, 22)
             ApplyCompactButtonFont(pBtn)
             qm.profileButtons[i] = pBtn
+        else
+            pBtn:SetWidth(btnW)
         end
         pBtn:ClearAllPoints()
         pBtn:SetPoint("TOPLEFT", 12, curY)
@@ -267,10 +301,21 @@ local function RefreshQuickMenu()
     qm.presetHeader:SetPoint("TOPLEFT", 12, curY)
     curY = curY - 18
 
+    local activePreset = ns.db and ns.db.settings and ns.db.settings.activePreset or nil
+    local presetIds = { "DEFAULT_100", "COMPACT_80", "WQHD_85", "LAPTOP_72" }
     for i = 1, #qm.presetButtons do
         local pBtn = qm.presetButtons[i]
+        pBtn:SetWidth(btnW)
         pBtn:ClearAllPoints()
         pBtn:SetPoint("TOPLEFT", 12, curY)
+        local fs = pBtn:GetFontString()
+        if fs then
+            if activePreset and presetIds[i] == activePreset then
+                fs:SetTextColor(0.0, 1.0, 0.59)
+            else
+                fs:SetTextColor(1.0, 0.82, 0.0)
+            end
+        end
         curY = curY - 22
     end
 
@@ -279,26 +324,38 @@ local function RefreshQuickMenu()
     qm.toolsHeader:SetPoint("TOPLEFT", 12, curY)
     curY = curY - 18
 
+    qm.pickerBtn:SetWidth(btnW)
     qm.pickerBtn:ClearAllPoints()
     qm.pickerBtn:SetPoint("TOPLEFT", 12, curY)
     curY = curY - 22
 
+    qm.gridBtn:SetWidth(btnW)
     qm.gridBtn:ClearAllPoints()
     qm.gridBtn:SetPoint("TOPLEFT", 12, curY)
+    local gridFs = qm.gridBtn:GetFontString()
+    if gridFs then
+        if ns.GridOverlay and ns.GridOverlay:IsShown() then
+            gridFs:SetTextColor(0.0, 0.90, 1.0)
+        else
+            gridFs:SetTextColor(1.0, 0.82, 0.0)
+        end
+    end
     curY = curY - 22
 
+    qm.tourBtn:SetWidth(btnW)
     qm.tourBtn:ClearAllPoints()
     qm.tourBtn:SetPoint("TOPLEFT", 12, curY)
     curY = curY - 24
 
-    local totalH = math.abs(curY) + 24
+    local totalH = math.abs(curY) + 26
     qm:SetHeight(totalH)
 end
 
 local function ToggleQuickMenu(anchorFrame)
     local qm = GetOrCreateQuickMenu()
+    ns:PlaySound("CLICK")
     if qm:IsShown() then
-        qm:Hide()
+        MinimapButton:HideQuickMenu()
         return
     end
 
@@ -314,7 +371,6 @@ local function ToggleQuickMenu(anchorFrame)
         local left = (btnFrame:GetLeft() or 0) * scaleRatio
         local right = (btnFrame:GetRight() or 0) * scaleRatio
         local top = (btnFrame:GetTop() or 0) * scaleRatio
-        local bottom = (btnFrame:GetBottom() or 0) * scaleRatio
         local uipW = UIParent:GetWidth() or 1920
         local uipH = UIParent:GetHeight() or 1080
 
@@ -327,6 +383,9 @@ local function ToggleQuickMenu(anchorFrame)
         qm:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     end
 
+    if quickMenuCatcher then
+        quickMenuCatcher:Show()
+    end
     qm:Show()
 end
 
@@ -376,6 +435,7 @@ function MinimapButton:Init()
     -- Dragging around Minimap
     btn:SetScript("OnDragStart", function(self)
         isDragging = true
+        MinimapButton:HideQuickMenu()
         self:SetScript("OnUpdate", OnDragUpdate)
     end)
     btn:SetScript("OnDragStop", function(self)
@@ -395,6 +455,7 @@ function MinimapButton:Init()
             return
         end
         if _G.IsShiftKeyDown and _G.IsShiftKeyDown() then
+            MinimapButton:HideQuickMenu()
             if Profiles and Profiles.CycleNextProfile then
                 Profiles:CycleNextProfile()
                 if ns.ManagerUI and ns.ManagerUI.RefreshList then
@@ -406,10 +467,13 @@ function MinimapButton:Init()
         if button == "RightButton" then
             ToggleQuickMenu(self)
         elseif button == "MiddleButton" then
+            MinimapButton:HideQuickMenu()
             if ns.Picker and ns.Picker.Start then
                 ns.Picker:Start(false)
             end
         else
+            MinimapButton:HideQuickMenu()
+            ns:PlaySound("CLICK")
             if ns.ManagerUI and ns.ManagerUI.Toggle then
                 ns.ManagerUI:Toggle()
             end
@@ -422,7 +486,7 @@ function MinimapButton:Init()
             GameTooltip:SetOwner(self, "ANCHOR_LEFT")
             GameTooltip:AddLine(L["MINIMAP_TOOLTIP_TITLE"], 1, 0.82, 0)
             local curProf = Profiles and Profiles.GetActiveProfileName and Profiles:GetActiveProfileName() or "Default"
-            GameTooltip:AddLine(string.format("» Profil: |cff00ff96%s|r", curProf), 0.9, 0.9, 0.9)
+            GameTooltip:AddLine(string.format(L["MINIMAP_ACTIVE_PROFILE"], curProf), 0.9, 0.9, 0.9)
             GameTooltip:AddLine(" ")
             GameTooltip:AddLine(L["MINIMAP_TOOLTIP_LCLICK"], 1, 1, 1)
             GameTooltip:AddLine(L["MINIMAP_TOOLTIP_RCLICK"], 1, 1, 1)
@@ -450,6 +514,7 @@ function MinimapButton:Init()
                 icon = ICON_PATH,
                 OnClick = function(clickedFrame, clickBtn)
                     if _G.IsShiftKeyDown and _G.IsShiftKeyDown() then
+                        MinimapButton:HideQuickMenu()
                         if Profiles and Profiles.CycleNextProfile then
                             Profiles:CycleNextProfile()
                             if ns.ManagerUI and ns.ManagerUI.RefreshList then
@@ -461,10 +526,13 @@ function MinimapButton:Init()
                     if clickBtn == "RightButton" then
                         ToggleQuickMenu(clickedFrame)
                     elseif clickBtn == "MiddleButton" then
+                        MinimapButton:HideQuickMenu()
                         if ns.Picker and ns.Picker.Start then
                             ns.Picker:Start(false)
                         end
                     else
+                        MinimapButton:HideQuickMenu()
+                        ns:PlaySound("CLICK")
                         if ns.ManagerUI and ns.ManagerUI.Toggle then
                             ns.ManagerUI:Toggle()
                         end
@@ -473,7 +541,7 @@ function MinimapButton:Init()
                 OnTooltipShow = function(tooltip)
                     tooltip:AddLine(L["MINIMAP_TOOLTIP_TITLE"], 1, 0.82, 0)
                     local curProf = Profiles and Profiles.GetActiveProfileName and Profiles:GetActiveProfileName() or "Default"
-                    tooltip:AddLine(string.format("» Profil: |cff00ff96%s|r", curProf), 0.9, 0.9, 0.9)
+                    tooltip:AddLine(string.format(L["MINIMAP_ACTIVE_PROFILE"], curProf), 0.9, 0.9, 0.9)
                     tooltip:AddLine(" ")
                     tooltip:AddLine(L["MINIMAP_TOOLTIP_LCLICK"], 1, 1, 1)
                     tooltip:AddLine(L["MINIMAP_TOOLTIP_RCLICK"], 1, 1, 1)

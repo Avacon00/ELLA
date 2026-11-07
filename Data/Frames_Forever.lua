@@ -56,57 +56,66 @@ Registry:RegisterWindow("FOREVER_FACTIONS", {
 
 Registry:RegisterBatch(nil, {
     COMM_DETAILS = {
-        candidates = { "DetailsBaseWindow1", "_detalhes" },
+        candidates = { "DetailsBaseFrame1", "DetailsBaseWindow1" },
         labelKey = "WIN_COMM_DETAILS",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.85,
+        isCommunityAddon = true,
     },
     COMM_QUESTIE = {
         candidates = { "Questie_BaseFrame", "QuestieFrame", "QuestieTracker" },
         labelKey = "WIN_COMM_QUESTIE",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.85,
+        isCommunityAddon = true,
     },
     COMM_BAGNON = {
         candidates = { "BagnonFrameinventory", "BagnonFramebank", "Baganator_CategoryView_BackpackViewFrame", "Baganator_SingleView_BackpackViewFrame" },
         labelKey = "WIN_COMM_BAGNON",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.85,
+        isCommunityAddon = true,
     },
     COMM_THREAT = {
         candidates = { "ThreatClassic2BarFrame", "ThreatClassicFrame" },
         labelKey = "WIN_COMM_THREAT",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.85,
+        isCommunityAddon = true,
     },
     COMM_TOMTOM = {
         candidates = { "TomTomBlock" },
         labelKey = "WIN_COMM_TOMTOM",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.90,
+        isCommunityAddon = true,
     },
     COMM_WEAKAURAS = {
         candidates = { "WeakAurasOptions" },
         labelKey = "WIN_COMM_WEAKAURAS",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.85,
+        isCommunityAddon = true,
     },
     COMM_AUCTIONATOR = {
         candidates = { "AuctionatorShoppingFrame", "AuctionatorConfigFrame" },
         labelKey = "WIN_COMM_AUCTIONATOR",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.85,
+        isCommunityAddon = true,
     },
     COMM_ATLASLOOT = {
         candidates = { "AtlasLoot_GUI-Frame", "AtlasLootDefaultFrame" },
         labelKey = "WIN_COMM_ATLASLOOT",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.82,
+        isCommunityAddon = true,
     },
     COMM_POSTAL = {
         candidates = { "Postal_OpenAllMenu" },
         labelKey = "WIN_COMM_POSTAL",
         category = "CAT_CUSTOM",
         defaultCompactScale = 0.90,
+        isCommunityAddon = true,
     },
 })

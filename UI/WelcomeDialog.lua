@@ -14,6 +14,13 @@ function Welcome:ShowIfFirstRun()
         return
     end
 
+    -- Let HandheldDialog handle compact/handheld displays exclusively so two dialogs never stack
+    local uipW = (UIParent and UIParent:GetWidth()) or 1920
+    local uipH = (UIParent and UIParent:GetHeight()) or 1080
+    if uipW <= 1400 and uipH <= 800 and not ns.db.settings.handheldPromptShown then
+        return
+    end
+
     if _G.InCombatLockdown and _G.InCombatLockdown() then
         ns.Guard:EnqueueAfterCombat("welcome_dialog", nil, function()
             Welcome:ShowIfFirstRun()
@@ -22,12 +29,15 @@ function Welcome:ShowIfFirstRun()
     end
 
     if not dialog then
-        local f = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-        f:SetSize(430, 218)
+        local f = CreateFrame("Frame", "EllaWelcomeDialog", UIParent, BACKDROP_TEMPLATE)
+        f:SetSize(430, 224)
         f:SetPoint("CENTER", 0, 90)
         f:SetFrameStrata("DIALOG")
         f:EnableMouse(true)
         f:SetClampedToScreen(true)
+        if _G.UISpecialFrames then
+            table.insert(_G.UISpecialFrames, "EllaWelcomeDialog")
+        end
         if f.SetBackdrop then
             f:SetBackdrop({
                 bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -56,6 +66,7 @@ function Welcome:ShowIfFirstRun()
         body:SetJustifyH("LEFT")
         body:SetSpacing(3)
         body:SetText(L["WELCOME_BODY"])
+        f.body = body
 
         local btnCompact = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         btnCompact:SetSize(394, 26)
@@ -83,12 +94,15 @@ function Welcome:ShowIfFirstRun()
         btnKeep:SetText(L["WELCOME_BTN_KEEP100"])
         btnKeep:SetScript("OnClick", function()
             ns.db.settings.welcomeShown = true
+            ns:PlaySound("CLICK")
             f:Hide()
         end)
 
         dialog = f
     end
 
+    local bodyH = (dialog.body and dialog.body:GetStringHeight()) or 64
+    dialog:SetHeight(math.max(224, math.ceil(bodyH + 158)))
     dialog:Show()
 end
 

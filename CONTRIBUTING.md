@@ -9,7 +9,7 @@ Vielen Dank für dein Interesse, **EĹLA** (im Spiel **`Ella`**) für *World of 
 Wenn ein neuer *WoW: Forever*-Patch ein weiteres Menüfenster einführt, musst du den Engine-Kern (`Core/`) **nicht** anfassen. Ergänze einfach einen deklarativen Eintrag in:
 * `Data/Frames_Core.lua` (immer geladene Standardfenster),
 * `Data/Frames_LoD.lua` (Blizzard Load-on-Demand-Module), oder
-* `Data/Frames_Forever.lua` (*Forever*-exklusive Systeme wie Camping, Legacy, neue Fraktionen).
+* `Data/Frames_Forever.lua` (*Forever*-exklusive Systeme wie Camping, Legacy, Fraktionen sowie Community-AddOns).
 
 ```lua
 Registry:RegisterWindow("MEIN_NEUES_FENSTER", {
@@ -22,7 +22,7 @@ Registry:RegisterWindow("MEIN_NEUES_FENSTER", {
 })
 ```
 
-> **Tipp:** Im Spiel kannst du `/ella pick` eingeben und ein Fenster anklicken – Ella generiert dir automatisch den fertigen Lua-Block zum Kopieren!
+> **Tipp:** Im Spiel kannst du `/ella pick` eingeben und ein Fenster anklicken – Ella generiert dir automatisch den fertigen Lua-Block zum Markieren & Kopieren!
 
 Vor dem Erstellen eines Pull Requests bitte einmal den lokalen Validator starten:
 ```bash
@@ -31,7 +31,7 @@ python3 tests/validate_addon.py
 
 ---
 
-## 2. Drittanbieter-API (`ELLA_API` / `LibStub`)
+## 2. Drittanbieter-API (`ELLA_API` / `_G.Ella` / `LibStub`)
 
 Eigene Addons können ihre Fenster direkt an EĹLA übergeben, ohne eigene Drag-/Skalierungslogik zu programmieren:
 
@@ -47,15 +47,23 @@ if api then
 end
 ```
 
-Unterstützte Methoden auf `ELLA_API`:
-* `ELLA_API:GetVersion()` – Gibt Versionsstring und API-Level zurück.
+Unterstützte Methoden auf `ELLA_API` (sowie Alias `_G.Ella` und `LibStub("ELLA-1.0")`):
+* `ELLA_API:GetVersion()` – Gibt Versionsstring (`"1.9.0"`) und API-Level (`2`) zurück.
 * `ELLA_API:IsForeverClient()` – `true`, wenn auf `WOW_PROJECT_CAMELOT` (`18`) ausgeführt.
+* `ELLA_API:GetActiveProfile()` – Gibt den Namen des derzeit aktiven Layout-Profils zurück.
+* `ELLA_API:GetProfiles()` – Gibt ein sortiertes Array aller vorhandenen Profilnamen zurück.
+* `ELLA_API:SwitchProfile(profileName)` – Wechselt zum angegebenen Profil.
 * `ELLA_API:RegisterWindow(windowId, descriptor)` – Registriert ein einzelnes Fenster.
 * `ELLA_API:RegisterAddonWindows(addonName, windowsTable)` – Registriert mehrere Fenster eines Addons gesammelt.
 * `ELLA_API:RegisterPreset(presetId, presetDefinition)` – Fügt ein eigenes Skalierungs-Preset hinzu.
+* `ELLA_API:ApplyPreset(presetId)` – Wendet ein registriertes Preset (`"STANDARD_100"`, `"CLASSIC_80"`, `"WQHD_85"`, `"LAPTOP_72"`, ...) an.
 * `ELLA_API:SetWindowScale(windowId, scale)` – Setzt die Skalierung (`0.50` – `1.50`) eines Fensters.
-* `ELLA_API:GetWindowConfig(windowId)` – Liest eine sichere Kopie der aktuellen Fenstereinstellungen.
-* `ELLA_API:RegisterCallback(eventName, callback)` – Lauscht auf `OnWindowRegistered`, `OnWindowBound`, `OnWindowApplied`, `OnWindowConfigChanged`, `OnPresetApplied`, `OnResetAll`.
+* `ELLA_API:SetWindowAlpha(windowId, alpha, mouseoverFade)` – Setzt Deckkraft (`0.30` – `1.00`) und optionales Mouseover-Fade eines Fensters.
+* `ELLA_API:GetWindowConfig(windowId)` – Liest eine sichere Kopie der aktuellen Fenstereinstellungen (`scale`, `mode`, `locked`, `alpha`, `mouseoverFade`, `uipX`, `uipY`).
+* `ELLA_API:ToggleManager()` – Öffnet oder schließt den Ella-Fenstermanager (`/ella`).
+* `ELLA_API:ToggleBossKey()` – Führt den Boss-Key (Panik-Schließen / Wiederherstellen) aus.
+* `ELLA_API:ToggleGrid()` – Schaltet das Vollbild-Ausrichtungsgitter ein oder aus (mit Chat-Bestätigung).
+* `ELLA_API:RegisterCallback(eventName, callback)` – Lauscht auf `OnWindowRegistered`, `OnWindowBound`, `OnWindowApplied`, `OnWindowConfigChanged`, `OnPresetApplied`, `OnProfileSwitched`, `OnProfileImported`, `OnResetAll`, `OnCharProfileBindingChanged`.
 
 ---
 
@@ -71,24 +79,25 @@ Jeder Commit wird automatisiert gegen diese Regeln geprüft (`python3 tests/vali
 
 ### Teil B – Die 8 Technischen Anti-Taint-Gesetze
 1. **Kampf-Schutz (`InCombatLockdown()`):** Niemals `SetScale`, `SetPoint` oder `ClearAllPoints` während des Kampfes auf `Protected`-Frames aufrufen – immer über `Guard:CanModifyNow()` & `Guard:EnqueueAfterCombat()` leiten.
-2. **Edit-Mode-Quarantäne:** HUD- und Kampf-Frames (`PlayerFrame`, Actionbars, Minimap, Buffs, ObjectiveTracker, Chat) sind streng gesperrt.
+2. **Edit-Mode-Quarantäne:** HUD- und Kampf-Frames (`PlayerFrame`, Actionbars, Minimap, Buffs, ObjectiveTracker, `RightManagedFrameContainer`, Chat) sind streng gesperrt (`Guard:ValidateTarget`).
 3. **`UIPanelWindows` bleibt unberührt:** Niemals Felder in `UIPanelWindows` überschreiben oder löschen.
 4. **Null Property-Injektion auf Blizzard-Frames:** Niemals `SomeBlizzardFrame.myProp = ...` schreiben oder Frame-Methoden direkt überschreiben (`hooksecurefunc` + Weak-Table in `Core/Engine.lua` nutzen!).
 5. **Pflicht-Check `IsForbidden()`:** Vor jedem Frame-Zugriff über `Guard:IsForbidden(frame)` absichern.
-6. **Null globale Leaks:** Jede `.lua`-Datei startet mit `local AddonName, ns = ...`. Keine unregistrierten globalen Variablen.
-7. **Sicherheitsgrenzen:** Skalierung strikt auf `[0.50, 1.50]` begrenzt + Bildschirm-Clamping + `/ella reset` Notausgang.
-8. **0,00 ms Ruhe-CPU:** Keine dauerhaften `OnUpdate`-Schleifen! `OnUpdate` darf ausschließlich während eines aktiven Maus-Ziehens oder aktiven Frame-Pickers laufen.
+6. **Null globale Leaks:** Jede `.lua`-Datei startet mit `local AddonName, ns = ...`. Nur dokumentierte Globals (`ELLA_API`, `Ella`, `ELLADB`, `BINDING_*`) sind erlaubt.
+7. **Sicherheitsgrenzen:** Skalierung strikt auf `[0.50, 1.50]` und Deckkraft auf `[0.30, 1.00]` begrenzt + Bildschirm-Clamping + `/ella reset` Notausgang.
+8. **0,00 ms Ruhe-CPU:** Keine dauerhaften `OnUpdate`-Schleifen! `OnUpdate` darf ausschließlich während eines aktiven Maus-Ziehens, aktiven Mouseover-Fade-Hovers oder aktiven Frame-Pickers laufen.
 
 ---
 
-## 4. Feature- & Release-Checkliste (Tutorial-Pflege)
+## 4. Feature- & Release-Checkliste (Tutorial- & Locale-Pflege)
 
 Wann immer ein neues Core-Feature oder sichtbares UI-Element ergänzt wird:
 1. **Tutorial-Synchronisation (`UI/Tutorial.lua`):**
-   * Prüfe die 8 Schritte des interaktiven In-Game-Tutorials (`/ella tour`).
+   * Prüfe alle **13 Schritte** des interaktiven In-Game-Tutorials (`/ella tour`).
    * Müssen Erklärungen in `Locales/deDE.lua` & `Locales/enUS.lua` aktualisiert werden?
-   * Passen die Spotlight-Rahmen (`STEPS[x].getTarget`) noch zu den Bedienelementen?
-2. **Lokalisierungs-Vollständigkeit:**
-   * Jeder Text-Key muss in beiden Lokalisierungsdateien exakt übereinstimmen.
+   * Passen die Spotlight-Rahmen (`STEPS[x].getTarget`) und Reiter-Sprünge (`STEPS[x].tab`) noch zu den Bedienelementen?
+2. **Lokalisierungs-, Format- & Schriftart-Sicherheit:**
+   * Jeder Text-Key und alle `string.format`-Platzhalter (`%s`, `%d`, `%%`) müssen in `Locales/enUS.lua` und `Locales/deDE.lua` exakt übereinstimmen.
+   * Alle sichtbaren Zeichen müssen im `cp1252`-Zeichensatz von Blizzards `Friz Quadrata`-Schriftart enthalten sein (echte deutsche Umlaute `ä/ö/ü/ß` verwenden, keine `ae/oe/ue`-Ersatzschreibweisen).
 3. **Automatisierte Validierung:**
-   * `python3 tests/validate_addon.py` muss vor jedem Git-Tag und Release 100 % grün sein.
+   * `python3 tests/validate_addon.py` prüft `ELLA.toc`, `Bindings.xml` (`category="ADDONS"`), Locale-Parität, Format-Strings, `cp1252`-Glyphen und alle Goldenen Regeln und muss vor jedem Git-Tag 100 % grün sein.

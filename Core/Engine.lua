@@ -59,11 +59,7 @@ function Engine:ReadUipTopLeft(frame)
     return uipX, uipY
 end
 
--- Golden Rule #7: Keep at least 120px width and the top titlebar inside the screen
-function Engine:ClampUipPosition(frame, scale, uipX, uipY)
-    if not ns.db or not ns.db.settings.clampToScreen then
-        return uipX, uipY
-    end
+local function GetClampBounds(frame, scale)
     local uipW = UIParent:GetWidth() or 1920
     local uipH = UIParent:GetHeight() or 1080
     local rawW = frame:GetWidth() or 350
@@ -73,6 +69,15 @@ function Engine:ClampUipPosition(frame, scale, uipX, uipY)
     local maxX = math.max(0, uipW - 120)
     local minY = -(uipH - 60)
     local maxY = 0
+    return minX, maxX, minY, maxY
+end
+
+-- Golden Rule #7: Keep at least 120px width and the top titlebar inside the screen
+function Engine:ClampUipPosition(frame, scale, uipX, uipY)
+    if not ns.db or not ns.db.settings.clampToScreen then
+        return uipX, uipY
+    end
+    local minX, maxX, minY, maxY = GetClampBounds(frame, scale)
 
     if uipX < minX then uipX = minX end
     if uipX > maxX then uipX = maxX end
@@ -82,6 +87,32 @@ function Engine:ClampUipPosition(frame, scale, uipX, uipY)
     return uipX, uipY
 end
 
+function Engine:GetEffectiveWindowMode(windowId, desc)
+    local isGlobalEnabled = (ns.db and ns.db.settings and ns.db.settings.enabled)
+    if not isGlobalEnabled then
+        return ns.MODE_DISABLED
+    end
+    desc = desc or Registry:GetDescriptor(windowId)
+    local cfg = ns:GetWindowConfig(windowId, false)
+    return (cfg and cfg.mode)
+        or (desc and desc.defaultMode)
+        or (ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
+end
+
+function Engine:GetEffectiveWindowScale(windowId, desc)
+    desc = desc or Registry:GetDescriptor(windowId)
+    local cfg = ns:GetWindowConfig(windowId, false)
+    local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+    local savedScale = Engine:ClampScale(cfg and cfg.scale or ns.DEFAULT_SCALE)
+    if mode == ns.MODE_DISABLED then
+        return ns.DEFAULT_SCALE, savedScale, false
+    end
+    if Engine.inCompactMode and savedScale > 0.75 then
+        return 0.75, savedScale, true
+    end
+    return savedScale, savedScale, false
+end
+
 -- Syncs scale onto optional companion sub-frames (e.g. QuestLogPopupDetailFrame, Orders panel)
 local function SyncLinkedFrames(windowId, desc, targetScale)
     if type(desc.linkedFrames) ~= "table" then
@@ -89,7 +120,7 @@ local function SyncLinkedFrames(windowId, desc, targetScale)
     end
     for i = 1, #desc.linkedFrames do
         local sub = Registry:ResolveFramePath(desc.linkedFrames[i])
-        if sub and not Guard:IsForbidden(sub) then
+        if sub and sub ~= desc.boundFrame and not Guard:IsForbidden(sub) then
             local subState = frameState[sub]
             if not subState or not subState.linkedHooked then
                 subState = subState or {}
@@ -97,13 +128,7 @@ local function SyncLinkedFrames(windowId, desc, targetScale)
                 frameState[sub] = subState
                 if type(sub.HookScript) == "function" then
                     sub:HookScript("OnShow", function(sFrame)
-                        local isGlobalEnabled = (ns.db and ns.db.settings.enabled)
-                        local cfg = ns:GetWindowConfig(windowId, false)
-                        local mode = (not isGlobalEnabled and ns.MODE_DISABLED)
-                            or (cfg and cfg.mode)
-                            or desc.defaultMode
-                            or (ns.db and ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
-                        local sTarget = (mode == ns.MODE_DISABLED) and ns.DEFAULT_SCALE or Engine:ClampScale(cfg and cfg.scale or ns.DEFAULT_SCALE)
+                        local sTarget = Engine:GetEffectiveWindowScale(windowId, desc)
                         if Guard:CanModifyNow(sFrame, desc.protected) then
                             local c = sFrame:GetScale() or 1
                             if math.abs(c - sTarget) > 0.001 then
@@ -135,18 +160,24 @@ local function HookFrameFade(frame, windowId, desc)
     fadeWatcher:SetScript("OnUpdate", function(self)
         if not frame:IsShown() or not frame:IsMouseOver() then
             self:Hide()
+            if activeDrag and activeDrag.frame == frame then
+                return
+            end
+            local mode = Engine:GetEffectiveWindowMode(windowId, desc)
             local cfg = ns:GetWindowConfig(windowId, false)
-            if cfg and not (activeDrag and activeDrag.frame == frame) then
-                local a = cfg.alpha or 1.0
-                if type(frame.SetAlpha) == "function" then
-                    frame:SetAlpha(a)
-                end
+            local a = (mode == ns.MODE_DISABLED) and 1.0 or ((cfg and cfg.alpha) or 1.0)
+            if type(frame.SetAlpha) == "function" then
+                frame:SetAlpha(a)
             end
         end
     end)
 
     if type(frame.HookScript) == "function" then
         frame:HookScript("OnEnter", function(f)
+            local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+            if mode == ns.MODE_DISABLED then
+                return
+            end
             local cfg = ns:GetWindowConfig(windowId, false)
             if cfg and cfg.mouseoverFade and not (activeDrag and activeDrag.frame == f) then
                 if type(f.SetAlpha) == "function" then
@@ -166,6 +197,14 @@ function Engine:ApplyAlphaToFrame(windowId, frame, desc)
         return
     end
     HookFrameFade(frame, windowId, desc)
+    local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+    if mode == ns.MODE_DISABLED then
+        if type(frame.SetAlpha) == "function" then
+            frame:SetAlpha(1.0)
+        end
+        return
+    end
+
     local cfg = ns:GetWindowConfig(windowId, false)
     local targetAlpha = (cfg and cfg.alpha) or 1.0
     local isMouseoverFade = (cfg and cfg.mouseoverFade) or false
@@ -192,16 +231,9 @@ function Engine:ApplyToFrame(windowId, frame, desc)
         return
     end
 
-    local isGlobalEnabled = (ns.db and ns.db.settings.enabled)
     local cfg = ns:GetWindowConfig(windowId, false)
-    local mode = (not isGlobalEnabled and ns.MODE_DISABLED)
-        or (cfg and cfg.mode)
-        or desc.defaultMode
-        or (ns.db and ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
-    local targetScale = (mode == ns.MODE_DISABLED) and ns.DEFAULT_SCALE or Engine:ClampScale(cfg and cfg.scale or ns.DEFAULT_SCALE)
-    if Engine.inCompactMode and mode ~= ns.MODE_DISABLED then
-        targetScale = math.min(targetScale, 0.75)
-    end
+    local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+    local targetScale = Engine:GetEffectiveWindowScale(windowId, desc)
 
     local canModify, reason = Guard:CanModifyNow(frame, desc.protected)
     if not canModify then
@@ -287,6 +319,8 @@ function Engine:SetWindowScale(windowId, requestedScale, pivotAroundCursor)
         end
 
         local oldScale = (cfg.scale and cfg.scale > 0) and cfg.scale or (frame:GetScale() or 1)
+        local effOldScale = Engine.inCompactMode and math.min(oldScale, 0.75) or oldScale
+        local effNewScale = Engine.inCompactMode and math.min(newScale, 0.75) or newScale
         local readX, readY = Engine:ReadUipTopLeft(frame)
         local oldUipX = (cfg.pos and cfg.pos.uipX) or readX
         local oldUipY = (cfg.pos and cfg.pos.uipY) or readY
@@ -298,7 +332,7 @@ function Engine:SetWindowScale(windowId, requestedScale, pivotAroundCursor)
                 local uipH = UIParent:GetHeight() or 1080
                 local cX = curX / uipEff
                 local cY = (curY / uipEff) - uipH
-                local ratio = newScale / oldScale
+                local ratio = effNewScale / effOldScale
                 cfg.pos = {
                     uipX = cX - (cX - oldUipX) * ratio,
                     uipY = cY - (cY - oldUipY) * ratio,
@@ -341,8 +375,8 @@ function Engine:SetWindowAlpha(windowId, requestedAlpha, mouseoverFade)
     end
 
     if requestedAlpha ~= nil then
-        local a = tonumber(requestedAlpha) or 1.0
-        if a < 0.20 then a = 0.20 elseif a > 1.0 then a = 1.0 end
+        local a = tonumber(requestedAlpha) or ns.MAX_ALPHA
+        if a < ns.MIN_ALPHA then a = ns.MIN_ALPHA elseif a > ns.MAX_ALPHA then a = ns.MAX_ALPHA end
         cfg.alpha = math.floor(a * 100 + 0.5) / 100
     end
 
@@ -384,6 +418,8 @@ function Engine:ResetWindow(windowId, resetPositionOnly)
     cfg.pos = nil
     if not resetPositionOnly then
         cfg.scale = ns.DEFAULT_SCALE
+        cfg.alpha = 1.00
+        cfg.mouseoverFade = false
     end
     if desc and desc.boundFrame then
         Engine:ApplyToFrame(windowId, desc.boundFrame, desc)
@@ -528,7 +564,9 @@ function Engine:FindDockedCluster(sourceFrame)
             local other = otherDesc.boundFrame
             if other and other ~= sourceFrame and other:IsShown() and not visited[other] and not otherDesc.protected and not Guard:IsForbidden(other) then
                 local oCfg = ns:GetWindowConfig(otherId, false)
-                if not oCfg or (oCfg.mode == ns.MODE_SCALE_MOVE and not oCfg.locked) then
+                local oMode = Engine:GetEffectiveWindowMode(otherId, otherDesc)
+                local oLocked = (oCfg and oCfg.locked) or false
+                if oMode == ns.MODE_SCALE_MOVE and not oLocked then
                     if AreFramesDocked(curr, other) then
                         visited[other] = true
                         local oX, oY = Engine:ReadUipTopLeft(other)
@@ -581,7 +619,43 @@ local function OnDragUpdate()
     local rawX = activeDrag.startUipX + dX
     local rawY = activeDrag.startUipY + dY
     local snappedX, snappedY = ApplyMagneticOrGridSnap(frame, scale, rawX, rawY)
-    local newUipX, newUipY = Engine:ClampUipPosition(frame, scale, snappedX, snappedY)
+
+    local isAltDown = IsAltKeyDown()
+    local hasDocked = (activeDrag.dockedFrames and #activeDrag.dockedFrames > 0)
+    local deltaX = snappedX - activeDrag.startUipX
+    local deltaY = snappedY - activeDrag.startUipY
+
+    -- Rigid group screen-edge clamping so docked windows never squash into each other
+    if not isAltDown and hasDocked and ns.db and ns.db.settings.clampToScreen then
+        local pMinX, pMaxX, pMinY, pMaxY = GetClampBounds(frame, scale)
+        local minDeltaX = pMinX - activeDrag.startUipX
+        local maxDeltaX = pMaxX - activeDrag.startUipX
+        local minDeltaY = pMinY - activeDrag.startUipY
+        local maxDeltaY = pMaxY - activeDrag.startUipY
+
+        for i = 1, #activeDrag.dockedFrames do
+            local docked = activeDrag.dockedFrames[i]
+            local dFrame = docked.frame
+            if dFrame and dFrame:IsShown() and Guard:CanModifyNow(dFrame, docked.desc.protected) then
+                local dMinX, dMaxX, dMinY, dMaxY = GetClampBounds(dFrame, docked.scale)
+                minDeltaX = math.max(minDeltaX, dMinX - docked.startUipX)
+                maxDeltaX = math.min(maxDeltaX, dMaxX - docked.startUipX)
+                minDeltaY = math.max(minDeltaY, dMinY - docked.startUipY)
+                maxDeltaY = math.min(maxDeltaY, dMaxY - docked.startUipY)
+            end
+        end
+
+        if minDeltaX <= maxDeltaX then
+            if deltaX < minDeltaX then deltaX = minDeltaX elseif deltaX > maxDeltaX then deltaX = maxDeltaX end
+        end
+        if minDeltaY <= maxDeltaY then
+            if deltaY < minDeltaY then deltaY = minDeltaY elseif deltaY > maxDeltaY then deltaY = maxDeltaY end
+        end
+    end
+
+    local newUipX, newUipY = Engine:ClampUipPosition(frame, scale, activeDrag.startUipX + deltaX, activeDrag.startUipY + deltaY)
+    deltaX = newUipX - activeDrag.startUipX
+    deltaY = newUipY - activeDrag.startUipY
 
     local state = frameState[frame]
     if state then
@@ -597,13 +671,9 @@ local function OnDragUpdate()
     activeDrag.lastUipX = newUipX
     activeDrag.lastUipY = newUipY
 
-    -- Synchronous Docked Group Dragging (Option 2)
+    -- Synchronous Docked Group Dragging
     -- If [Alt] is held down, user explicitly detaches/unsticks this window from the group
-    local isAltDown = IsAltKeyDown()
-    if activeDrag.dockedFrames and #activeDrag.dockedFrames > 0 then
-        local deltaX = newUipX - activeDrag.startUipX
-        local deltaY = newUipY - activeDrag.startUipY
-
+    if hasDocked then
         for i = 1, #activeDrag.dockedFrames do
             local docked = activeDrag.dockedFrames[i]
             local dFrame = docked.frame
@@ -698,6 +768,7 @@ function Engine:StartWindowDrag(windowId, frame, desc)
     if state then
         state.isDragging = true
     end
+    ns:Fire("OnWindowDragStarted", windowId, frame)
     dragDriver:SetScript("OnUpdate", OnDragUpdate)
 end
 
@@ -752,6 +823,7 @@ function Engine:StopActiveDrag()
             end
         end
     end
+    ns:Fire("OnWindowDragStopped", finished.windowId, finished.frame)
 end
 
 local function HookDragRegion(region, windowId, rootFrame, desc)
@@ -897,11 +969,11 @@ function Engine:ToggleBossKey()
         for i = 1, #toRestore do
             local winId = toRestore[i]
             local desc = Registry:GetDescriptor(winId)
-            if desc and desc.boundFrame then
+            if desc and desc.boundFrame and not desc.boundFrame:IsShown() then
                 local ok = pcall(function()
                     Registry:ToggleWindowPreview(winId)
                 end)
-                if ok then
+                if ok and desc.boundFrame:IsShown() then
                     restoredCount = restoredCount + 1
                 end
             end
@@ -973,30 +1045,32 @@ function Engine:UpdateInstanceCompactState()
             ns:Print(ns.L["MSG_INSTANCE_LEFT"])
         end
         Engine:ReapplyAllShown()
+        ns:Fire("OnInstanceCompactChanged", isCompact)
     end
 end
 
 function ns:RunSelfTest()
-    ns:Print("|cffffd100--- ELLA In-Game Selbsttest v" .. ns.Version .. " ---|r")
+    local L = ns.L
+    ns:Print(string.format(L["SELFTEST_HEADER"], ns.Version))
     local passed = 0
     local total = 6
 
     -- Test 1: Version & DB Schema
-    if ns.Version == "1.8.0" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
-        ns:Print("|cff00ff96[1/6 PASS]|r Version 1.8.0 & Datenbank-Schema v2 OK")
+    if type(ns.Version) == "string" and ns.Version ~= "" and ns.db and ns.db.schemaVersion == 2 and ns.db.settings then
+        ns:Print(string.format(L["SELFTEST_1_PASS"], ns.Version))
         passed = passed + 1
     else
-        ns:Print("|cffff3333[1/6 FAIL]|r Datenbank-Schema oder Version fehlerhaft")
+        ns:Print(L["SELFTEST_1_FAIL"])
     end
 
     -- Test 2: Character-Profile Binding
-    local charKey = ns.Profiles and ns.Profiles:GetCharKey() or "Unknown"
-    if charKey ~= "Unknown" then
+    local charKey = ns.Profiles and ns.Profiles:GetCharKey() or nil
+    if charKey then
         local bound = ns.Profiles:IsCharBoundToActiveProfile()
-        ns:Print(string.format("|cff00ff96[2/6 PASS]|r Charakter-Erkennung: %s (Gebunden: %s)", charKey, bound and "Ja" or "Nein"))
+        ns:Print(string.format(L["SELFTEST_2_PASS"], charKey, bound and L["SELFTEST_YES"] or L["SELFTEST_NO"]))
         passed = passed + 1
     else
-        ns:Print("|cffff3333[2/6 FAIL]|r Charakter-Name konnte nicht ermittelt werden")
+        ns:Print(L["SELFTEST_2_FAIL"])
     end
 
     -- Test 3: Opacity & Fade Engine
@@ -1009,11 +1083,11 @@ function ns:RunSelfTest()
     local verifyCfg = ns:GetWindowConfig(testWin, false)
     if okAlpha and verifyCfg and verifyCfg.alpha == 0.85 and verifyCfg.mouseoverFade == true then
         Engine:SetWindowAlpha(testWin, origAlpha, origFade)
-        ns:Print("|cff00ff96[3/6 PASS]|r Deckkraft- & Mouseover-Fade-Engine OK")
+        ns:Print(L["SELFTEST_3_PASS"])
         passed = passed + 1
     else
         Engine:SetWindowAlpha(testWin, origAlpha, origFade)
-        ns:Print("|cffff3333[3/6 FAIL]|r Deckkraft-Steuerung fehlgeschlagen")
+        ns:Print(L["SELFTEST_3_FAIL"])
     end
 
     -- Test 4: Profile Snapshot & Undo-System
@@ -1022,13 +1096,13 @@ function ns:RunSelfTest()
         local canUndo = ns.Profiles:CanUndo()
         ns.Profiles:UndoLastChange()
         if canUndo then
-            ns:Print("|cff00ff96[4/6 PASS]|r Profil-Snapshot & Undo-Stack OK")
+            ns:Print(L["SELFTEST_4_PASS"])
             passed = passed + 1
         else
-            ns:Print("|cffff3333[4/6 FAIL]|r Undo-Stack reagiert nicht")
+            ns:Print(L["SELFTEST_4_FAIL"])
         end
     else
-        ns:Print("|cffff3333[4/6 FAIL]|r Profile-Modul unvollständig")
+        ns:Print(L["SELFTEST_4_MISSING"])
     end
 
     -- Test 5: Window Registry
@@ -1037,23 +1111,23 @@ function ns:RunSelfTest()
         count = count + 1
     end
     if count >= 15 then
-        ns:Print(string.format("|cff00ff96[5/6 PASS]|r Window Registry: %d Fenster registriert", count))
+        ns:Print(string.format(L["SELFTEST_5_PASS"], count))
         passed = passed + 1
     else
-        ns:Print(string.format("|cffff3333[5/6 FAIL]|r Zu wenige Fenster registriert: %d", count))
+        ns:Print(string.format(L["SELFTEST_5_FAIL"], count))
     end
 
     -- Test 6: Resolution & Handheld Check
     local uipW = (UIParent and UIParent:GetWidth()) or 0
     local uipH = (UIParent and UIParent:GetHeight()) or 0
     local isHandheld = (uipW <= 1400 and uipH <= 800)
-    ns:Print(string.format("|cff00ff96[6/6 PASS]|r Bildschirmaufloesung: %dx%d (%s)", math.floor(uipW), math.floor(uipH), isHandheld and "Handheld / Kompakt" or "Standard Desktop"))
+    ns:Print(string.format(L["SELFTEST_6_PASS"], math.floor(uipW), math.floor(uipH), isHandheld and L["SELFTEST_HANDHELD"] or L["SELFTEST_DESKTOP"]))
     passed = passed + 1
 
     if passed == total then
-        ns:Print(string.format("|cff00ff96Alle %d von %d In-Game-Tests erfolgreich bestanden!|r", passed, total))
+        ns:Print(string.format(L["SELFTEST_SUMMARY_OK"], passed, total))
     else
-        ns:Print(string.format("|cffffaa00Selbsttest beendet: %d von %d Tests bestanden.|r", passed, total))
+        ns:Print(string.format(L["SELFTEST_SUMMARY_WARN"], passed, total))
     end
 end
 
@@ -1111,14 +1185,18 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
             if ns.Profiles and ns.Profiles.Init then
                 ns.Profiles:Init()
             end
+            if ns.Profiles and ns.Profiles.RestoreCustomWindows then
+                ns.Profiles:RestoreCustomWindows()
+            end
+            Registry:EnableBindingAndScan()
         else
             Registry:OnAddOnLoaded(arg1)
         end
     elseif event == "PLAYER_LOGIN" then
-        Registry:ScanUnboundWindows()
         if ns.Profiles and ns.Profiles.RestoreCustomWindows then
             ns.Profiles:RestoreCustomWindows()
         end
+        Registry:EnableBindingAndScan()
         if ns.Profiles and ns.Profiles.AutoLoadCharProfile then
             ns.Profiles:AutoLoadCharProfile()
         end
@@ -1126,9 +1204,6 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         Engine:ReapplyAllShown()
         if ns.MinimapButton and ns.MinimapButton.Init then
             ns.MinimapButton:Init()
-        end
-        if ns.HandheldDialog and ns.HandheldDialog.CheckAndPrompt then
-            ns.HandheldDialog:CheckAndPrompt()
         end
         local clientTag = ns.IsForeverClient and ns.L["PROJECT_FOREVER"] or ns.L["PROJECT_GENERIC"]
         ns:Print(string.format(ns.L["LOADED_MSG"], ns.Version, clientTag))
@@ -1144,6 +1219,7 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
         Engine:UpdateInstanceCompactState()
     elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
         Engine:ReapplyAllShown()
+        ns:Fire("OnResolutionChanged")
     elseif event == "MODIFIER_STATE_CHANGED" then
         if arg1 == "LCTRL" or arg1 == "RCTRL" then
             UpdateCtrlWheelCatcher()

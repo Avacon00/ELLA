@@ -57,7 +57,40 @@ local EDITMODE_BLACKLIST = {
     Boss4TargetFrame = true,
     Boss5TargetFrame = true,
     ArenaEnemyFramesContainer = true,
+    RightManagedFrameContainer = true,
+    UIParentRightManagedFrameContainer = true,
+    UIParentBottomManagedFrameContainer = true,
+    TopManagedFrameContainer = true,
+    BottomManagedFrameContainer = true,
+    PlayerPowerBarAlt = true,
+    MirrorTimerContainer = true,
+    ObjectiveTrackerBonusBannerFrame = true,
+    SubZoneTextFrame = true,
+    ZoneTextFrame = true,
+    UIWidgetTopCenterContainerFrame = true,
+    UIWidgetBelowMinimapContainerFrame = true,
+    QueueStatusButton = true,
+    MicroButtonAndBagsBar = true,
+    BagsBar = true,
+    MicroMenuContainer = true,
 }
+
+function Guard:IsBlacklistedName(name)
+    if type(name) ~= "string" or name == "" then
+        return false
+    end
+    if EDITMODE_BLACKLIST[name] then
+        return true
+    end
+    if string.match(name, "^NamePlate%d+")
+        or string.match(name, "^ChatFrame%d+")
+        or string.match(name, "^CompactRaid")
+        or string.match(name, "ManagedFrameContainer$")
+    then
+        return true
+    end
+    return false
+end
 
 -- Golden Rule #5: Mandatory IsForbidden check before touching any frame method
 function Guard:IsForbidden(frame)
@@ -78,10 +111,7 @@ function Guard:IsEditModeFrame(frame)
         return false
     end
     local name = type(frame.GetName) == "function" and frame:GetName() or nil
-    if name and EDITMODE_BLACKLIST[name] then
-        return true
-    end
-    if name and (string.match(name, "^NamePlate%d+") or string.match(name, "^ChatFrame%d+") or string.match(name, "^CompactRaid")) then
+    if name and Guard:IsBlacklistedName(name) then
         return true
     end
     -- Dynamic runtime check for Blizzard's EditModeSystemMixin frames

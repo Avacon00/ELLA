@@ -24,6 +24,20 @@ local lastTopAncestor = nil
 
 local currentCandidate = nil
 local currentCandidateName = nil
+local armedForLeftClick = false
+local blockedFeedbackPrinted = false
+
+local function RegisterSpecialFrameOnce(frameName)
+    if not _G.UISpecialFrames or type(frameName) ~= "string" then
+        return
+    end
+    for i = 1, #_G.UISpecialFrames do
+        if _G.UISpecialFrames[i] == frameName then
+            return
+        end
+    end
+    table.insert(_G.UISpecialFrames, frameName)
+end
 
 -- Compatible mouse-focus helper for WoW 16001 (GetMouseFoci) + fallback
 local function GetTopMouseFrame()
@@ -32,14 +46,14 @@ local function GetTopMouseFrame()
         if type(foci) == "table" then
             for i = 1, #foci do
                 local f = foci[i]
-                if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and not Guard:IsForbidden(f) then
+                if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and f ~= snippetModal and not Guard:IsForbidden(f) then
                     return f
                 end
             end
         end
     elseif type(_G.GetMouseFocus) == "function" then
         local f = _G.GetMouseFocus()
-        if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and not Guard:IsForbidden(f) then
+        if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and f ~= snippetModal and not Guard:IsForbidden(f) then
             return f
         end
     end
@@ -76,11 +90,13 @@ end
 
 local function ShowSnippetModal(frameName)
     if not snippetModal then
-        local m = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
+        local m = CreateFrame("Frame", "EllaPickerSnippetModal", UIParent, BACKDROP_TEMPLATE)
         m:SetSize(440, 210)
         m:SetPoint("CENTER", 0, 40)
         m:SetFrameStrata("FULLSCREEN_DIALOG")
         m:EnableMouse(true)
+        m:SetClampedToScreen(true)
+        RegisterSpecialFrameOnce("EllaPickerSnippetModal")
         if m.SetBackdrop then
             m:SetBackdrop({
                 bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -180,7 +196,7 @@ local function EnsurePickerFrames()
 
     -- Floating Cursor Inspection HUD Tooltip (Picker 2.0)
     pickerHud = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-    pickerHud:SetSize(340, 78)
+    pickerHud:SetSize(410, 86)
     pickerHud:SetFrameStrata("TOOLTIP")
     pickerHud:SetFrameLevel(9000)
     pickerHud:EnableMouse(false)
@@ -205,20 +221,20 @@ local function EnsurePickerFrames()
     pickerHud.hudName = hudName
 
     local hudSize = pickerHud:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    hudSize:SetPoint("TOPLEFT", 10, -25)
-    hudSize:SetPoint("TOPRIGHT", -10, -25)
+    hudSize:SetPoint("TOPLEFT", hudName, "BOTTOMLEFT", 0, -4)
+    hudSize:SetPoint("TOPRIGHT", hudName, "BOTTOMRIGHT", 0, -4)
     hudSize:SetJustifyH("LEFT")
     pickerHud.hudSize = hudSize
 
     local hudStatus = pickerHud:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    hudStatus:SetPoint("TOPLEFT", 10, -41)
-    hudStatus:SetPoint("TOPRIGHT", -10, -41)
+    hudStatus:SetPoint("TOPLEFT", hudSize, "BOTTOMLEFT", 0, -4)
+    hudStatus:SetPoint("TOPRIGHT", hudSize, "BOTTOMRIGHT", 0, -4)
     hudStatus:SetJustifyH("LEFT")
     pickerHud.hudStatus = hudStatus
 
     local hudControls = pickerHud:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    hudControls:SetPoint("TOPLEFT", 10, -58)
-    hudControls:SetPoint("TOPRIGHT", -10, -58)
+    hudControls:SetPoint("TOPLEFT", hudStatus, "BOTTOMLEFT", 0, -5)
+    hudControls:SetPoint("TOPRIGHT", hudStatus, "BOTTOMRIGHT", 0, -5)
     hudControls:SetJustifyH("LEFT")
     hudControls:SetText(L["PICKER_HUD_CONTROLS"])
     pickerHud.hudControls = hudControls
@@ -246,12 +262,13 @@ local function EnsurePickerFrames()
         end
     end)
 
-    bannerFrame = CreateFrame("Button", nil, UIParent, BACKDROP_TEMPLATE)
-    bannerFrame:SetSize(520, 68)
+    bannerFrame = CreateFrame("Button", "EllaPickerBanner", UIParent, BACKDROP_TEMPLATE)
+    bannerFrame:SetSize(540, 70)
     bannerFrame:SetPoint("TOP", UIParent, "TOP", 0, -24)
     bannerFrame:SetFrameStrata("FULLSCREEN_DIALOG")
     bannerFrame:EnableMouse(true)
     bannerFrame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    RegisterSpecialFrameOnce("EllaPickerBanner")
     if bannerFrame.SetBackdrop then
         bannerFrame:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -282,6 +299,11 @@ local function EnsurePickerFrames()
             Picker:Stop()
         end
     end)
+    bannerFrame:SetScript("OnHide", function()
+        if Picker.active then
+            Picker:Stop()
+        end
+    end)
     bannerFrame:Hide()
 end
 
@@ -289,28 +311,6 @@ local function UpdateFloatingHud(targetFrame, winName, ok, reason, existingDesc)
     if not pickerHud or not targetFrame then
         return
     end
-
-    local curX, curY = GetCursorPosition()
-    local uipScale = UIParent:GetEffectiveScale() or 1
-    local uipW = UIParent:GetWidth() or 1920
-    local uipH = UIParent:GetHeight() or 1080
-
-    local cX = curX / uipScale
-    local cY = (curY / uipScale) - uipH
-
-    local hudW, hudH = 340, 78
-    local targetX = cX + 22
-    local targetY = cY - 20
-
-    if (targetX + hudW) > (uipW - 12) then
-        targetX = cX - hudW - 22
-    end
-    if (targetY - hudH) < (-uipH + 12) then
-        targetY = cY + hudH + 20
-    end
-
-    pickerHud:ClearAllPoints()
-    pickerHud:SetPoint("TOPLEFT", UIParent, "TOPLEFT", targetX, targetY)
 
     local fW = math.floor((targetFrame:GetWidth() or 0) + 0.5)
     local fH = math.floor((targetFrame:GetHeight() or 0) + 0.5)
@@ -344,6 +344,34 @@ local function UpdateFloatingHud(targetFrame, winName, ok, reason, existingDesc)
         bannerFrame.status:SetText(string.format(L["PICKER_BLOCKED"], tostring(winName or "<anonymous>"), tostring(reason or "")))
     end
 
+    local h1 = pickerHud.hudName:GetStringHeight() or 14
+    local h2 = pickerHud.hudSize:GetStringHeight() or 12
+    local h3 = pickerHud.hudStatus:GetStringHeight() or 14
+    local h4 = pickerHud.hudControls:GetStringHeight() or 12
+    local hudW = 410
+    local hudH = math.max(82, math.ceil(h1 + h2 + h3 + h4 + 30))
+    pickerHud:SetSize(hudW, hudH)
+
+    local curX, curY = GetCursorPosition()
+    local uipScale = UIParent:GetEffectiveScale() or 1
+    local uipW = UIParent:GetWidth() or 1920
+    local uipH = UIParent:GetHeight() or 1080
+
+    local cX = curX / uipScale
+    local cY = (curY / uipScale) - uipH
+
+    local targetX = cX + 22
+    local targetY = cY - 20
+
+    if (targetX + hudW) > (uipW - 12) then
+        targetX = cX - hudW - 22
+    end
+    if (targetY - hudH) < (-uipH + 12) then
+        targetY = cY + hudH + 20
+    end
+
+    pickerHud:ClearAllPoints()
+    pickerHud:SetPoint("TOPLEFT", UIParent, "TOPLEFT", targetX, targetY)
     pickerHud:Show()
 end
 
@@ -413,17 +441,28 @@ local function OnPickerUpdate()
 
     UpdateFloatingHud(targetWin, winName, ok, reason, existingDesc)
 
-    if IsMouseButtonDown("LeftButton") and not bannerFrame:IsMouseOver() then
-        if winName and winName ~= "" then
+    local isLeftDown = IsMouseButtonDown("LeftButton")
+    if not isLeftDown then
+        armedForLeftClick = true
+        blockedFeedbackPrinted = false
+    elseif armedForLeftClick and not bannerFrame:IsMouseOver() then
+        if (ok or existingDesc) and winName and winName ~= "" then
             local pickedName = winName
             Picker:Stop()
             Picker:RegisterPickedWindow(pickedName)
+        elseif not blockedFeedbackPrinted then
+            blockedFeedbackPrinted = true
+            ns:Print(string.format(L["PICKER_BLOCKED"], tostring(winName or "<anonymous>"), tostring(reason or L["GUARD_ERR_UNSAFE"])))
         end
     end
 end
 
 function Picker:RegisterPickedWindow(frameName)
     if not frameName or frameName == "" then
+        return
+    end
+    if Guard.IsBlacklistedName and Guard:IsBlacklistedName(frameName) then
+        ns:Print(string.format(L["PICKER_BLOCKED"], tostring(frameName), L["GUARD_ERR_EDITMODE"]))
         return
     end
 
@@ -466,6 +505,8 @@ function Picker:Start(reopenManager)
     EnsurePickerFrames()
     Picker.active = true
     Picker.reopenManager = (reopenManager == true)
+    armedForLeftClick = not IsMouseButtonDown("LeftButton")
+    blockedFeedbackPrinted = false
     currentCandidate = nil
     currentCandidateName = nil
     lastLeafFrame = nil
@@ -473,6 +514,7 @@ function Picker:Start(reopenManager)
     currentHierarchyStack = {}
     currentHierarchyIndex = 1
 
+    ns:PlaySound("CLICK")
     bannerFrame:Show()
     pickerOverlay:Show()
     -- Golden Rule #8: OnUpdate runs ONLY while interactive picker mode is open

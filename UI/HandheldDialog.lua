@@ -30,12 +30,15 @@ function HandheldDialog:CheckAndPrompt()
     end
 
     if not dialog then
-        local f = CreateFrame("Frame", nil, UIParent, BACKDROP_TEMPLATE)
-        f:SetSize(440, 190)
+        local f = CreateFrame("Frame", "EllaHandheldDialog", UIParent, BACKDROP_TEMPLATE)
+        f:SetSize(440, 196)
         f:SetPoint("CENTER", 0, 70)
         f:SetFrameStrata("DIALOG")
         f:EnableMouse(true)
         f:SetClampedToScreen(true)
+        if _G.UISpecialFrames then
+            table.insert(_G.UISpecialFrames, "EllaHandheldDialog")
+        end
         if f.SetBackdrop then
             f:SetBackdrop({
                 bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -72,6 +75,7 @@ function HandheldDialog:CheckAndPrompt()
         btnAccept:SetText(L["HANDHELD_DIALOG_ACCEPT"])
         btnAccept:SetScript("OnClick", function()
             ns.db.settings.handheldPromptShown = true
+            ns.db.settings.welcomeShown = true
             Profiles:ApplyPreset("LAPTOP_72")
             f:Hide()
         end)
@@ -82,6 +86,8 @@ function HandheldDialog:CheckAndPrompt()
         btnDecline:SetText(L["HANDHELD_DIALOG_DECLINE"])
         btnDecline:SetScript("OnClick", function()
             ns.db.settings.handheldPromptShown = true
+            ns.db.settings.welcomeShown = true
+            ns:PlaySound("CLICK")
             f:Hide()
         end)
 
@@ -90,6 +96,8 @@ function HandheldDialog:CheckAndPrompt()
         dialog.body:SetText(string.format(L["HANDHELD_DIALOG_BODY"], math.floor(uipW + 0.5), math.floor(uipH + 0.5)))
     end
 
+    local bodyH = (dialog.body and dialog.body:GetStringHeight()) or 64
+    dialog:SetHeight(math.max(196, math.ceil(bodyH + 128)))
     dialog:Show()
 end
 
