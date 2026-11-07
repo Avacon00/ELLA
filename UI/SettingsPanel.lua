@@ -103,13 +103,17 @@ local function ApplyFlatButtonTheme(btn, bgR, bgG, bgB, bgA, brR, brG, brB, brA,
     btn._bgR, btn._bgG, btn._bgB, btn._bgA = bgR, bgG, bgB, bgA
     btn._brR, btn._brG, btn._brB, btn._brA = brR, brG, brB, brA
     btn._txR, btn._txG, btn._txB = txR, txG, txB
-    if not btn._isHovered then
+    if not btn._isHovered or not btn:IsEnabled() then
         if btn.SetBackdropColor then
             btn:SetBackdropColor(bgR, bgG, bgB, bgA)
             btn:SetBackdropBorderColor(brR, brG, brB, brA)
         end
         if btn.text then
             btn.text:SetTextColor(txR, txG, txB)
+        end
+    else
+        if btn.SetBackdropColor then
+            btn:SetBackdropColor(math.min(1, bgR + 0.05), math.min(1, bgG + 0.06), math.min(1, bgB + 0.08), 0.98)
         end
     end
 end
@@ -146,6 +150,9 @@ local function CreateFlatButton(parent, width, height, initialText)
     ApplyFlatButtonTheme(btn, 0.11, 0.13, 0.18, 0.92, 0.26, 0.31, 0.40, 0.85, 0.86, 0.89, 0.94)
 
     btn:HookScript("OnEnter", function(self)
+        if not self:IsEnabled() then
+            return
+        end
         self._isHovered = true
         if self.SetBackdropColor then
             self:SetBackdropColor(0.16, 0.21, 0.29, 0.98)
@@ -168,6 +175,9 @@ local function CreateFlatButton(parent, width, height, initialText)
     end)
 
     btn:HookScript("OnMouseDown", function(self)
+        if not self:IsEnabled() then
+            return
+        end
         if self.text then
             self.text:SetPoint("CENTER", 0, -1)
         end
@@ -446,9 +456,9 @@ local function OpenNewProfileModal()
     newProfileModal.input:SetFocus()
 end
 
-local DEFAULT_MANAGER_W = 720
+local DEFAULT_MANAGER_W = 760
 local DEFAULT_MANAGER_H = 620
-local MIN_MANAGER_W = 680
+local MIN_MANAGER_W = 720
 local MAX_MANAGER_W = 1080
 local MIN_MANAGER_H = 440
 local MAX_MANAGER_H = 860
@@ -456,11 +466,13 @@ local MIN_MANAGER_SCALE = 0.60
 local MAX_MANAGER_SCALE = 1.40
 
 local function ApplyRowResponsiveWidth(row, childW)
-    local labelW = math.max(182, childW - 422)
+    local labelW = math.max(180, childW - 458)
     row.label:SetWidth(labelW)
     row.catLabel:SetWidth(labelW)
-    row.modeBtn:ClearAllPoints()
-    row.modeBtn:SetPoint("LEFT", labelW + 30, 0)
+    if row.toggleBtn then
+        row.toggleBtn:ClearAllPoints()
+        row.toggleBtn:SetPoint("LEFT", labelW + 30, 0)
+    end
 end
 
 local function SetManagerScale(requestedScale)
@@ -539,7 +551,7 @@ local function ApplyManagerResponsiveLayout(f)
         end
 
         if f.scrollChild then
-            local childW = math.max(614, w - 66)
+            local childW = math.max(654, w - 66)
             f.scrollChild:SetWidth(childW)
             for i = 1, #rowPool do
                 if rowPool[i] then
@@ -647,36 +659,47 @@ local function GetOrCreateRow(parent, index)
     catLabel:SetWordWrap(false)
     row.catLabel = catLabel
 
-    local modeBtn = CreateFlatButton(row, 180, 22, "")
-    modeBtn:SetPoint("LEFT", 278, 0)
+    local toggleBtn = CreateFlatButton(row, 58, 22, "")
+    toggleBtn:SetPoint("LEFT", 226, 0)
+    toggleBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    BindRowHover(row, toggleBtn)
+    row.toggleBtn = toggleBtn
+
+    local modeBtn = CreateFlatButton(row, 148, 22, "")
+    modeBtn:SetPoint("LEFT", toggleBtn, "RIGHT", 5, 0)
     BindRowHover(row, modeBtn)
     row.modeBtn = modeBtn
 
-    ApplyRowResponsiveWidth(row, parent:GetWidth() or 654)
+    ApplyRowResponsiveWidth(row, parent:GetWidth() or 694)
 
-    local minusBtn = CreateFlatButton(row, 24, 22, "-")
-    minusBtn:SetPoint("LEFT", modeBtn, "RIGHT", 8, 0)
+    local minusBtn = CreateFlatButton(row, 22, 22, "-")
+    minusBtn:SetPoint("LEFT", modeBtn, "RIGHT", 6, 0)
     BindRowHover(row, minusBtn)
     row.minusBtn = minusBtn
 
     local scaleTxt = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    scaleTxt:SetSize(48, 22)
+    scaleTxt:SetSize(44, 22)
     scaleTxt:SetPoint("LEFT", minusBtn, "RIGHT", 2, 0)
     scaleTxt:SetJustifyH("CENTER")
     row.scaleTxt = scaleTxt
 
-    local plusBtn = CreateFlatButton(row, 24, 22, "+")
+    local plusBtn = CreateFlatButton(row, 22, 22, "+")
     plusBtn:SetPoint("LEFT", scaleTxt, "RIGHT", 2, 0)
     BindRowHover(row, plusBtn)
     row.plusBtn = plusBtn
 
-    local resetBtn = CreateFlatButton(row, 52, 22, "100%")
-    resetBtn:SetPoint("LEFT", plusBtn, "RIGHT", 8, 0)
+    local resetBtn = CreateFlatButton(row, 46, 22, "100%")
+    resetBtn:SetPoint("LEFT", plusBtn, "RIGHT", 6, 0)
     BindRowHover(row, resetBtn)
     row.resetBtn = resetBtn
 
+    local badgeBtn = CreateFlatButton(row, 26, 22, "%")
+    badgeBtn:SetPoint("LEFT", resetBtn, "RIGHT", 5, 0)
+    BindRowHover(row, badgeBtn)
+    row.badgeBtn = badgeBtn
+
     local eyeBtn = CreateFlatButton(row, 26, 22, nil)
-    eyeBtn:SetPoint("LEFT", resetBtn, "RIGHT", 6, 0)
+    eyeBtn:SetPoint("LEFT", badgeBtn, "RIGHT", 4, 0)
     BindRowHover(row, eyeBtn)
     local eyeIcon = eyeBtn:CreateTexture(nil, "ARTWORK")
     eyeIcon:SetSize(15, 15)
@@ -686,6 +709,67 @@ local function GetOrCreateRow(parent, index)
     eyeBtn.icon = eyeIcon
     row.eyeBtn = eyeBtn
     row.eyeIcon = eyeIcon
+
+    toggleBtn:SetScript("OnClick", function(_, mouseButton)
+        if not row.windowId then
+            return
+        end
+        if mouseButton == "RightButton" and IsShiftKeyDown() and row.isCustom then
+            ns:PlaySound("CLICK")
+            if _G.GameTooltip then
+                GameTooltip:Hide()
+            end
+            Profiles:RemoveCustomWindow(row.windowId)
+            return
+        end
+        if mouseButton == "LeftButton" then
+            ns:PlaySound("CLICK")
+            Engine:ToggleWindowEnabled(row.windowId)
+        end
+    end)
+    toggleBtn:HookScript("OnEnter", function(self)
+        if _G.GameTooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(row.winTitle or "", 1, 0.82, 0)
+            GameTooltip:AddLine(L["UI_ROW_TOGGLE_ENABLE_TIP"], 0.9, 0.9, 0.9, true)
+            if row.isCustom then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine(L["UI_ROW_CUSTOM_REMOVE_HINT"], 1.0, 0.65, 0.65)
+            end
+            GameTooltip:Show()
+        end
+    end)
+    toggleBtn:HookScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+
+    local function ShowBadgeBtnTooltip(self)
+        if _G.GameTooltip and row.windowId then
+            local c = ns:GetWindowConfig(row.windowId, false)
+            local hidden = (c and c.hideBadge) and true or false
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(row.winTitle or "", 1, 0.82, 0)
+            GameTooltip:AddLine(hidden and L["UI_ROW_BADGE_TIP_OFF"] or L["UI_ROW_BADGE_TIP_ON"], 0.9, 0.9, 0.9, true)
+            GameTooltip:Show()
+        end
+    end
+    badgeBtn:SetScript("OnClick", function(self)
+        if row.windowId then
+            ns:PlaySound("CLICK")
+            Engine:ToggleWindowBadge(row.windowId)
+            if self._isHovered then
+                ShowBadgeBtnTooltip(self)
+            end
+        end
+    end)
+    badgeBtn:HookScript("OnEnter", ShowBadgeBtnTooltip)
+    badgeBtn:HookScript("OnLeave", function()
+        if _G.GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
 
     eyeBtn:SetScript("OnClick", function()
         if row.windowId then
@@ -783,22 +867,7 @@ local function GetOrCreateRow(parent, index)
 end
 
 local function IsCommunityAddonActive(desc)
-    if not desc or not desc.isCommunityAddon then
-        return true
-    end
-    if desc.boundFrame ~= nil then
-        return true
-    end
-    local addonName = desc.addon
-    if type(addonName) == "string" and addonName ~= "" then
-        if _G.C_AddOns and type(_G.C_AddOns.IsAddOnLoaded) == "function" and _G.C_AddOns.IsAddOnLoaded(addonName) then
-            return true
-        end
-        if type(_G.IsAddOnLoaded) == "function" and _G.IsAddOnLoaded(addonName) then
-            return true
-        end
-    end
-    return false
+    return Registry:IsCommunityAddonActive(desc)
 end
 
 function ManagerUI:RefreshList()
@@ -961,6 +1030,7 @@ function ManagerUI:RefreshList()
         local row = GetOrCreateRow(content, visibleIdx)
         row.windowId = windowId
         row.winTitle = item.winTitle
+        row.isCustom = (desc.isCustom == true)
         row:ClearAllPoints()
         row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((visibleIdx - 1) * 36))
         row:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((visibleIdx - 1) * 36))
@@ -970,6 +1040,9 @@ function ManagerUI:RefreshList()
         if not s.enabled then
             mode = ns.MODE_DISABLED
         end
+        local isRowActive = (mode ~= ns.MODE_DISABLED)
+        local isBadgeHidden = (cfg and cfg.hideBadge) and true or false
+        local isThirdParty = (desc.isCommunityAddon or desc.isCustom) and true or false
         local effScale, savedScale, isCapped = Engine:GetEffectiveWindowScale(windowId, desc)
         local effPct = math.floor(effScale * 100 + 0.5)
         local savedPct = math.floor(savedScale * 100 + 0.5)
@@ -979,30 +1052,62 @@ function ManagerUI:RefreshList()
         local hasCustomPos = (cfg and cfg.pos and cfg.pos.uipX ~= nil and cfg.pos.uipY ~= nil) or false
         local hasCustomAlpha = (cfg and cfg.alpha and cfg.alpha < 0.995) or false
         local isModified = (savedPct ~= 100) or hasCustomPos or hasCustomAlpha
+        local catPrefix = isThirdParty and ("|cff66bbff" .. L["UI_ADDON_TAG"] .. "|r • " .. item.catTitle) or item.catTitle
 
-        if item.isOpen then
+        if not isRowActive then
+            row.statusDot:SetText("|cff555866•|r")
+            if item.isOpen then
+                row.catLabel:SetText(catPrefix .. " • |cff00ff96" .. L["UI_STATUS_OPEN"] .. "|r")
+            elseif item.isLoaded then
+                row.catLabel:SetText(catPrefix .. " • " .. L["UI_STATUS_LOADED"])
+            else
+                row.catLabel:SetText(catPrefix .. " • " .. L["UI_STATUS_LOD"])
+            end
+        elseif item.isOpen then
             row.statusDot:SetText("|cff00ff96•|r")
-            row.catLabel:SetText(item.catTitle .. " • |cff00ff96" .. L["UI_STATUS_OPEN"] .. "|r")
+            row.catLabel:SetText(catPrefix .. " • |cff00ff96" .. L["UI_STATUS_OPEN"] .. "|r")
         elseif item.isLoaded then
             row.statusDot:SetText("|cffffd100•|r")
-            row.catLabel:SetText(item.catTitle .. " • " .. L["UI_STATUS_LOADED"])
+            row.catLabel:SetText(catPrefix .. " • " .. L["UI_STATUS_LOADED"])
         else
             row.statusDot:SetText("|cff666677•|r")
-            row.catLabel:SetText(item.catTitle .. " • " .. L["UI_STATUS_LOD"])
+            row.catLabel:SetText(catPrefix .. " • " .. L["UI_STATUS_LOD"])
         end
 
         row.label:SetText(item.winTitle)
+        if isRowActive then
+            row.label:SetTextColor(1.0, 0.82, 0.0)
+            row.toggleBtn:SetLabel(L["UI_ROW_STATE_ON"])
+            ApplyFlatButtonTheme(row.toggleBtn, 0.06, 0.18, 0.14, 0.94, 0.14, 0.58, 0.44, 0.90, 0.28, 0.98, 0.70)
+        else
+            row.label:SetTextColor(0.60, 0.63, 0.70)
+            row.toggleBtn:SetLabel(L["UI_ROW_STATE_OFF"])
+            ApplyFlatButtonTheme(row.toggleBtn, 0.14, 0.08, 0.10, 0.86, 0.44, 0.22, 0.26, 0.78, 0.86, 0.56, 0.60)
+        end
+
         row.modeBtn:SetLabel(ModeLabel(mode))
         if mode == ns.MODE_SCALE_MOVE then
             ApplyFlatButtonTheme(row.modeBtn, 0.07, 0.17, 0.15, 0.92, 0.14, 0.54, 0.43, 0.85, 0.35, 0.96, 0.72)
         elseif mode == ns.MODE_SCALE_ONLY then
             ApplyFlatButtonTheme(row.modeBtn, 0.18, 0.15, 0.07, 0.92, 0.66, 0.53, 0.18, 0.85, 1.0, 0.84, 0.28)
         else
-            ApplyFlatButtonTheme(row.modeBtn, 0.09, 0.10, 0.13, 0.78, 0.22, 0.25, 0.32, 0.65, 0.52, 0.55, 0.62)
+            ApplyFlatButtonTheme(row.modeBtn, 0.09, 0.10, 0.13, 0.75, 0.20, 0.23, 0.30, 0.60, 0.48, 0.51, 0.58)
         end
 
-        row.scaleTxt:SetText(effPct .. "%")
-        if isCapped then
+        row.minusBtn:SetEnabled(isRowActive)
+        row.plusBtn:SetEnabled(isRowActive)
+        if isRowActive then
+            ApplyFlatButtonTheme(row.minusBtn, 0.11, 0.13, 0.18, 0.92, 0.26, 0.31, 0.40, 0.85, 0.86, 0.89, 0.94)
+            ApplyFlatButtonTheme(row.plusBtn, 0.11, 0.13, 0.18, 0.92, 0.26, 0.31, 0.40, 0.85, 0.86, 0.89, 0.94)
+        else
+            ApplyFlatButtonTheme(row.minusBtn, 0.08, 0.09, 0.12, 0.65, 0.18, 0.20, 0.26, 0.50, 0.40, 0.42, 0.48)
+            ApplyFlatButtonTheme(row.plusBtn, 0.08, 0.09, 0.12, 0.65, 0.18, 0.20, 0.26, 0.50, 0.40, 0.42, 0.48)
+        end
+
+        row.scaleTxt:SetText((isRowActive and effPct or savedPct) .. "%")
+        if not isRowActive then
+            row.scaleTxt:SetTextColor(0.45, 0.48, 0.54)
+        elseif isCapped then
             row.scaleTxt:SetTextColor(0.20, 0.92, 1.0)
         elseif isModified then
             row.scaleTxt:SetTextColor(1.0, 0.84, 0.18)
@@ -1010,10 +1115,18 @@ function ManagerUI:RefreshList()
             row.scaleTxt:SetTextColor(0.74, 0.78, 0.84)
         end
 
-        if isModified then
+        if isModified and isRowActive then
             ApplyFlatButtonTheme(row.resetBtn, 0.14, 0.15, 0.20, 0.94, 0.48, 0.42, 0.22, 0.85, 0.96, 0.84, 0.36)
         else
             ApplyFlatButtonTheme(row.resetBtn, 0.09, 0.10, 0.14, 0.80, 0.22, 0.26, 0.34, 0.70, 0.54, 0.58, 0.66)
+        end
+
+        if isBadgeHidden then
+            ApplyFlatButtonTheme(row.badgeBtn, 0.11, 0.08, 0.10, 0.78, 0.34, 0.20, 0.24, 0.70, 0.55, 0.46, 0.50)
+        elseif isRowActive and s.showBadges then
+            ApplyFlatButtonTheme(row.badgeBtn, 0.16, 0.14, 0.07, 0.92, 0.60, 0.48, 0.18, 0.85, 1.0, 0.84, 0.28)
+        else
+            ApplyFlatButtonTheme(row.badgeBtn, 0.08, 0.09, 0.12, 0.68, 0.20, 0.23, 0.30, 0.55, 0.45, 0.48, 0.55)
         end
 
         if item.isOpen then
@@ -2026,6 +2139,8 @@ ns:On("OnCharProfileBindingChanged", function() ManagerUI:RefreshList() end)
 ns:On("OnProfileImported", function() ManagerUI:RefreshList() end)
 ns:On("OnInstanceCompactChanged", function() ManagerUI:RefreshList() end)
 ns:On("OnResetAll", function() ManagerUI:RefreshList() end)
+ns:On("OnCustomWindowRemoved", function() ManagerUI:RefreshList() end)
+ns:On("OnWindowUnregistered", function() ManagerUI:RefreshList() end)
 ns:On("OnGridOverlayToggled", function() UpdateGridButtonVisual() end)
 
 -- ============================================================================

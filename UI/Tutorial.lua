@@ -361,6 +361,9 @@ local STEPS = {
         bodyKey = "TUTORIAL_STEP3_BODY",
         getTarget = function()
             local row = ns.ManagerUI and ns.ManagerUI.GetRow and ns.ManagerUI:GetRow(1)
+            if row and row.toggleBtn and row.modeBtn then
+                return { tl = row.toggleBtn, br = row.modeBtn }
+            end
             return row and row.modeBtn
         end,
     },
@@ -526,6 +529,10 @@ function Tutorial:Start(stepIndex)
     if _G.InCombatLockdown and _G.InCombatLockdown() then
         ns:Print(L["GUARD_ERR_FORBIDDEN"])
         return
+    end
+    if ns.Picker and ns.Picker.active and type(ns.Picker.Stop) == "function" then
+        ns.Picker.reopenManager = false
+        ns.Picker:Stop()
     end
 
     if promptDialog then

@@ -6,7 +6,7 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-[![Download Latest Release](https://img.shields.io/badge/Download-v1.9.1_(ZIP)-ffaa00?logo=github)](https://github.com/Avacon00/ELLA/releases/latest)
+[![Download Latest Release](https://img.shields.io/badge/Download-v1.10.0_(ZIP)-ffaa00?logo=github)](https://github.com/Avacon00/ELLA/releases/latest)
 [![CI Validation](https://github.com/Avacon00/ELLA/actions/workflows/lint.yml/badge.svg)](https://github.com/Avacon00/ELLA/actions/workflows/lint.yml)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
@@ -95,7 +95,10 @@
 * **4. Steam Deck, Laptop & Twink-Setups (`72 %`-Preset + `Mouseover-Fade`):** Auf kompakten Auflösungen (`≤ 1400×800`) schlägt Ella beim ersten Login automatisch das **Laptop / Deck (72 %)**-Preset vor. Kombiniert mit **Mouseover-Fade** kann z. B. das Questlog dezent bei `55 %` Deckkraft mitlaufen und blendet erst beim Überfahren mit der Maus weich auf `100 %` auf (`0,00 ms` Ruhe-CPU).
 
 ### Highlights
-* **Dark-Slate UI-Überarbeitung, Typografie & Engine-Härtung (`v1.9.0`):**
+* **Dedizierte Drittanbieter-AddOn-Steuerung & Individuelles `%`-Badge (`v1.10.0`):**
+  * *1-Klick-Schalter `[• Aktiv]` / `[Aus]` pro AddOn:* Entscheide pro Drittanbieter-AddOn mit einem Klick, ob Ella es verwalten soll oder ob es auf **`Aus`** zu 100 % unberührt bleibt (keine `SetPoint`-/`SetScale`-Konflikte nach `/reload` bei AddOns mit eigener Positionslogik!).
+  * *Individuelles `%`-Badge & Rahmenloser Außen-Anker:* Schalte das `%`-Badge für einzelne AddOns (z. B. kleine Seiten-AddOns wie *Auto Heal*) direkt per `Alt + Klick` auf das Badge, im Badge-Popover oder über den `[%]`-Button in `/ella` ein oder aus. Ist es aktiv, sitzt es bei rahmenlosen AddOns sauber außen an der Oberkante statt im Klickbereich.
+* **Dark-Slate UI-Überarbeitung, Typografie & Engine-Härtung (`v1.9.0`–`v1.9.1`):**
   * *Ruhiges Flat-UI in der Fensterliste:* Maßgeschneiderte dunkle Slate-Steuerelemente statt greller Blizzard-Rot-Buttons – mit semantischen Modusfarben (**Smaragdgrün** für *Skalieren + Bewegen*, **Bernsteingold** für *Nur Skalieren*, **Schiefergrau** für *Deaktiviert*) und Gold-/Cyan-Akzenten bei abweichender Skalierung.
   * *Echte deutsche Typografie:* 100 % saubere Umlaute (`ä`, `ö`, `ü`, `ß`) in allen Menüs, Tooltips, Dialogen und allen 13 Tutorial-Schritten.
   * *Persistentes Ausrichtungsgitter & 8 Filter-Kategorien:* Das Screen-Grid bleibt auch nach dem Schließen des Managers aktiv (inklusive leuchtendem Cyan-Aktivstatus auf `[# Gitter]`); neuer eigener Filter-Reiter **`Forever`** sowie kontextsensitive Leerzustände.
@@ -150,7 +153,10 @@
 * **4. Steam Deck, Laptop & Multi-Spec Profiles (`72%` Preset + `Mouseover Fade`):** Compact screens (`≤ 1400×800`) automatically offer the tailored **Laptop / Deck (72%)** preset on first login. Combine character-bound profiles with **Mouseover Fade** (`30%–100%` opacity, `0.00 ms` idle CPU) and instant `Shift + Click` cycling on the Minimap button.
 
 ### Key Features
-* **Dark-Slate UI Polish, Engine Hardening & UX Refinement (`v1.9.0`):**
+* **Per-AddOn On/Off Control & Individual `%`-Badge Toggle (`v1.10.0`):**
+  * *1-Click `[• Active]` / `[Off]` Toggle per Window:* Leave Ella active on the third-party AddOns you want to scale/move while setting others with their own position memory to **`Off`** (100% hands-off across `/reload` — zero `SetPoint`/`SetScale` conflicts!).
+  * *Per-Window `%`-Badge Toggle & Frameless Exterior Anchor:* Hide or show the `%`-badge on specific windows/AddOns (such as compact sidebars like *Auto Heal*) via `Alt + Click` on the badge, inside the badge popover, or via the `[%]` button in `/ella`. When visible on frameless AddOns, the badge anchors cleanly outside the top edge instead of inside clickable buttons.
+* **Dark-Slate UI Polish, Engine Hardening & UX Refinement (`v1.9.0`–`v1.9.1`):**
   * *Custom Dark-Slate Row Controls:* Replaces repetitive red Blizzard buttons inside the scroll list with sleek flat Dark-Slate controls and semantic mode colors (**Emerald** for *Scale + Move*, **Amber Gold** for *Scale Only*, **Muted Slate** for *Disabled*) plus gold/cyan scale indicators.
   * *Persistent Alignment Grid & 8 Filter Pills:* The full-screen alignment grid now stays active after closing the manager so you can arrange game windows unobstructed (with glowing cyan active states on `[# Grid]`), joined by a dedicated **`Forever`** category pill and contextual empty-state helpers.
   * *Two-Click Inline Safety & Rigid Group Clamping:* Destructive actions (`Reset All`, `Delete Profile`) require a quick second confirmation click; docked Sticky Window clusters clamp rigidly at screen boundaries without breaking relative alignment.
@@ -197,10 +203,10 @@
 
 > [!IMPORTANT]
 > **Wichtig beim manuellen Download / Manual Download Note:**  
-> Lade immer das fertige **`ELLA-v1.9.1-16001.zip`** unter **[GitHub Releases](https://github.com/Avacon00/ELLA/releases/latest)** herunter *(nicht über den grünen Button `<> Code -> Download ZIP`, da dieser den Ordner `ELLA-main` nennt und WoW ihn sonst nicht lädt)*.
+> Lade immer das fertige **`ELLA-v1.10.0-16001.zip`** unter **[GitHub Releases](https://github.com/Avacon00/ELLA/releases/latest)** herunter *(nicht über den grünen Button `<> Code -> Download ZIP`, da dieser den Ordner `ELLA-main` nennt und WoW ihn sonst nicht lädt)*.
 
 ### 1. Manuelle Installation (Windows / macOS / Linux)
-1. Lade **[`ELLA-v1.9.1-16001.zip`](https://github.com/Avacon00/ELLA/releases/latest)** herunter.
+1. Lade **[`ELLA-v1.10.0-16001.zip`](https://github.com/Avacon00/ELLA/releases/latest)** herunter.
 2. Entpacke den enthaltenen Ordner `ELLA` in dein *WoW: Forever*-`AddOns`-Verzeichnis, sodass folgender Pfad existiert:
 ```text
 World of Warcraft/_forever_/Interface/AddOns/ELLA/ELLA.toc

@@ -97,7 +97,7 @@ L["PRESET_APPLIED"] = "Applied preset: |cff00ff96%s|r."
 L["GUARD_DEFERRED_COMBAT"] = "Protected window '%s' cannot be modified in combat. Queued for combat end."
 L["GUARD_COMBAT_APPLIED"] = "Applied %d queued window adjustment(s) after combat."
 L["GUARD_ERR_FORBIDDEN"] = "Cannot manage this frame: restricted/forbidden by Blizzard."
-L["GUARD_ERR_EDITMODE"] = "Blocked: HUD & combat frames belong to Blizzard's native Edit Mode."
+L["GUARD_ERR_EDITMODE"] = "HUD & combat frames belong to Blizzard's native Edit Mode."
 L["GUARD_ERR_UNSAFE"] = "Cannot pick an unnamed frame; only global named windows can be saved across sessions."
 
 -- Welcome Dialog
@@ -218,10 +218,10 @@ L["TUTORIAL_STEP1_TITLE"] = "Welcome to Ella!"
 L["TUTORIAL_STEP1_BODY"] = "Ella solves a major UI challenge in WoW: Forever:\n\nYou can smoothly scale and position oversized interface panels like your Spellbook, Quest Log, or Professions—without shrinking your chat, action bars, or breaking Edit Mode.\n\nThis short tour introduces every essential tool!"
 
 L["TUTORIAL_STEP2_TITLE"] = "Window List & Fine-Tuning"
-L["TUTORIAL_STEP2_BODY"] = "Manage each window individually right from the list:\n\n• |cff00ff96+|r and |cffff6060-|r: Scale in 5% steps (hold |cffffd100Shift|r for fine 1% steps).\n• |cffffd100100%|r: Reset to default (|cffffd100Shift + Click|r resets position only).\n• |cff00ff96[Eye Icon]|r: Toggle standard panels open for live preview (NPC windows like Bank/Vendor open when visiting an NPC)."
+L["TUTORIAL_STEP2_BODY"] = "Manage each window individually right from the list:\n\n• |cff00ff96+|r and |cffff6060-|r: Scale in 5% steps (hold |cffffd100Shift|r for fine 1% steps).\n• |cffffd100100%|r: Reset to default (|cffffd100Shift + Click|r resets position only).\n• |cffffd100[%]|r & |cff00ff96[Eye]|r: Show/hide the %-badge per window or toggle live preview."
 
-L["TUTORIAL_STEP3_TITLE"] = "The 3 Scaling Modes"
-L["TUTORIAL_STEP3_BODY"] = "Every row has a color-coded mode button:\n\n• |cff00ff96Scale + Move|r: Free dragging & persistent coordinate saving.\n• |cffffd100Scale Only|r: Keeps Blizzard's automatic side-by-side push layout while rendering at your custom scale.\n• |cff888888Disabled|r: Leaves the window completely untouched."
+L["TUTORIAL_STEP3_TITLE"] = "Per-AddOn On/Off & Scaling Modes"
+L["TUTORIAL_STEP3_BODY"] = "Full control for Blizzard & third-party AddOns:\n\n• |cff00ff96[• Active] / [Off]|r: 1-click toggle per window! Set third-party AddOns with their own layout to |cff888888Off|r so they stay 100% untouched after /reload.\n• |cff00ff96Scale + Move|r: Free dragging & persistent coordinate saving.\n• |cffffd100Scale Only|r: Custom scale while keeping native auto-layout."
 
 L["TUTORIAL_STEP4_TITLE"] = "Search & Category Filters"
 L["TUTORIAL_STEP4_BODY"] = "Find any window in seconds:\n\n• |cffffd100Search Box|r: Filter by window or category name in real time.\n• |cff00ff96Category Pills|r: Filter by [All], [Open (X)], [Character], [Professions], [Quests], [Social], [Forever], or [Custom (X)]."
@@ -248,7 +248,7 @@ L["TUTORIAL_STEP11_TITLE"] = "Combat & Instance Protection"
 L["TUTORIAL_STEP11_BODY"] = "Unobstructed vision when combat starts:\n\n• |cff00ff96Combat Auto-Close:|r Closes open spellbooks, quest logs, and profession panels automatically on aggro.\n• |cffffd100Instance Compact Mode:|r Temporarily caps open windows to max 75% scale inside dungeons, raids, and PvP."
 
 L["TUTORIAL_STEP12_TITLE"] = "Titlebar Badges, Opacity & Fade"
-L["TUTORIAL_STEP12_BODY"] = "Direct control right on each window:\n\n• Every managed window has a subtle |cffffd100%-badge|r in its titlebar.\n• |cffffd100Mouse Wheel|r on the badge zooms right around your cursor.\n• |cff00ff96Left-Click|r opens the popover for |cff00ff96Opacity (30%-100%)|r, |cffffd100Mouseover Fade|r, and position locking!"
+L["TUTORIAL_STEP12_BODY"] = "Direct control right on each window:\n\n• Managed windows display a subtle |cffffd100%-badge|r (placed outside compact frameless AddOns).\n• |cffffd100Mouse Wheel|r zooms around your cursor; |cff00ff96Left-Click|r opens Opacity, Fade & Lock.\n• Hide the badge on specific AddOns anytime via |cffff8080Alt + Click|r, the popover checkbox, or |cffffd100[%]|r in /ella!"
 
 L["TUTORIAL_STEP13_TITLE"] = "Boss-Key, Keybindings & Ready!"
 L["TUTORIAL_STEP13_BODY"] = "You are all set for WoW: Forever!\n\n• |cff00ff96Boss-Key:|r |cffffd100/ella panic|r closes all open windows at once—press again to restore them!\n• |cffffd100Keybindings:|r Under Options -> Keybindings -> AddOns -> Ella, bind Boss-Key, Manager, and Grid.\n• Replay this tour anytime via |cffffd100[?]|r in the titlebar!"
@@ -385,6 +385,20 @@ L["SELFTEST_HANDHELD"] = "Handheld / Compact"
 L["SELFTEST_DESKTOP"] = "Standard Desktop"
 L["SELFTEST_SUMMARY_OK"] = "|cff00ff96All %d of %d in-game tests passed!|r"
 L["SELFTEST_SUMMARY_WARN"] = "|cffffaa00Self-test finished: %d of %d tests passed.|r"
+
+-- Per-AddOn Enable/Disable & Per-Window %-Badge Controls (v1.10.0)
+L["UI_ROW_STATE_ON"] = "• Active"
+L["UI_ROW_STATE_OFF"] = "Off"
+L["UI_ROW_TOGGLE_ENABLE_TIP"] = "|cffffd100Left-Click:|r Enable or disable Ella for this window.\nWhen set to |cff888888Off|r, Ella stays 100% hands-off (even across /reload) so third-party AddOns keep their own native position & scale."
+L["UI_ROW_CUSTOM_REMOVE_HINT"] = "|cffff8080Shift + Right-Click:|r Remove custom window from Ella"
+L["MSG_CUSTOM_REMOVED"] = "Removed custom window |cffff8080%s|r from Ella."
+L["UI_ADDON_TAG"] = "AddOn"
+L["UI_ROW_BADGE_TIP_ON"] = "|cffffd100%-Badge: Visible|r\nClick to hide the %-badge on this specific window (ideal for small frameless side AddOns)."
+L["UI_ROW_BADGE_TIP_OFF"] = "|cff888888%-Badge: Hidden on this window|r\nClick to show the %-badge on this window again."
+L["POPOVER_SHOW_BADGE"] = "Show %-Badge on this window"
+L["POPOVER_SHOW_BADGE_TIP"] = "Uncheck to hide the %-badge on this specific window/AddOn while keeping scaling & dragging active. Re-enable anytime via the [%] button in /ella."
+L["BADGE_TOOLTIP_ALTCLICK"] = "|cffff8080Alt + Click:|r Hide %-badge on this window"
+L["MSG_BADGE_HIDDEN_WIN"] = "Hidden %%-badge for |cffffd100%s|r. You can re-enable it anytime via the |cffffd100[%%]|r button in |cff00ff96/ella|r."
 
 _G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
 _G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]

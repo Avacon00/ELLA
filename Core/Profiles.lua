@@ -22,7 +22,9 @@ local function DeepCopyWindows(src)
             out[winId] = {
                 scale = cfg.scale,
                 mode = cfg.mode,
+                prevMode = cfg.prevMode,
                 locked = cfg.locked,
+                hideBadge = cfg.hideBadge and true or false,
                 alpha = cfg.alpha,
                 mouseoverFade = cfg.mouseoverFade,
                 pos = (type(cfg.pos) == "table" and cfg.pos.uipX and cfg.pos.uipY)
@@ -42,7 +44,7 @@ local function ReplaceWindowsInPlace(dest, src)
     end
 end
 
-local function WindowConfigsEqual(a, b)
+local function WindowConfigsEqual(winId, a, b)
     local sA = math.floor(((a and a.scale) or 1.00) * 100 + 0.5)
     local sB = math.floor(((b and b.scale) or 1.00) * 100 + 0.5)
     if sA ~= sB then
@@ -63,7 +65,14 @@ local function WindowConfigsEqual(a, b)
     if lA ~= lB then
         return false
     end
-    local defMode = (ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly) and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
+    local hbA = (a and a.hideBadge) and true or false
+    local hbB = (b and b.hideBadge) and true or false
+    if hbA ~= hbB then
+        return false
+    end
+    local desc = winId and Registry:GetDescriptor(winId) or nil
+    local defMode = (desc and desc.defaultMode)
+        or ((ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly) and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
     local mA = (a and a.mode) or defMode
     local mB = (b and b.mode) or defMode
     if mA ~= mB then
@@ -225,12 +234,12 @@ function Profiles:HasUnsavedChanges()
     local live = ns.db.windows or {}
 
     for winId, cfg in pairs(live) do
-        if not WindowConfigsEqual(cfg, saved[winId]) then
+        if not WindowConfigsEqual(winId, cfg, saved[winId]) then
             return true
         end
     end
     for winId, cfg in pairs(saved) do
-        if not WindowConfigsEqual(live[winId], cfg) then
+        if not WindowConfigsEqual(winId, live[winId], cfg) then
             return true
         end
     end
@@ -282,7 +291,7 @@ function Profiles:RestoreWindowToSavedOrUndo(windowId)
     local savedCfg = prof and prof.savedSnapshot and prof.savedSnapshot[windowId] or nil
     local liveCfg = ns.db.windows[windowId]
 
-    if not WindowConfigsEqual(liveCfg, savedCfg) then
+    if not WindowConfigsEqual(windowId, liveCfg, savedCfg) then
         Profiles:PushUndoSnapshot("restore_win:" .. windowId)
         lastUndoTag = nil
         if savedCfg then
@@ -515,15 +524,23 @@ function Profiles:ApplyPreset(presetId)
     lastUndoTag = nil
 
     for windowId, desc in Registry:IterateWindows() do
-        local cfg = ns:GetWindowConfig(windowId, true)
-        local targetScale = (preset.scales and preset.scales[windowId])
-            or (presetId == "COMPACT_80" and desc.defaultCompactScale)
-            or preset.fallbackScale
-            or ns.DEFAULT_SCALE
+        local isThirdParty = (desc.isCommunityAddon or desc.isCustom)
+        local isDormantComm = (desc.isCommunityAddon and not Registry:IsCommunityAddonActive(desc))
+        if not isDormantComm then
+            local effMode = Engine:GetEffectiveWindowMode(windowId, desc)
+            -- Respect per-AddOn Off state: never auto-enable disabled third-party AddOns on preset click!
+            if not (isThirdParty and effMode == ns.MODE_DISABLED) then
+                local cfg = ns:GetWindowConfig(windowId, true)
+                local targetScale = (preset.scales and preset.scales[windowId])
+                    or (presetId == "COMPACT_80" and desc.defaultCompactScale)
+                    or preset.fallbackScale
+                    or ns.DEFAULT_SCALE
 
-        cfg.scale = Engine:ClampScale(targetScale)
-        if cfg.mode == ns.MODE_DISABLED and presetId ~= "DEFAULT_100" then
-            cfg.mode = ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
+                cfg.scale = Engine:ClampScale(targetScale)
+                if not isThirdParty and cfg.mode == ns.MODE_DISABLED and presetId ~= "DEFAULT_100" then
+                    cfg.mode = ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
+                end
+            end
         end
     end
 
@@ -595,6 +612,42 @@ function Profiles:RestoreCustomWindows()
     end
 end
 
+function Profiles:RemoveCustomWindow(windowId)
+    local desc = Registry:GetDescriptor(windowId)
+    if not desc or not desc.isCustom then
+        return false
+    end
+    local frameName = desc.frame or string.gsub(windowId, "^CUSTOM_", "")
+    local label = Registry:GetDisplayLabel(desc)
+
+    if desc.boundFrame then
+        Engine:SetWindowMode(windowId, ns.MODE_DISABLED)
+    end
+    if ns.BadgeUI and ns.BadgeUI.HideWindowBadge then
+        ns.BadgeUI:HideWindowBadge(windowId)
+    end
+
+    if ns.db and type(ns.db.customWindows) == "table" then
+        ns.db.customWindows[frameName] = nil
+    end
+    if ns.db and type(ns.db.profiles) == "table" then
+        for _, prof in pairs(ns.db.profiles) do
+            if type(prof) == "table" then
+                if type(prof.windows) == "table" then
+                    prof.windows[windowId] = nil
+                end
+                if type(prof.savedSnapshot) == "table" then
+                    prof.savedSnapshot[windowId] = nil
+                end
+            end
+        end
+    end
+    Registry:UnregisterWindow(windowId)
+    ns:Print(string.format(L["MSG_CUSTOM_REMOVED"], label))
+    ns:Fire("OnCustomWindowRemoved", windowId)
+    return true
+end
+
 -- Safe, deterministic ASCII profile export (NO loadstring ever used!)
 local MODE_TO_SHORT = {
     [ns.MODE_SCALE_MOVE] = "M",
@@ -623,7 +676,8 @@ function Profiles:ExportString()
             local py = (cfg.pos and cfg.pos.uipY) and tostring(math.floor(cfg.pos.uipY + 0.5)) or ""
             local a = math.floor(((cfg.alpha ~= nil and cfg.alpha) or 1) * 100 + 0.5)
             local f = cfg.mouseoverFade and "1" or "0"
-            parts[#parts + 1] = string.format("%s=%d,%s,%s,%s,%s,%d,%s", windowId, s, m, l, px, py, a, f)
+            local hb = cfg.hideBadge and "1" or "0"
+            parts[#parts + 1] = string.format("%s=%d,%s,%s,%s,%s,%d,%s,%s", windowId, s, m, l, px, py, a, f, hb)
         end
     end
     return table.concat(parts, ";")
@@ -654,7 +708,7 @@ function Profiles:InspectImportString(raw)
         if not string.match(token, "^!ELLA") and not string.match(token, "^ELLA") and not string.match(token, "^FSCALE") then
             local winId, payload = string.match(token, "^([%w_%-]+)=(.+)$")
             if winId and payload and Registry:GetDescriptor(winId) then
-                local sStr, mStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?)$")
+                local sStr, mStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?),?([01]?)$")
                 if sStr and mStr then
                     count = count + 1
                     if #names < 4 then
@@ -692,7 +746,7 @@ function Profiles:ImportString(raw)
         if not string.match(token, "^!ELLA") and not string.match(token, "^ELLA") and not string.match(token, "^FSCALE") then
             local winId, payload = string.match(token, "^([%w_%-]+)=(.+)$")
             if winId and payload and Registry:GetDescriptor(winId) then
-                local sStr, mStr, lStr, xStr, yStr, aStr, fStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?)$")
+                local sStr, mStr, lStr, xStr, yStr, aStr, fStr, hbStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?),?([01]?)$")
                 if sStr and mStr then
                     local cfg = ns:GetWindowConfig(winId, true)
                     cfg.scale = Engine:ClampScale((tonumber(sStr) or 100) / 100)
@@ -712,6 +766,9 @@ function Profiles:ImportString(raw)
                     end
                     if fStr and fStr ~= "" then
                         cfg.mouseoverFade = (fStr == "1")
+                    end
+                    if hbStr and hbStr ~= "" then
+                        cfg.hideBadge = (hbStr == "1")
                     end
                     importedCount = importedCount + 1
                 end

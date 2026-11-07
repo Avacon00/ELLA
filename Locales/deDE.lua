@@ -94,7 +94,7 @@ L["PRESET_APPLIED"] = "Preset aktiviert: |cff00ff96%s|r."
 L["GUARD_DEFERRED_COMBAT"] = "Geschütztes Fenster '%s' darf im Kampf nicht geändert werden. Wird nach Kampfende angewendet."
 L["GUARD_COMBAT_APPLIED"] = "%d vorgemerkte Fenster-Anpassung(en) nach Kampfende übernommen."
 L["GUARD_ERR_FORBIDDEN"] = "Fenster kann nicht verwaltet werden: Von Blizzard geschützt/gesperrt."
-L["GUARD_ERR_EDITMODE"] = "Gesperrt: HUD- & Kampfelemente gehören zu Blizzards nativem Edit Mode."
+L["GUARD_ERR_EDITMODE"] = "HUD- & Kampfelemente gehören zu Blizzards nativem Edit Mode."
 L["GUARD_ERR_UNSAFE"] = "Unbenannte Frames können nicht gespeichert werden; nur globale Fenster sind erlaubt."
 
 -- Welcome Dialog
@@ -215,10 +215,10 @@ L["TUTORIAL_STEP1_TITLE"] = "Willkommen bei Ella!"
 L["TUTORIAL_STEP1_BODY"] = "Ella löst ein großes UI-Problem in WoW: Forever:\n\nDu kannst klobige Menüs wie Zauberbuch, Questlog oder Berufe stufenlos verkleinern und frei platzieren – ganz ohne deinen Chat, deine Aktionsleisten oder Blizzards Edit Mode zu verändern.\n\nIn dieser kurzen Tour lernst du alle wichtigen Werkzeuge kennen!"
 
 L["TUTORIAL_STEP2_TITLE"] = "Fensterliste & Feineinstellung"
-L["TUTORIAL_STEP2_BODY"] = "In der Liste steuerst du jedes Fenster einzeln:\n\n• |cff00ff96+|r und |cffff6060-|r: In 5%-Schritten skalieren (|cffffd100Shift|r = feine 1%-Schritte).\n• |cffffd100100%|r: Auf Standardgröße zurücksetzen (|cffffd100Shift + Klick|r setzt nur die Position zurück).\n• |cff00ff96[Auge]|r: Öffnet Standard-Menüs direkt zur Vorschau (Händler/Bank öffnen sich beim NPC-Besuch)."
+L["TUTORIAL_STEP2_BODY"] = "In der Liste steuerst du jedes Fenster einzeln:\n\n• |cff00ff96+|r und |cffff6060-|r: In 5%-Schritten skalieren (|cffffd100Shift|r = feine 1%-Schritte).\n• |cffffd100100%|r: Auf Standardgröße zurücksetzen (|cffffd100Shift + Klick|r setzt nur die Position zurück).\n• |cffffd100[%]|r & |cff00ff96[Auge]|r: %-Badge pro Fenster ein-/ausblenden oder Live-Vorschau öffnen."
 
-L["TUTORIAL_STEP3_TITLE"] = "Die 3 Skalierungsmodi"
-L["TUTORIAL_STEP3_BODY"] = "Jede Zeile besitzt eine farbcodierte Modus-Schaltfläche:\n\n• |cff00ff96Skalieren + Bewegen|r: Freies Ziehen & Position dauerhaft merken.\n• |cffffd100Nur Skalieren|r: Blizzards automatische Nebeneinander-Anordnung bleibt aktiv, öffnet aber in deiner Wunschgröße!\n• |cff888888Deaktiviert|r: Fenster bleibt völlig unberührt."
+L["TUTORIAL_STEP3_TITLE"] = "Ein/Aus pro AddOn & Skalierungsmodi"
+L["TUTORIAL_STEP3_BODY"] = "Volle Kontrolle für Blizzard- & Drittanbieter-AddOns:\n\n• |cff00ff96[• Aktiv] / [Aus]|r: 1-Klick-Schalter pro Fenster! Setze AddOns mit eigener Positionslogik auf |cff888888Aus|r, damit sie nach /reload zu 100% unberührt bleiben.\n• |cff00ff96Skalieren + Bewegen|r: Freies Ziehen & Position dauerhaft merken.\n• |cffffd100Nur Skalieren|r: Wunschgröße bei nativer Auto-Anordnung."
 
 L["TUTORIAL_STEP4_TITLE"] = "Suche & Kategorie-Filter"
 L["TUTORIAL_STEP4_BODY"] = "Blitzschnell das gesuchte Fenster finden:\n\n• |cffffd100Suchleiste|r: Filtert Fenster- und Kategorienamen sofort beim Tippen.\n• |cff00ff96Kategorie-Pills|r: Filtere gezielt nach [Alle], [Offen (X)], [Charakter], [Berufe], [Quests], [Social], [Forever] oder [Custom (X)]."
@@ -245,7 +245,7 @@ L["TUTORIAL_STEP11_TITLE"] = "Kampf- & Instanz-Schutz"
 L["TUTORIAL_STEP11_BODY"] = "Freie Sicht im Gefecht:\n\n• |cff00ff96Kampf-Schutz:|r Schließt Zauberbuch, Quests, Berufe und Händler bei Kampfbeginn automatisch.\n• |cffffd100Instanz-Kompaktmodus:|r Begrenzt offene Fenster in Dungeons, Raids und Schlachtfeldern automatisch auf maximal 75% Größe."
 
 L["TUTORIAL_STEP12_TITLE"] = "Titelleisten-Badges, Deckkraft & Fade"
-L["TUTORIAL_STEP12_BODY"] = "Direkte Steuerung am jeweiligen Fenster:\n\n• Jedes Fenster trägt oben rechts ein dezentes |cffffd100%-Badge|r.\n• |cffffd100Mausrad|r auf dem Badge zoomt direkt unterm Mauszeiger.\n• |cff00ff96Linksklick|r öffnet das Popover für |cff00ff96Deckkraft (30%-100%)|r, |cffffd100Mouseover-Fade|r und Positionssperre!"
+L["TUTORIAL_STEP12_BODY"] = "Direkte Steuerung am jeweiligen Fenster:\n\n• Verwaltete Fenster tragen oben rechts ein dezentes |cffffd100%-Badge|r (bei kleinen rahmenlosen AddOns sauber außen angesetzt).\n• |cffffd100Mausrad|r zoomt unterm Mauszeiger; |cff00ff96Linksklick|r öffnet Deckkraft, Fade & Sperre.\n• Blende das Badge bei einzelnen AddOns jederzeit per |cffff8080Alt + Klick|r, im Popover oder über |cffffd100[%]|r in /ella aus!"
 
 L["TUTORIAL_STEP13_TITLE"] = "Boss-Key, Tastenbelegung & Startklar!"
 L["TUTORIAL_STEP13_BODY"] = "Du bist startklar für WoW: Forever!\n\n• |cff00ff96Boss-Key:|r |cffffd100/ella panic|r schließt alle offenen Fenster sofort – ein zweiter Druck stellt sie wieder her!\n• |cffffd100Tastenbelegung:|r Unter Optionen -> Tastenbelegung -> AddOns -> Ella kannst du Boss-Key, Manager und Gitter frei belegen.\n• Wiederhole diese Tour jederzeit über das |cffffd100[?]|r oben rechts!"
@@ -382,6 +382,20 @@ L["SELFTEST_HANDHELD"] = "Handheld / Kompakt"
 L["SELFTEST_DESKTOP"] = "Standard-Desktop"
 L["SELFTEST_SUMMARY_OK"] = "|cff00ff96Alle %d von %d In-Game-Tests erfolgreich bestanden!|r"
 L["SELFTEST_SUMMARY_WARN"] = "|cffffaa00Selbsttest beendet: %d von %d Tests bestanden.|r"
+
+-- Ein/Aus pro AddOn & individuelles %-Badge pro Fenster (v1.10.0)
+L["UI_ROW_STATE_ON"] = "• Aktiv"
+L["UI_ROW_STATE_OFF"] = "Aus"
+L["UI_ROW_TOGGLE_ENABLE_TIP"] = "|cffffd100Linksklick:|r Ella für dieses Fenster aktivieren oder deaktivieren.\nSteht der Schalter auf |cff888888Aus|r, greift Ella auch nach /reload zu 100% nicht ein – Drittanbieter-AddOns behalten ihre eigene Position & Größe."
+L["UI_ROW_CUSTOM_REMOVE_HINT"] = "|cffff8080Shift + Rechtsklick:|r Eigenes Fenster aus Ella entfernen"
+L["MSG_CUSTOM_REMOVED"] = "Eigenes Fenster |cffff8080%s|r aus Ella entfernt."
+L["UI_ADDON_TAG"] = "AddOn"
+L["UI_ROW_BADGE_TIP_ON"] = "|cffffd100%-Badge: Eingeblendet|r\nKlicken, um das %-Badge an diesem einzelnen Fenster auszublenden (ideal für kleine rahmenlose Seiten-AddOns)."
+L["UI_ROW_BADGE_TIP_OFF"] = "|cff888888%-Badge: An diesem Fenster ausgeblendet|r\nKlicken, um das %-Badge an diesem Fenster wieder einzublenden."
+L["POPOVER_SHOW_BADGE"] = "%-Badge an diesem Fenster anzeigen"
+L["POPOVER_SHOW_BADGE_TIP"] = "Haken entfernen, um das %-Badge nur bei diesem Fenster/AddOn auszublenden (Skalieren & Bewegen bleiben aktiv). Über [%] in /ella jederzeit wieder aktivierbar."
+L["BADGE_TOOLTIP_ALTCLICK"] = "|cffff8080Alt + Klick:|r %-Badge für dieses Fenster ausblenden"
+L["MSG_BADGE_HIDDEN_WIN"] = "%%-Badge für |cffffd100%s|r ausgeblendet. Über den |cffffd100[%%]|r-Button in |cff00ff96/ella|r jederzeit wieder einblendbar."
 
 _G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
 _G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]

@@ -4,7 +4,7 @@
 ## Notes: Easy Layout & Location Assistant – Scale and move Blizzard & WoW: Forever windows individually without shrinking fonts, action bars, or breaking Edit Mode.
 ## Notes-deDE: Easy Layout & Location Assistant – Skaliert und verschiebt Blizzard- & WoW: Forever-Fenster einzeln, ohne Schriften, Aktionsleisten oder den Edit Mode zu verändern.
 ## Author: Avacon00
-## Version: 1.9.1
+## Version: 1.10.0
 ## SavedVariables: ELLADB
 ## AllowLoadGameType: camelot, standard
 ## IconTexture: Interface\AddOns\ELLA\Media\Icon

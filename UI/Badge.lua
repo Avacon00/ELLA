@@ -76,7 +76,7 @@ local function GetOrCreatePopover()
     end
 
     local p = CreateFrame("Frame", "EllaBadgePopover", UIParent, BACKDROP_TEMPLATE)
-    p:SetSize(304, 224)
+    p:SetSize(304, 246)
     p:SetFrameStrata("DIALOG")
     p:SetFrameLevel(220)
     p:EnableMouse(true)
@@ -275,6 +275,30 @@ local function GetOrCreatePopover()
     end)
     AttachTooltip(lockChk, "POPOVER_LOCK_POS", "POPOVER_LOCK_POS_TIP")
 
+    -- Per-Window Show %-Badge Checkbox
+    local showBadgeChk = CreateFrame("CheckButton", nil, p, "UICheckButtonTemplate")
+    showBadgeChk:SetSize(22, 22)
+    showBadgeChk:SetPoint("TOPLEFT", 10, -170)
+    showBadgeChk:SetHitRectInsets(0, -220, 0, 0)
+    local sbText = showBadgeChk:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    sbText:SetPoint("LEFT", showBadgeChk, "RIGHT", 4, 0)
+    sbText:SetText(L["POPOVER_SHOW_BADGE"])
+    p.showBadgeChk = showBadgeChk
+
+    showBadgeChk:SetScript("OnClick", function(self)
+        if not p.windowId then
+            return
+        end
+        ns:PlaySound("CLICK")
+        local hideIt = not self:GetChecked()
+        Engine:SetWindowBadgeHidden(p.windowId, hideIt)
+        if hideIt then
+            local desc = Registry:GetDescriptor(p.windowId)
+            ns:Print(string.format(L["MSG_BADGE_HIDDEN_WIN"], Registry:GetDisplayLabel(desc)))
+        end
+    end)
+    AttachTooltip(showBadgeChk, "POPOVER_SHOW_BADGE", "POPOVER_SHOW_BADGE_TIP")
+
     -- Bottom Action Buttons: [Zurück / Undo] [100% Reset] [Pos. Reset]
     local function ApplySmallBtnFont(btn)
         if btn.SetNormalFontObject then
@@ -361,6 +385,9 @@ local function RefreshPopover()
     popover.scaleOnlyChk:SetChecked(effMode == ns.MODE_SCALE_ONLY)
     popover.fadeChk:SetChecked(cfg.mouseoverFade and true or false)
     popover.lockChk:SetChecked(cfg.locked and true or false)
+    if popover.showBadgeChk then
+        popover.showBadgeChk:SetChecked(not (cfg.hideBadge == true))
+    end
     popover.updating = false
 end
 
@@ -379,7 +406,7 @@ local function AnchorPopoverNearBadge(p, badge)
     local uipW = UIParent:GetWidth() or 1920
     local uipH = UIParent:GetHeight() or 1080
     local popW = p:GetWidth() or 304
-    local popH = p:GetHeight() or 224
+    local popH = p:GetHeight() or 246
 
     local bLeft = (badge:GetLeft() or 400) * ratio
     local bRight = (badge:GetRight() or 444) * ratio
@@ -428,6 +455,12 @@ local function UpdateBadgeVisual(windowId, badge)
         badge:Hide()
         return
     end
+    local effMode = Engine:GetEffectiveWindowMode(windowId, desc)
+    local cfg = ns:GetWindowConfig(windowId, false)
+    if effMode == ns.MODE_DISABLED or (cfg and cfg.hideBadge) then
+        badge:Hide()
+        return
+    end
 
     local effScale, _, isCapped = Engine:GetEffectiveWindowScale(windowId, desc)
     local pct = math.floor(effScale * 100 + 0.5)
@@ -468,8 +501,18 @@ local function UpdateBadgeVisual(windowId, badge)
     badge:ClearAllPoints()
     if type(closeBtn) == "table" and not ns.Guard:IsForbidden(closeBtn) then
         badge:SetPoint("RIGHT", closeBtn, "LEFT", -28, 0)
+    elseif desc.hasExplicitBadgeOffset or type(nineSlice) == "table" or type(titleContainer) == "table" then
+        badge:SetPoint("TOPRIGHT", target, "TOPRIGHT", desc.badgeOffsetX or -28, desc.badgeOffsetY or -5)
     else
-        badge:SetPoint("TOPRIGHT", target, "TOPRIGHT", desc.badgeOffsetX or -54, desc.badgeOffsetY or -5)
+        -- Frameless / compact third-party AddOns (e.g. Auto Heal, TomTom):
+        -- Place badge cleanly outside the top-right edge so it never covers clickable frame contents!
+        local uipH = UIParent:GetHeight() or 1080
+        local tTop = (target:GetTop() or 0) * (target:GetScale() or 1)
+        if tTop > (uipH - 24) then
+            badge:SetPoint("TOPRIGHT", target, "BOTTOMRIGHT", -2, -2)
+        else
+            badge:SetPoint("BOTTOMRIGHT", target, "TOPRIGHT", -2, 2)
+        end
     end
     badge:Show()
 end
@@ -484,7 +527,7 @@ local function GetOrCreateBadge(windowId)
     btn:SetSize(44, 18)
     btn:EnableMouse(true)
     btn:EnableMouseWheel(true)
-    btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    btn:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
     ApplyPillBackdrop(btn, 0.88, 0.75, 0.62, 0.24)
     btn:Hide()
 
@@ -516,6 +559,7 @@ local function GetOrCreateBadge(windowId)
             GameTooltip:AddLine(L["BADGE_TOOLTIP_LCLICK"], 0.9, 0.9, 0.9)
             GameTooltip:AddLine(L["BADGE_TOOLTIP_RCLICK"], 0.9, 0.9, 0.9)
             GameTooltip:AddLine(L["BADGE_TOOLTIP_SRCLICK"], 0.9, 0.9, 0.9)
+            GameTooltip:AddLine(L["BADGE_TOOLTIP_ALTCLICK"], 0.95, 0.65, 0.65)
             GameTooltip:Show()
         end
     end)
@@ -532,6 +576,19 @@ local function GetOrCreateBadge(windowId)
     end)
 
     btn:SetScript("OnClick", function(self, mouseButton)
+        if IsAltKeyDown() or mouseButton == "MiddleButton" then
+            ns:PlaySound("CLICK")
+            if _G.GameTooltip then
+                GameTooltip:Hide()
+            end
+            if popover and popover:IsShown() and popover.windowId == windowId then
+                popover:Hide()
+            end
+            Engine:SetWindowBadgeHidden(windowId, true)
+            local desc = Registry:GetDescriptor(windowId)
+            ns:Print(string.format(L["MSG_BADGE_HIDDEN_WIN"], Registry:GetDisplayLabel(desc)))
+            return
+        end
         if mouseButton == "LeftButton" then
             TogglePopoverForBadge(windowId, self)
         elseif mouseButton == "RightButton" then
@@ -572,6 +629,20 @@ function BadgeUI:OpenPopoverForWindow(windowId)
     p:Show()
     RefreshPopover()
 end
+
+function BadgeUI:HideWindowBadge(windowId)
+    local b = badgesByWindow[windowId]
+    if b then
+        b:Hide()
+    end
+    if popover and popover.windowId == windowId then
+        popover:Hide()
+    end
+end
+
+ns:On("OnWindowUnregistered", function(windowId)
+    BadgeUI:HideWindowBadge(windowId)
+end)
 
 ns:On("OnManagedFrameShown", function(windowId)
     local b = GetOrCreateBadge(windowId)

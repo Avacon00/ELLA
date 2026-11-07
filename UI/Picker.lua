@@ -39,6 +39,35 @@ local function RegisterSpecialFrameOnce(frameName)
     table.insert(_G.UISpecialFrames, frameName)
 end
 
+-- Checks whether a frame (or one of its parents) belongs to Ella's own UI
+local function IsEllaInternalFrame(frame)
+    local cursor = frame
+    local depth = 0
+    while cursor and cursor ~= _G.UIParent and cursor ~= _G.WorldFrame and depth < 12 do
+        if Guard:IsForbidden(cursor) then
+            return false
+        end
+        if cursor == bannerFrame or cursor == highlightBox or cursor == pickerOverlay or cursor == pickerHud or cursor == snippetModal then
+            return true
+        end
+        local name = type(cursor.GetName) == "function" and cursor:GetName() or nil
+        if type(name) == "string" and string.sub(name, 1, 4) == "Ella" then
+            return true
+        end
+        cursor = type(cursor.GetParent) == "function" and cursor:GetParent() or nil
+        depth = depth + 1
+    end
+    return false
+end
+
+-- Interactive Blizzard launcher bars users often click during Picker to open a panel
+local PASS_THROUGH_LAUNCHERS = {
+    MicroMenuContainer = true,
+    MicroButtonAndBagsBar = true,
+    BagsBar = true,
+    MainMenuBarBackpackButton = true,
+}
+
 -- Compatible mouse-focus helper for WoW 16001 (GetMouseFoci) + fallback
 local function GetTopMouseFrame()
     if type(_G.GetMouseFoci) == "function" then
@@ -46,14 +75,14 @@ local function GetTopMouseFrame()
         if type(foci) == "table" then
             for i = 1, #foci do
                 local f = foci[i]
-                if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and f ~= snippetModal and not Guard:IsForbidden(f) then
+                if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and not Guard:IsForbidden(f) then
                     return f
                 end
             end
         end
     elseif type(_G.GetMouseFocus) == "function" then
         local f = _G.GetMouseFocus()
-        if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and f ~= snippetModal and not Guard:IsForbidden(f) then
+        if f and f ~= bannerFrame and f ~= highlightBox and f ~= pickerOverlay and f ~= pickerHud and not Guard:IsForbidden(f) then
             return f
         end
     end
@@ -387,6 +416,24 @@ local function OnPickerUpdate()
     end
 
     local leaf = GetTopMouseFrame()
+    if not leaf or IsEllaInternalFrame(leaf) then
+        lastLeafFrame = nil
+        lastTopAncestor = nil
+        wipe(currentHierarchyStack)
+        currentCandidate = nil
+        currentCandidateName = nil
+        highlightBox:Hide()
+        pickerHud:Hide()
+        bannerFrame.status:SetText("-")
+        if not IsMouseButtonDown("LeftButton") then
+            armedForLeftClick = true
+            blockedFeedbackPrinted = false
+        else
+            armedForLeftClick = false
+        end
+        return
+    end
+
     if leaf ~= lastLeafFrame then
         lastLeafFrame = leaf
         local newStack = BuildFrameHierarchy(leaf)
@@ -452,7 +499,9 @@ local function OnPickerUpdate()
             Picker:RegisterPickedWindow(pickedName)
         elseif not blockedFeedbackPrinted then
             blockedFeedbackPrinted = true
-            ns:Print(string.format(L["PICKER_BLOCKED"], tostring(winName or "<anonymous>"), tostring(reason or L["GUARD_ERR_UNSAFE"])))
+            if not (winName and PASS_THROUGH_LAUNCHERS[winName]) then
+                ns:Print(string.format(L["PICKER_BLOCKED"], tostring(winName or "<anonymous>"), tostring(reason or L["GUARD_ERR_UNSAFE"])))
+            end
         end
     end
 end
@@ -468,6 +517,9 @@ function Picker:RegisterPickedWindow(frameName)
 
     local existingId, existingDesc = Registry:FindByFrameName(frameName)
     if existingId and existingDesc then
+        if ns.Engine and ns.Engine.GetEffectiveWindowMode and ns.Engine:GetEffectiveWindowMode(existingId, existingDesc) == ns.MODE_DISABLED then
+            ns.Engine:SetWindowEnabled(existingId, true)
+        end
         ns:Print(string.format(L["PICKER_ALREADY_MANAGED"], frameName, Registry:GetDisplayLabel(existingDesc)))
         if ns.BadgeUI and ns.BadgeUI.OpenPopoverForWindow then
             ns.BadgeUI:OpenPopoverForWindow(existingId)
@@ -502,6 +554,9 @@ function Picker:RegisterPickedWindow(frameName)
 end
 
 function Picker:Start(reopenManager)
+    if ns.Tutorial and ns.Tutorial.active and type(ns.Tutorial.Stop) == "function" then
+        ns.Tutorial:Stop()
+    end
     EnsurePickerFrames()
     Picker.active = true
     Picker.reopenManager = (reopenManager == true)

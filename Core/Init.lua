@@ -1,7 +1,7 @@
 local AddonName, ns = ...
 
 ns.AddonName = AddonName
-ns.Version = "1.9.1"
+ns.Version = "1.10.0"
 
 -- Internal Project Camelot (WoW: Forever) constant is 18
 ns.WOW_PROJECT_CAMELOT = _G.WOW_PROJECT_CAMELOT or 18
@@ -68,7 +68,7 @@ local DEFAULT_SETTINGS = {
     welcomeShown = false,
     activePreset = nil,
     managerScale = 1.00,
-    managerWidth = 720,
+    managerWidth = 760,
     managerHeight = 620,
     tutorialPromptShown = false,
     tutorialCompleted = false,
@@ -98,6 +98,12 @@ function ns:InitDatabase()
     end
     if db.settings.managerHeight and db.settings.managerHeight < 620 then
         db.settings.managerHeight = 620
+    end
+    if not db.settings.widthMigratedV110 then
+        if db.settings.managerWidth and db.settings.managerWidth < 760 then
+            db.settings.managerWidth = 760
+        end
+        db.settings.widthMigratedV110 = true
     end
 
     -- Schema v2: Named Profiles (seamless migration from v1 db.windows)
@@ -146,11 +152,15 @@ function ns:GetWindowConfig(windowId, createIfMissing)
     end
     local winTbl = ns.db.windows[windowId]
     if not winTbl and createIfMissing then
-        local defaultMode = ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
+        local desc = ns.Registry and ns.Registry.GetDescriptor and ns.Registry:GetDescriptor(windowId)
+        local defaultMode = (desc and desc.defaultMode)
+            or (ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
         winTbl = {
             scale = ns.DEFAULT_SCALE,
             mode = defaultMode,
+            prevMode = nil,
             locked = false,
+            hideBadge = false,
             pos = nil,
             alpha = 1.00,
             mouseoverFade = false,

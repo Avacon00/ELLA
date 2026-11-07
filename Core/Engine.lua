@@ -114,7 +114,7 @@ function Engine:GetEffectiveWindowScale(windowId, desc)
 end
 
 -- Syncs scale onto optional companion sub-frames (e.g. QuestLogPopupDetailFrame, Orders panel)
-local function SyncLinkedFrames(windowId, desc, targetScale)
+local function SyncLinkedFrames(windowId, desc, targetScale, isDisabling)
     if type(desc.linkedFrames) ~= "table" then
         return
     end
@@ -128,20 +128,38 @@ local function SyncLinkedFrames(windowId, desc, targetScale)
                 frameState[sub] = subState
                 if type(sub.HookScript) == "function" then
                     sub:HookScript("OnShow", function(sFrame)
+                        local sMode = Engine:GetEffectiveWindowMode(windowId, desc)
+                        if sMode == ns.MODE_DISABLED then
+                            return
+                        end
                         local sTarget = Engine:GetEffectiveWindowScale(windowId, desc)
                         if Guard:CanModifyNow(sFrame, desc.protected) then
+                            local st = frameState[sFrame]
+                            if st and st.initialScale == nil then
+                                st.initialScale = sFrame:GetScale() or 1
+                            end
                             local c = sFrame:GetScale() or 1
                             if math.abs(c - sTarget) > 0.001 then
                                 sFrame:SetScale(sTarget)
+                                if st then st.hasEllaScaled = true end
                             end
                         end
                     end)
                 end
             end
-            if Guard:CanModifyNow(sub, desc.protected) then
+            if isDisabling then
+                if subState.hasEllaScaled and Guard:CanModifyNow(sub, desc.protected) then
+                    sub:SetScale(subState.initialScale or 1)
+                    subState.hasEllaScaled = false
+                end
+            elseif Guard:CanModifyNow(sub, desc.protected) then
+                if subState.initialScale == nil then
+                    subState.initialScale = sub:GetScale() or 1
+                end
                 local cur = sub:GetScale() or 1
                 if math.abs(cur - targetScale) > 0.001 then
                     sub:SetScale(targetScale)
+                    subState.hasEllaScaled = true
                 end
             end
         end
@@ -164,8 +182,11 @@ local function HookFrameFade(frame, windowId, desc)
                 return
             end
             local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+            if mode == ns.MODE_DISABLED then
+                return
+            end
             local cfg = ns:GetWindowConfig(windowId, false)
-            local a = (mode == ns.MODE_DISABLED) and 1.0 or ((cfg and cfg.alpha) or 1.0)
+            local a = (cfg and cfg.alpha) or 1.0
             if type(frame.SetAlpha) == "function" then
                 frame:SetAlpha(a)
             end
@@ -196,14 +217,17 @@ function Engine:ApplyAlphaToFrame(windowId, frame, desc)
     if not frame or Guard:IsForbidden(frame) then
         return
     end
-    HookFrameFade(frame, windowId, desc)
+    local state = frameState[frame]
     local mode = Engine:GetEffectiveWindowMode(windowId, desc)
     if mode == ns.MODE_DISABLED then
-        if type(frame.SetAlpha) == "function" then
-            frame:SetAlpha(1.0)
+        if state and state.hasEllaAlpha and type(frame.SetAlpha) == "function" then
+            frame:SetAlpha(state.initialAlpha or 1.0)
+            state.hasEllaAlpha = false
         end
         return
     end
+
+    HookFrameFade(frame, windowId, desc)
 
     local cfg = ns:GetWindowConfig(windowId, false)
     local targetAlpha = (cfg and cfg.alpha) or 1.0
@@ -213,13 +237,24 @@ function Engine:ApplyAlphaToFrame(windowId, frame, desc)
         return
     end
 
+    -- Preserve native third-party frame alpha if the user has not customized opacity/fade in Ella
+    if targetAlpha >= 0.999 and not isMouseoverFade and not (state and state.hasEllaAlpha) then
+        return
+    end
+
+    if state and state.initialAlpha == nil then
+        state.initialAlpha = (type(frame.GetAlpha) == "function" and frame:GetAlpha()) or 1.0
+    end
+
     if isMouseoverFade and frame:IsShown() and frame:IsMouseOver() then
         if type(frame.SetAlpha) == "function" then
             frame:SetAlpha(1.0)
+            if state then state.hasEllaAlpha = true end
         end
     else
         if type(frame.SetAlpha) == "function" then
             frame:SetAlpha(targetAlpha)
+            if state then state.hasEllaAlpha = (targetAlpha < 0.999 or isMouseoverFade) end
         end
     end
 end
@@ -233,6 +268,48 @@ function Engine:ApplyToFrame(windowId, frame, desc)
 
     local cfg = ns:GetWindowConfig(windowId, false)
     local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+
+    -- 100% Hands-Off Guarantee when a window/AddOn is set to Off (MODE_DISABLED):
+    -- On /reload or OnShow, if Ella has not modified this frame during the session,
+    -- touch NOTHING (zero SetScale, zero SetAlpha, zero SetPoint) so third-party
+    -- AddOns retain complete ownership of their native position, scale, and opacity!
+    if mode == ns.MODE_DISABLED then
+        if not state.hasEllaScaled and not state.hasEllaAlpha and not state.hasCustomPosApplied then
+            ns:Fire("OnWindowApplied", windowId, frame, frame:GetScale() or 1, mode)
+            return
+        end
+
+        local canRestore, restoreReason = Guard:CanModifyNow(frame, desc.protected)
+        if not canRestore then
+            if restoreReason == "DEFERRED_COMBAT" then
+                Guard:EnqueueAfterCombat("apply:" .. windowId, Registry:GetDisplayLabel(desc), function()
+                    Engine:ApplyToFrame(windowId, frame, desc)
+                end)
+            end
+            return
+        end
+
+        state.applying = true
+        if state.hasEllaScaled then
+            local origScale = state.initialScale or 1.0
+            frame:SetScale(origScale)
+            state.hasEllaScaled = false
+        end
+        SyncLinkedFrames(windowId, desc, state.initialScale or 1.0, true)
+        Engine:ApplyAlphaToFrame(windowId, frame, desc)
+        if state.hasCustomPosApplied and state.initialPoints then
+            frame:ClearAllPoints()
+            for i = 1, #state.initialPoints do
+                local p = state.initialPoints[i]
+                frame:SetPoint(p[1], p[2], p[3], p[4], p[5])
+            end
+            state.hasCustomPosApplied = false
+        end
+        state.applying = false
+        ns:Fire("OnWindowApplied", windowId, frame, frame:GetScale() or 1, mode)
+        return
+    end
+
     local targetScale = Engine:GetEffectiveWindowScale(windowId, desc)
 
     local canModify, reason = Guard:CanModifyNow(frame, desc.protected)
@@ -247,7 +324,11 @@ function Engine:ApplyToFrame(windowId, frame, desc)
 
     state.applying = true
 
-    -- Snapshot original pristine Blizzard anchor points once before any custom move
+    if state.initialScale == nil then
+        state.initialScale = frame:GetScale() or 1.0
+    end
+
+    -- Snapshot original pristine anchor points once before any custom move
     if not state.initialPoints and type(frame.GetNumPoints) == "function" then
         local numPts = frame:GetNumPoints()
         if numPts and numPts > 0 then
@@ -263,8 +344,11 @@ function Engine:ApplyToFrame(windowId, frame, desc)
     local currentScale = frame:GetScale() or 1
     if math.abs(currentScale - targetScale) > 0.001 then
         frame:SetScale(targetScale)
+        state.hasEllaScaled = true
+    elseif math.abs(targetScale - (state.initialScale or 1.0)) > 0.001 then
+        state.hasEllaScaled = true
     end
-    SyncLinkedFrames(windowId, desc, targetScale)
+    SyncLinkedFrames(windowId, desc, targetScale, false)
     Engine:ApplyAlphaToFrame(windowId, frame, desc)
 
     if mode == ns.MODE_SCALE_MOVE and cfg and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
@@ -398,12 +482,68 @@ function Engine:SetWindowMode(windowId, newMode)
     if not desc then
         return
     end
+    if ns.Profiles and ns.Profiles.PushUndoSnapshot then
+        ns.Profiles:PushUndoSnapshot("mode:" .. windowId)
+    end
     local cfg = ns:GetWindowConfig(windowId, true)
+    if newMode == ns.MODE_DISABLED and cfg.mode and cfg.mode ~= ns.MODE_DISABLED then
+        cfg.prevMode = cfg.mode
+    elseif newMode ~= ns.MODE_DISABLED then
+        cfg.prevMode = newMode
+    end
     cfg.mode = newMode
     if desc.boundFrame then
         Engine:ApplyToFrame(windowId, desc.boundFrame, desc)
     end
     ns:Fire("OnWindowConfigChanged", windowId, cfg)
+end
+
+function Engine:SetWindowEnabled(windowId, enabled)
+    local desc = Registry:GetDescriptor(windowId)
+    if not desc then
+        return
+    end
+    local cfg = ns:GetWindowConfig(windowId, true)
+    if enabled then
+        local restoreMode = cfg.prevMode
+        if restoreMode ~= ns.MODE_SCALE_MOVE and restoreMode ~= ns.MODE_SCALE_ONLY then
+            restoreMode = (ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly) and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
+        end
+        Engine:SetWindowMode(windowId, restoreMode)
+    else
+        Engine:SetWindowMode(windowId, ns.MODE_DISABLED)
+    end
+end
+
+function Engine:ToggleWindowEnabled(windowId)
+    local desc = Registry:GetDescriptor(windowId)
+    if not desc then
+        return false
+    end
+    local curMode = Engine:GetEffectiveWindowMode(windowId, desc)
+    local willEnable = (curMode == ns.MODE_DISABLED)
+    Engine:SetWindowEnabled(windowId, willEnable)
+    return willEnable
+end
+
+function Engine:SetWindowBadgeHidden(windowId, hidden)
+    local desc = Registry:GetDescriptor(windowId)
+    if not desc then
+        return
+    end
+    if ns.Profiles and ns.Profiles.PushUndoSnapshot then
+        ns.Profiles:PushUndoSnapshot("badge:" .. windowId)
+    end
+    local cfg = ns:GetWindowConfig(windowId, true)
+    cfg.hideBadge = (hidden == true)
+    ns:Fire("OnWindowConfigChanged", windowId, cfg)
+end
+
+function Engine:ToggleWindowBadge(windowId)
+    local cfg = ns:GetWindowConfig(windowId, true)
+    local newHidden = not (cfg.hideBadge == true)
+    Engine:SetWindowBadgeHidden(windowId, newHidden)
+    return not newHidden
 end
 
 function Engine:ResetWindow(windowId, resetPositionOnly)
@@ -889,8 +1029,9 @@ function Engine:AttachWindow(windowId, frame, desc)
         if not ns.db or not ns.db.settings.enabled then
             return
         end
+        local effMode = Engine:GetEffectiveWindowMode(windowId, desc)
         local cfg = ns:GetWindowConfig(windowId, false)
-        if cfg and cfg.mode == ns.MODE_SCALE_MOVE and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
+        if effMode == ns.MODE_SCALE_MOVE and cfg and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
             Engine:ApplyToFrame(windowId, f, desc)
         end
     end)
@@ -931,9 +1072,11 @@ function Engine:OnCombatStart()
         return
     end
     local closedCount = 0
-    for _, desc in Registry:IterateWindows() do
+    for winId, desc in Registry:IterateWindows() do
         local frame = desc.boundFrame
-        if frame and frame:IsShown() and not desc.protected and not Guard:IsProtectedHierarchy(frame) then
+        local effMode = Engine:GetEffectiveWindowMode(winId, desc)
+        local isThirdParty = (desc.isCommunityAddon or desc.isCustom)
+        if frame and frame:IsShown() and effMode ~= ns.MODE_DISABLED and not isThirdParty and not desc.protected and not Guard:IsProtectedHierarchy(frame) then
             local closed = false
             if _G.HideUIPanel then
                 local ok = pcall(_G.HideUIPanel, frame)
@@ -987,7 +1130,8 @@ function Engine:ToggleBossKey()
     local closedList = {}
     for winId, desc in Registry:IterateWindows() do
         local frame = desc.boundFrame
-        if frame and frame:IsShown() and not desc.protected and not Guard:IsProtectedHierarchy(frame) then
+        local effMode = Engine:GetEffectiveWindowMode(winId, desc)
+        if frame and frame:IsShown() and effMode ~= ns.MODE_DISABLED and not desc.protected and not Guard:IsProtectedHierarchy(frame) then
             local closed = false
             if _G.HideUIPanel then
                 local ok = pcall(_G.HideUIPanel, frame)
@@ -1141,7 +1285,7 @@ local function UpdateCtrlWheelCatcher()
     local bestId, bestFrame = nil, nil
     for windowId, desc in Registry:IterateWindows() do
         local f = desc.boundFrame
-        if f and f:IsShown() and f:IsMouseOver() then
+        if f and f:IsShown() and f:IsMouseOver() and Engine:GetEffectiveWindowMode(windowId, desc) ~= ns.MODE_DISABLED then
             bestId = windowId
             bestFrame = f
         end
@@ -1216,6 +1360,16 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
     elseif event == "PLAYER_REGEN_ENABLED" then
         Guard:FlushCombatQueue()
     elseif event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" then
+        if event == "PLAYER_ENTERING_WORLD" then
+            Registry:ScanUnboundWindows()
+            Engine:ReapplyAllShown()
+            if _G.C_Timer and _G.C_Timer.After then
+                _G.C_Timer.After(0.25, function()
+                    Registry:ScanUnboundWindows()
+                    Engine:ReapplyAllShown()
+                end)
+            end
+        end
         Engine:UpdateInstanceCompactState()
     elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
         Engine:ReapplyAllShown()

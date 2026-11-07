@@ -87,6 +87,7 @@ function Registry:RegisterWindow(windowId, spec)
     desc.frame = spec.frame or desc.frame
     desc.candidates = spec.candidates or desc.candidates
     desc.addon = spec.addon or desc.addon
+    desc.addonNames = spec.addonNames or desc.addonNames
     desc.label = spec.label or (spec.labelKey and L[spec.labelKey]) or desc.label or windowId
     desc.labelKey = spec.labelKey or desc.labelKey
     desc.category = spec.category or desc.category or "CAT_CUSTOM"
@@ -95,6 +96,9 @@ function Registry:RegisterWindow(windowId, spec)
     desc.protected = (spec.protected == true)
     desc.dragSubFrames = spec.dragSubFrames or desc.dragSubFrames
     desc.linkedFrames = spec.linkedFrames or desc.linkedFrames
+    if spec.badgeOffsetX ~= nil or spec.badgeOffsetY ~= nil then
+        desc.hasExplicitBadgeOffset = true
+    end
     desc.badgeOffsetX = tonumber(spec.badgeOffsetX) or desc.badgeOffsetX or -28
     desc.badgeOffsetY = tonumber(spec.badgeOffsetY) or desc.badgeOffsetY or -5
     desc.isCustom = (spec.isCustom == true)
@@ -191,6 +195,53 @@ end
 
 function Registry:GetDescriptor(windowId)
     return Registry.windows[windowId]
+end
+
+local function IsSingleAddonLoaded(addonName)
+    if type(addonName) ~= "string" or addonName == "" then
+        return false
+    end
+    if _G.C_AddOns and type(_G.C_AddOns.IsAddOnLoaded) == "function" and _G.C_AddOns.IsAddOnLoaded(addonName) then
+        return true
+    end
+    if type(_G.IsAddOnLoaded) == "function" and _G.IsAddOnLoaded(addonName) then
+        return true
+    end
+    return false
+end
+
+function Registry:IsCommunityAddonActive(desc)
+    if not desc or not desc.isCommunityAddon then
+        return true
+    end
+    if desc.boundFrame ~= nil then
+        return true
+    end
+    if IsSingleAddonLoaded(desc.addon) then
+        return true
+    end
+    if type(desc.addonNames) == "table" then
+        for i = 1, #desc.addonNames do
+            if IsSingleAddonLoaded(desc.addonNames[i]) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function Registry:UnregisterWindow(windowId)
+    if type(windowId) ~= "string" or not Registry.windows[windowId] then
+        return false
+    end
+    Registry.windows[windowId] = nil
+    for i = #Registry.windowOrder, 1, -1 do
+        if Registry.windowOrder[i] == windowId then
+            table.remove(Registry.windowOrder, i)
+        end
+    end
+    ns:Fire("OnWindowUnregistered", windowId)
+    return true
 end
 
 -- Finds an existing descriptor managing the given global frame name (built-in preferred over custom)

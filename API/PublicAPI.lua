@@ -71,6 +71,16 @@ function API:SetWindowAlpha(windowId, alpha, mouseoverFade)
     return Engine:SetWindowAlpha(windowId, alpha, mouseoverFade)
 end
 
+function API:SetWindowEnabled(windowId, enabled)
+    Engine:SetWindowEnabled(windowId, enabled == true)
+    return true
+end
+
+function API:SetWindowBadgeHidden(windowId, hidden)
+    Engine:SetWindowBadgeHidden(windowId, hidden == true)
+    return true
+end
+
 function API:GetWindowConfig(windowId)
     local cfg = ns:GetWindowConfig(windowId, false)
     if not cfg then
@@ -81,6 +91,7 @@ function API:GetWindowConfig(windowId)
         scale = cfg.scale,
         mode = cfg.mode,
         locked = cfg.locked,
+        hideBadge = cfg.hideBadge and true or false,
         alpha = cfg.alpha or 1.0,
         mouseoverFade = cfg.mouseoverFade and true or false,
         uipX = cfg.pos and cfg.pos.uipX or nil,
