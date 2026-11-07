@@ -6,11 +6,12 @@
 
 > **Per-Window UI Scaler & Position Memory for *World of Warcraft: Forever* (`Interface: 16001` / `Project Camelot`)**
 
-![Version 1.9.1](https://img.shields.io/badge/Version-v1.9.1-ffaa00)
+[![Download Latest Release](https://img.shields.io/badge/Download-v1.9.1_(ZIP)-ffaa00?logo=github)](https://github.com/Avacon00/ELLA/releases/latest)
+[![CI Validation](https://github.com/Avacon00/ELLA/actions/workflows/lint.yml/badge.svg)](https://github.com/Avacon00/ELLA/actions/workflows/lint.yml)
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
-![License MIT](https://img.shields.io/badge/License-MIT-blue)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
 **EĹLA** (**E**asy **L**ayout & **L**ocation **A**ssistant — im Spiel aufgrund von Blizzards `Friz Quadrata`-Schriftart sauber als **`Ella`** dargestellt) löst eines der größten UI-Probleme in **World of Warcraft: Forever**: Moderne Retail-Menüfenster (Berufe, Zauberbuch, Questlog, Auktionshaus, Ruf) wirken überdimensioniert, während die globale UI-Skalierung sofort auch Chat, Tooltips und Aktionsleisten unleserlich klein macht.
 
@@ -192,15 +193,26 @@
 
 ---
 
-## Installation
+## Installation & Download
 
-### Standard (Windows / macOS / Linux)
-Entpacke den Ordner `ELLA` in dein *WoW: Forever*-AddOns-Verzeichnis, sodass folgender Pfad existiert:
+> [!IMPORTANT]
+> **Wichtig beim manuellen Download / Manual Download Note:**  
+> Lade immer das fertige **`ELLA-v1.9.1-16001.zip`** unter **[GitHub Releases](https://github.com/Avacon00/ELLA/releases/latest)** herunter *(nicht über den grünen Button `<> Code -> Download ZIP`, da dieser den Ordner `ELLA-main` nennt und WoW ihn sonst nicht lädt)*.
+
+### 1. Manuelle Installation (Windows / macOS / Linux)
+1. Lade **[`ELLA-v1.9.1-16001.zip`](https://github.com/Avacon00/ELLA/releases/latest)** herunter.
+2. Entpacke den enthaltenen Ordner `ELLA` in dein *WoW: Forever*-`AddOns`-Verzeichnis, sodass folgender Pfad existiert:
 ```text
 World of Warcraft/_forever_/Interface/AddOns/ELLA/ELLA.toc
 ```
 
-### Linux Development Symlink (Faugus / Lutris / Steam / Bottles / Wine)
+### 2. AddOn-Manager per GitHub-URL (z. B. WoWUp)
+In GitHub-fähigen AddOn-Managern (*AddOn über URL installieren* / *Install from URL*) einfach die Repository-Adresse eintragen:
+```text
+https://github.com/Avacon00/ELLA
+```
+
+### 3. Linux Development Symlink (Faugus / Lutris / Steam / Bottles / Wine)
 Für lokale Entwicklung unter Linux verlinkt das mitgelieferte Skript das Repository direkt in deine `_forever_`-Installation (Änderungen sind sofort per `/reload` im Spiel aktiv):
 ```bash
 ./scripts/link-addon.sh "/pfad/zu/World of Warcraft/_forever_/Interface/AddOns"

@@ -12,7 +12,7 @@
 ## Category-deDE: Benutzerinterface
 ## X-License: MIT
 ## X-Website: https://github.com/Avacon00/ELLA
-## X-Curse-Project-ID: 000000
+# Set once published on CurseForge: ## X-Curse-Project-ID: <project-id>
 
 # Embedded Public-Domain Library
 Libs\LibStub\LibStub.lua
