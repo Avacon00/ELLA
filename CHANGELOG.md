@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.9.1 – In-Game Feinschliff: Tooltip-Randschutz, Minimap-Maskierung & Custom-Zähler
+* **Intelligente Badge-Tooltip-Verankerung (`UI/Badge.lua`):**
+  * Der Tooltip des `%`-Badges öffnet sich auf der mittleren und rechten Bildschirmhälfte nun automatisch nach **unten-links** (`ANCHOR_BOTTOMLEFT`) statt nach unten-rechts und klappt nur nahe am linken Bildschirmrand auf `ANCHOR_BOTTOMRIGHT` um – kein abgeschnittener Tooltip mehr am rechten Bildschirmrand.
+* **Präziser `Custom (X)`-Zähler auch nach Preset-Anwendung (`UI/SettingsPanel.lua`):**
+  * Vorregistrierte Community-AddOns (`Details!`, `Questie`, `Bagnon` etc.) werden im Zähler `Custom (X)` und in der Standardliste nur noch geführt, wenn das jeweilige AddOn tatsächlich im Client geladen ist – nicht mehr allein deshalb, weil ein 1-Klick-Preset (`WQHD / 4K` etc.) pauschal Skalierungswerte in `ELLADB` hinterlegt hat (`Custom (0)` statt `Custom (9)`).
+* **Kreisrunde Minimap-Icon-Maskierung & Pixel-Zentrierung (`UI/MinimapButton.lua`):**
+  * Exakte `31×31` / `53×53` `MiniMap-TrackingBorder`-Geometrie plus kreisförmige `MaskTexture` (`TempPortraitAlphaMask`) und nativer runder Hintergrund (`UI-Minimap-Background`), sodass keine eckigen Icon-Ecken mehr unter dem Goldring hervorstehen.
+
 ## v1.9.0 – Design-System-Politur, Deutsche Typografie, Engine-Härtung & UX-Feinschliff
 * **Dark-Slate UI-Überarbeitung & Visuelle Hierarchie (`SettingsPanel`, `Badge`, `MinimapButton`, `Tutorial`):**
   * **Maßgeschneiderte Flat-Controls in der Fensterliste:** Ersetzt die repetitiven knallroten Blizzard-Buttons pro Zeile durch ruhige Dark-Slate-Steuerelemente (`CreateFlatButton`) mit subtilen Hover-Rahmen und Zeilenglanz.

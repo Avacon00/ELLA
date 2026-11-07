@@ -501,7 +501,11 @@ local function GetOrCreateBadge(windowId)
         local effPct = math.floor(effScale * 100 + 0.5)
         local savedPct = math.floor(savedScale * 100 + 0.5)
         if _G.GameTooltip then
-            GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+            local uipScale = UIParent:GetEffectiveScale() or 1
+            local effS = self:GetEffectiveScale() or uipScale
+            local cx = ((self:GetCenter() or 0) * effS) / uipScale
+            local tipAnchor = (cx < 340) and "ANCHOR_BOTTOMRIGHT" or "ANCHOR_BOTTOMLEFT"
+            GameTooltip:SetOwner(self, tipAnchor)
             GameTooltip:AddLine(string.format(L["BADGE_TOOLTIP_TITLE"], Registry:GetDisplayLabel(desc), effPct), 1, 0.82, 0)
             if isCapped then
                 GameTooltip:AddLine(string.format(L["UI_COMPACT_CAP_HINT"], savedPct), 0.20, 0.90, 1.0)

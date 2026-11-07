@@ -782,6 +782,25 @@ local function GetOrCreateRow(parent, index)
     return row
 end
 
+local function IsCommunityAddonActive(desc)
+    if not desc or not desc.isCommunityAddon then
+        return true
+    end
+    if desc.boundFrame ~= nil then
+        return true
+    end
+    local addonName = desc.addon
+    if type(addonName) == "string" and addonName ~= "" then
+        if _G.C_AddOns and type(_G.C_AddOns.IsAddOnLoaded) == "function" and _G.C_AddOns.IsAddOnLoaded(addonName) then
+            return true
+        end
+        if type(_G.IsAddOnLoaded) == "function" and _G.IsAddOnLoaded(addonName) then
+            return true
+        end
+    end
+    return false
+end
+
 function ManagerUI:RefreshList()
     if not managerFrame or not managerFrame:IsShown() then
         return
@@ -806,13 +825,12 @@ function ManagerUI:RefreshList()
     if managerFrame.filterPills then
         local countOpen = 0
         local countCustom = 0
-        for windowId, desc in Registry:IterateWindows() do
+        for _, desc in Registry:IterateWindows() do
             local f = desc.boundFrame
             if f and f:IsShown() then
                 countOpen = countOpen + 1
             end
-            local hasUserCfg = (ns.db and ns.db.windows and ns.db.windows[windowId] ~= nil)
-            if desc.isCustom or (desc.category == "CAT_CUSTOM" and (f ~= nil or (not desc.isCommunityAddon) or hasUserCfg)) then
+            if desc.isCustom or (desc.category == "CAT_CUSTOM" and IsCommunityAddonActive(desc)) then
                 countCustom = countCustom + 1
             end
         end
@@ -895,10 +913,9 @@ function ManagerUI:RefreshList()
     for windowId, desc in Registry:IterateWindows() do
         orderIndex = orderIndex + 1
         local isLoaded = (desc.boundFrame ~= nil)
-        local hasUserCfg = (ns.db and ns.db.windows and ns.db.windows[windowId] ~= nil)
 
-        -- Hide uninstalled pre-registered third-party community addons unless searched or configured
-        local skipDormantCommunity = (desc.isCommunityAddon and not isLoaded and not hasUserCfg and q == "")
+        -- Hide uninstalled pre-registered third-party community addons unless explicitly searched
+        local skipDormantCommunity = (desc.isCommunityAddon and not IsCommunityAddonActive(desc) and q == "")
         if not skipDormantCommunity then
             local winTitle = Registry:GetDisplayLabel(desc)
             local cat = desc.category or "CAT_CUSTOM"

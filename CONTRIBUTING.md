@@ -48,7 +48,7 @@ end
 ```
 
 Unterstützte Methoden auf `ELLA_API` (sowie Alias `_G.Ella` und `LibStub("ELLA-1.0")`):
-* `ELLA_API:GetVersion()` – Gibt Versionsstring (`"1.9.0"`) und API-Level (`2`) zurück.
+* `ELLA_API:GetVersion()` – Gibt Versionsstring (`"1.9.1"`) und API-Level (`2`) zurück.
 * `ELLA_API:IsForeverClient()` – `true`, wenn auf `WOW_PROJECT_CAMELOT` (`18`) ausgeführt.
 * `ELLA_API:GetActiveProfile()` – Gibt den Namen des derzeit aktiven Layout-Profils zurück.
 * `ELLA_API:GetProfiles()` – Gibt ein sortiertes Array aller vorhandenen Profilnamen zurück.

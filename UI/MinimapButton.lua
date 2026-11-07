@@ -398,7 +398,7 @@ function MinimapButton:Init()
     -- Minimap has an internal mask texture that clips children outside its circular viewport.
     local parentFrame = _G.MinimapBackdrop or _G.MinimapCluster or _G.UIParent
     btn = CreateFrame("Button", "EllaMinimapButton", parentFrame)
-    btn:SetSize(32, 32)
+    btn:SetSize(31, 31)
     btn:SetFrameStrata("HIGH")
     btn:SetFrameLevel(20)
     btn:EnableMouse(true)
@@ -406,29 +406,36 @@ function MinimapButton:Init()
     btn:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
     btn:RegisterForDrag("LeftButton")
 
-    -- Dark circular backdrop behind icon
+    -- Native circular Blizzard minimap button backdrop (matches MiniMap-TrackingBorder ring center at 15, -14)
     local bg = btn:CreateTexture(nil, "BACKGROUND")
-    bg:SetSize(22, 22)
-    bg:SetPoint("CENTER", 0, 0)
-    bg:SetColorTexture(0.05, 0.06, 0.09, 0.95)
+    bg:SetSize(20, 20)
+    bg:SetPoint("TOPLEFT", btn, "TOPLEFT", 6, -5)
+    bg:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
 
-    -- Custom Ella Logo Icon
+    -- Custom Ella Logo Icon (circularly masked so square corners never poke past the golden ring)
     local icon = btn:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(20, 20)
-    icon:SetPoint("CENTER", 0, 0)
+    icon:SetSize(18, 18)
+    icon:SetPoint("TOPLEFT", btn, "TOPLEFT", 6, -5)
     icon:SetTexture(ICON_PATH)
+    icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    if btn.CreateMaskTexture and icon.AddMaskTexture then
+        local mask = btn:CreateMaskTexture()
+        mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetAllPoints(icon)
+        icon:AddMaskTexture(mask)
+    end
     btn.icon = icon
 
-    -- Circular Blizzard border overlay
+    -- Circular Blizzard border overlay (exact 53x53 TOPLEFT 0,0 geometry for 31x31 tracking buttons)
     local border = btn:CreateTexture(nil, "OVERLAY")
-    border:SetSize(52, 52)
-    border:SetPoint("TOPLEFT", btn, "TOPLEFT", -2, 2)
+    border:SetSize(53, 53)
+    border:SetPoint("TOPLEFT", btn, "TOPLEFT", 0, 0)
     border:SetTexture(BORDER_PATH)
 
-    -- Subtle hover highlight
+    -- Subtle hover highlight centered on the ring
     local highlight = btn:CreateTexture(nil, "HIGHLIGHT")
     highlight:SetSize(24, 24)
-    highlight:SetPoint("CENTER", 0, 0)
+    highlight:SetPoint("TOPLEFT", btn, "TOPLEFT", 3, -2)
     highlight:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
     highlight:SetBlendMode("ADD")
 
