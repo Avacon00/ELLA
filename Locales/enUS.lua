@@ -417,5 +417,5 @@ _G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]
 _G["BINDING_NAME_ELLA_TOGGLE_GRID"] = L["BINDING_NAME_ELLA_TOGGLE_GRID"]
 
 L["UI_DIAGNOSTICS_TITLE"] = "ELLA diagnostics"
-L["UI_DIAGNOSTICS_HINT"] = "Review the report before copying. Window numbers refer to registry order."
+L["UI_DIAGNOSTICS_HINT"] = "Review the report before copying. Custom window names are replaced by numbers."
 L["SLASH_HELP_DEBUG"] = "/ella debug - Preview a copyable diagnostics report."

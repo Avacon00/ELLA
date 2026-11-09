@@ -138,3 +138,8 @@ Registry:RegisterBatch(nil, {
         isCommunityAddon = true,
     },
 })
+
+-- The TOC loads built-in data before saved custom windows and the public API.
+for id in Registry:IterateWindows() do
+    Registry.diagnosticBuiltinIds[id] = true
+end

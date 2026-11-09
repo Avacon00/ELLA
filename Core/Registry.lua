@@ -7,6 +7,7 @@ local Registry = {
     windows = {},
     windowOrder = {},
     pendingByAddon = {},
+    diagnosticBuiltinIds = {},
     presets = {},
     presetOrder = {},
     readyToBind = false,
