@@ -1500,8 +1500,12 @@ function ns:RunSelfTest()
     end
 end
 
+local function IsCtrlWheelActive()
+    return ns.db and ns.db.settings.enabled and ns.db.settings.ctrlWheelZoom and IsControlKeyDown()
+end
+
 local function UpdateCtrlWheelCatcher()
-    if not ns.db or not ns.db.settings.enabled or not ns.db.settings.ctrlWheelZoom or not IsControlKeyDown() then
+    if not IsCtrlWheelActive() then
         ctrlWheelCatcher:Hide()
         ctrlWheelCatcher.targetWindowId = nil
         return
@@ -1510,7 +1514,7 @@ local function UpdateCtrlWheelCatcher()
     local bestId, bestFrame = nil, nil
     for windowId, desc in Registry:IterateWindows() do
         local f = desc.boundFrame
-        if f and f:IsShown() and f:IsMouseOver() and Engine:GetEffectiveWindowMode(windowId, desc) ~= ns.MODE_DISABLED then
+        if f and not Guard:IsForbidden(f) and f:IsShown() and f:IsMouseOver() and Engine:GetEffectiveWindowMode(windowId, desc) ~= ns.MODE_DISABLED then
             bestId = windowId
             bestFrame = f
         end
@@ -1533,7 +1537,7 @@ end
 -- Keep tracking while Ctrl is held, even when the cursor starts outside every window.
 local ctrlWheelElapsed = 0
 local function TrackCtrlWheelTarget(self, elapsed)
-    if not IsControlKeyDown() then
+    if not IsCtrlWheelActive() then
         self:SetScript("OnUpdate", nil)
         UpdateCtrlWheelCatcher()
         return
@@ -1618,7 +1622,7 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1)
     elseif event == "MODIFIER_STATE_CHANGED" then
         if arg1 == "LCTRL" or arg1 == "RCTRL" then
             ctrlWheelElapsed = 0
-            eventFrame:SetScript("OnUpdate", IsControlKeyDown() and TrackCtrlWheelTarget or nil)
+            eventFrame:SetScript("OnUpdate", IsCtrlWheelActive() and TrackCtrlWheelTarget or nil)
             UpdateCtrlWheelCatcher()
         end
     end
