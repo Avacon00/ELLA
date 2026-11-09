@@ -507,28 +507,10 @@ local function UpdateBadgeVisual(windowId, badge)
     end
     badge:ClearAllPoints()
     local targetName = target:GetName() or ""
-    local toolbar = targetName:match("^DetailsBaseFrame%d+$") and rawget(target, "cabecalho")
-    if type(toolbar) == "table" then
-        -- Details positions its icon buttons independently of the decorative title bar.
-        local anchor = target
-        local top = (target:GetTop() or 0) * target:GetEffectiveScale()
-        for _, key in ipairs({ "modo_selecao", "segmento", "atributo", "report", "reset", "fechar" }) do
-            local button = toolbar[key]
-            if button and not ns.Guard:IsForbidden(button) and button:IsVisible() then
-                local buttonTop = button:GetTop()
-                if buttonTop and buttonTop * button:GetEffectiveScale() > top then
-                    anchor = button
-                    top = buttonTop * button:GetEffectiveScale()
-                end
-            end
-        end
-        local uiScale = UIParent:GetEffectiveScale()
-        if top + 20 * uiScale <= UIParent:GetHeight() * uiScale then
-            badge:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", -2, 2)
-            badge:Show()
-        else
-            badge:Hide()
-        end
+    if targetName:match("^DetailsBaseFrame%d+$") then
+        -- The native toolbar straddles the top of the Details base frame.
+        badge:SetPoint("BOTTOMRIGHT", target, "TOPRIGHT", -2, 24)
+        badge:Show()
         return
     end
     if type(closeBtn) == "table" and not ns.Guard:IsForbidden(closeBtn) then
