@@ -419,4 +419,5 @@ L["SLASH_HELP_DEBUG"] = "/ella debug - Kopierbaren Diagnosebericht anzeigen."
 
 L["UI_HEALKIT_RECOMMENDED_MODE"] = "Zum Verschieben: Nur Skalieren wählen"
 L["UI_HEALKIT_NATIVE_POSITION"] = "HealKit speichert die Position"
-L["UI_HEALKIT_POSITION_TIP"] = "HealKit speichert seine Position selbst. Klicke hier, bis Nur Skalieren aktiv ist. Verschiebe HealKit dann im Bearbeitungsmodus oder öffne die Verschiebeleiste per Rechtsklick auf das HealKit-Minimap-Symbol."
+L["UI_HEALKIT_POSITION_TIP"] = "Wähle Nur Skalieren. HealKit speichert die Position."
+L["UI_HEALKIT_MOVE_TIP"] = "Verschiebe HealKit im Bearbeitungsmodus oder öffne die Verschiebeleiste per Rechtsklick auf das HealKit-Minimap-Symbol."

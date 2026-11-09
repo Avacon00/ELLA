@@ -422,4 +422,5 @@ L["SLASH_HELP_DEBUG"] = "/ella debug - Preview a copyable diagnostics report."
 
 L["UI_HEALKIT_RECOMMENDED_MODE"] = "For positioning: choose Scale Only"
 L["UI_HEALKIT_NATIVE_POSITION"] = "Position saved by HealKit"
-L["UI_HEALKIT_POSITION_TIP"] = "HealKit saves its own position. Click until Scale Only is selected. Then move HealKit in Edit Mode or right-click its minimap icon to show its move bar."
+L["UI_HEALKIT_POSITION_TIP"] = "Choose Scale Only. HealKit saves its own position."
+L["UI_HEALKIT_MOVE_TIP"] = "Move in Edit Mode or right-click HealKit's minimap icon to open its move bar."
