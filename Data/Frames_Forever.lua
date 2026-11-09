@@ -50,7 +50,7 @@ Registry:RegisterWindow("FOREVER_FACTIONS", {
 
 -- ============================================================================
 -- Pre-Registered Community & Quality-of-Life AddOns (Out-of-the-Box, Opt-In)
--- When not installed: 0.00 ms CPU, 0 bytes RAM (dormant candidates).
+-- Missing add-ons have no bound target frames; their descriptors remain in the registry.
 -- Default mode is MODE_DISABLED (Off) so third-party AddOns keep their own
 -- native layout/position across /reload unless explicitly enabled in /ella!
 -- ============================================================================

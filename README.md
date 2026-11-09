@@ -279,6 +279,8 @@ ELLA/
 
 ## Third-Party Addon API (`ELLA_API`)
 
+Für nicht geladene Community-AddOns hält ELLA Registrierungsdaten im Lua-Speicher. ELLA erstellt oder verwaltet dabei keine fehlenden Ziel-Frames.
+
 Andere Addon-Autoren können ihre eigenen Fenster mit wenigen Zeilen an **EĹLA** anbinden:
 
 ```lua
