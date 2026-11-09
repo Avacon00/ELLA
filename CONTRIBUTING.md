@@ -40,6 +40,38 @@ Die CI führt diese Tests einschließlich echter Lua-5.1-Syntaxprüfung aus.
 Frame-Doubles prüfen die Programmlogik; Rendering, Fokus, Combat-Lockdown und
 Taint müssen zusätzlich im tatsächlichen WoW-Client abgenommen werden.
 
+Die bestehende Testsuite verwendet `unittest` als Runner und Lupa mit `lua51` als
+Lua-Runtime. Neue Lua-Regressionsfälle gehören in diese Suite. Eine zweite Suite
+mit Busted würde für dieselben Modulpfade einen weiteren Test-Runner einführen.
+Die Suite deckt Profilwechsel, Import und Export, Migrationen, Registrierungs-
+und Rebind-Abläufe, API-Fehler sowie geschützte Änderungen nach Kampfende ab.
+Für einen einzelnen Testfall kann man aus dem Projektverzeichnis beispielsweise
+`/tmp/ella-tests-venv/bin/python -m unittest discover -s tests -p test_lifecycle.py -k pending_addon_binding -v` ausführen.
+
+### Abnahme im Forever-Client
+
+- Frisches ZIP installieren. Client-Build und Interface aus `GetBuildInfo()` sowie
+  den Commit des Add-ons notieren. Prüfen, ob ELLA in der Add-on-Liste erscheint,
+  `/ella` öffnet und die Installation auch nach `/reload` lädt.
+- Ein sichtbares verwaltetes Fenster skalieren und verschieben. Einen erst später
+  geladenen Frame öffnen und die Bindung sowie die gespeicherte Position prüfen.
+- Ein geschütztes Fenster im Kampf bedienen. Es darf im Kampf keine geschützte
+  Änderung geben. Nach Kampfende muss der aufgeschobene Auftrag korrekt laufen.
+  Lua-Fehler und Taint-Log für diesen Durchlauf erfassen.
+- Beim Strg-Mausrad außerhalb beginnen und in zwei verwaltete Fenster wechseln.
+  Auch überlappende Fenster und Fenster mit skalierten Eltern prüfen. Nach
+  Loslassen von Strg muss das normale Mausradverhalten wieder verfügbar sein.
+
+### Wowless-Pilot
+
+Die Upstream-[Builddaten für `wowf`](https://github.com/wowless/wowless/blob/main/data/products/wowf/build.yaml)
+führen Interface `16001` und Build `70790`. Das Produkt ist ein Kandidat für
+Headless-Tests. Für einen Pilotlauf einen Wowless-Commit und dessen `wowf`-Build
+festhalten, den Upstream-Container einrichten und aus dessen Projektverzeichnis
+`bin/run.sh wowf --addondir /pfad/zu/ELLA` ausführen. Das Add-on muss geladen
+werden, bevor Lifecycle- und Combat-Szenarien als CI-Prüfung taugen. Den
+Pilotlauf erst nach reproduzierbarer Einrichtung in die CI übernehmen.
+
 ---
 
 ## 2. Drittanbieter-API (`ELLA_API` / `_G.Ella` / `LibStub`)
