@@ -21,3 +21,22 @@ labels: ["bug"]
 
 ### Lua-Fehlermeldung oder Screenshot (optional)
 <!-- Füge hier ggf. einen Lua-Error oder Screenshot ein -->
+
+### ELLA-Diagnose (optional)
+
+Mit `/ella debug` kannst du einen Diagnosebericht öffnen. Prüfe den Text vor dem Kopieren.
+Bitte füge bei Bedarf den Diagnosebericht ein und halte private Profilcodes separat.
+
+Auszug aus einem fiktiven Bericht:
+
+```text
+ella_diagnostics=2
+client_interface=16001
+combat_pending=0
+CHARACTER state=bound mode=SCALE_AND_MOVE candidate=primary
+window_2 state=waiting_for_addon mode=DISABLED candidate=-
+addon_bindings_pending=1
+```
+
+Eigene Fenster erscheinen nummeriert. `candidate` ist `primary` für den
+primären Frame, eine Nummer für einen alternativen Kandidaten oder `-`.

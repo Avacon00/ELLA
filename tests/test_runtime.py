@@ -40,6 +40,9 @@ class RuntimeTests(unittest.TestCase):
     def test_diagnostics_report_is_redacted_read_only_and_tolerates_invalid_window_data(self):
         self.check_lua('''
             local frame = RegisterTestWindow("PRIVATE_WINDOW")
+            ns.Registry:RegisterWindow("UNBOUND", { frame = "NoSuchFrame" })
+            ns.Registry.diagnosticBuiltinIds.UNBOUND = true
+            ns.Guard:EnqueueAfterCombat("PrivateTask", nil, function() end)
             ns.Registry:RegisterWindow("PRIVATE_MISSING", { frame = "PrivateFrameName", addon = "PrivateAddon" })
             ns.db.activeProfile = "PrivateProfile"
             local windows = ns.db.windows
@@ -47,7 +50,12 @@ class RuntimeTests(unittest.TestCase):
             local before = frame.scaleWrites
             local undo = ns.Profiles:CanUndo()
             local report = ns.Engine:BuildDiagnosticsReport()
-            assert(report:find("ella_diagnostics=1", 1, true))
+            assert(report:find("ella_diagnostics=2", 1, true))
+            assert(report:find("UNBOUND state=missing", 1, true))
+            assert(report:find("candidate=primary", 1, true))
+            assert(report:find("combat_pending=1", 1, true))
+            assert(report:find("addon_bindings_pending=1", 1, true))
+            assert(report:find("state=waiting_for_addon", 1, true))
             assert(report:find("state=bound", 1, true))
             assert(report:find("state=missing", 1, true))
             assert(not report:lower():find("private", 1, true))

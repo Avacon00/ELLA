@@ -132,7 +132,7 @@ function Engine:BuildDiagnosticsReport()
         version, build, _, interface = _G.GetBuildInfo()
     end
     local lines = {
-        "ella_diagnostics=1",
+        "ella_diagnostics=2",
         "addon_version=" .. tostring(ns.Version or "unknown"),
         "client_version=" .. tostring(version or "unknown"),
         "client_build=" .. tostring(build or "unknown"),
@@ -141,14 +141,14 @@ function Engine:BuildDiagnosticsReport()
         "locale=" .. tostring(_G.GetLocale and _G.GetLocale() or "unknown"),
         string.format("ui_parent=%.0fx%.0f scale=%.3f", UIParent:GetWidth() or 0, UIParent:GetHeight() or 0,
             UIParent:GetEffectiveScale() or 1),
-        "combat_pending=" .. tostring(Guard:HasQueuedTasks()),
-        "drag_active=" .. tostring(activeDrag ~= nil),
+        "combat_pending=" .. Guard:GetQueuedTaskCount(),
+        "drag_active=" .. (activeDrag and 1 or 0),
     }
 
     local db = type(ns.db) == "table" and ns.db or {}
     local settings = type(db.settings) == "table" and db.settings or {}
     local windows = type(db.windows) == "table" and db.windows or {}
-    local count = 0
+    local count, waiting = 0, 0
     for id, desc in Registry:IterateWindows() do
         count = count + 1
         local cfg = type(windows[id]) == "table" and windows[id] or {}
@@ -164,10 +164,35 @@ function Engine:BuildDiagnosticsReport()
             local allowed, reason = Guard:CanModifyNow(frame, desc.protected)
             state = allowed and "bound" or (reason == "DEFERRED_COMBAT" and "combat_deferred" or "blocked")
         end
-        -- Extension IDs, frame names, and labels can contain player-provided text.
-        lines[#lines + 1] = string.format("window_%d state=%s mode=%s", count, state, mode)
+        if not frame and desc.addon then
+            local bucket = Registry.pendingByAddon[desc.addon]
+            for _, pending in ipairs(bucket or {}) do
+                if pending == desc then
+                    waiting = waiting + 1
+                    state = "waiting_for_addon"
+                    break
+                end
+            end
+        end
+        local slot = "-"
+        if desc.resolvedFrameName then
+            if desc.resolvedFrameName == desc.frame then
+                slot = "primary"
+            elseif type(desc.candidates) == "table" then
+                for index, candidate in ipairs(desc.candidates) do
+                    if candidate == desc.resolvedFrameName then
+                        slot = tostring(index)
+                        break
+                    end
+                end
+            end
+        end
+        -- Only ship IDs from the built-in data files. Never serialize extension-provided text.
+        local label = Registry.diagnosticBuiltinIds[id] and id or "window_" .. count
+        lines[#lines + 1] = string.format("%s state=%s mode=%s candidate=%s", label, state, mode, slot)
     end
     lines[#lines + 1] = "window_count=" .. count
+    lines[#lines + 1] = "addon_bindings_pending=" .. waiting
     return table.concat(lines, "\n")
 end
 

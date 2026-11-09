@@ -251,3 +251,9 @@ end
 function Guard:HasQueuedTasks()
     return #combatQueueOrder > 0
 end
+
+function Guard:GetQueuedTaskCount()
+    local count = 0
+    for _ in pairs(combatQueue) do count = count + 1 end
+    return count
+end
