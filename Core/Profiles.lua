@@ -626,9 +626,6 @@ function Profiles:RemoveCustomWindow(windowId)
     local frameName = desc.frame or string.gsub(windowId, "^CUSTOM_", "")
     local label = Registry:GetDisplayLabel(desc)
 
-    if desc.boundFrame then
-        Engine:SetWindowMode(windowId, ns.MODE_DISABLED)
-    end
     if ns.BadgeUI and ns.BadgeUI.HideWindowBadge then
         ns.BadgeUI:HideWindowBadge(windowId)
     end

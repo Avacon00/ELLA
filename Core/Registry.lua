@@ -12,6 +12,7 @@ local Registry = {
     readyToBind = false,
 }
 ns.Registry = Registry
+local nextGeneration = 0
 
 -- Resolves nested frame paths such as "ProfessionsFrame.TitleContainer" safely
 function Registry:ResolveFramePath(path)
@@ -55,7 +56,7 @@ function Registry:ResolveDescriptorFrame(desc)
 end
 
 local function TryBindDescriptor(desc)
-    if not Registry.readyToBind then
+    if not Registry.readyToBind or desc.retired or Registry.windows[desc.id] ~= desc then
         return false
     end
     if desc.boundFrame then
@@ -69,7 +70,11 @@ local function TryBindDescriptor(desc)
     desc.boundFrame = frame
     desc.resolvedFrameName = resolvedName
     if ns.Engine and ns.Engine.AttachWindow then
-        ns.Engine:AttachWindow(desc.id, frame, desc)
+        if not ns.Engine:AttachWindow(desc.id, frame, desc) then
+            desc.boundFrame = nil
+            desc.resolvedFrameName = nil
+            return false
+        end
     end
     ns:Fire("OnWindowBound", desc.id, frame, desc)
     return true
@@ -82,7 +87,10 @@ function Registry:RegisterWindow(windowId, spec)
     end
 
     local existing = Registry.windows[windowId]
-    local desc = existing or { id = windowId }
+    if not existing then
+        nextGeneration = nextGeneration + 1
+    end
+    local desc = existing or { id = windowId, generation = nextGeneration }
 
     desc.frame = spec.frame or desc.frame
     desc.candidates = spec.candidates or desc.candidates
@@ -234,13 +242,27 @@ function Registry:UnregisterWindow(windowId)
     if type(windowId) ~= "string" or not Registry.windows[windowId] then
         return false
     end
+    local desc = Registry.windows[windowId]
     Registry.windows[windowId] = nil
+    desc.retired = true
     for i = #Registry.windowOrder, 1, -1 do
         if Registry.windowOrder[i] == windowId then
             table.remove(Registry.windowOrder, i)
         end
     end
+    for addon, bucket in pairs(Registry.pendingByAddon) do
+        for i = #bucket, 1, -1 do
+            if bucket[i] == desc then table.remove(bucket, i) end
+        end
+        if #bucket == 0 then Registry.pendingByAddon[addon] = nil end
+    end
+    if ns.Engine and ns.Engine.DetachWindow then
+        ns.Engine:DetachWindow(windowId, desc.boundFrame, desc)
+    end
+    desc.boundFrame = nil
+    desc.resolvedFrameName = nil
     ns:Fire("OnWindowUnregistered", windowId)
+    Registry:ScanUnboundWindows()
     return true
 end
 
