@@ -61,6 +61,17 @@ function Engine:ClampScale(value)
     return math.floor(num * 100 + 0.5) / 100
 end
 
+-- Convert frame-local lengths and anchor offsets to and from UIParent units.
+local function GetUipScale(frame)
+    return frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
+end
+
+local function SetUipTopLeft(frame, uipX, uipY)
+    local scale = GetUipScale(frame)
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", uipX / scale, uipY / scale)
+end
+
 -- Reads a frame's current top-left coordinates in UIParent space (origin: UIParent TOPLEFT)
 function Engine:ReadUipTopLeft(frame)
     local left = frame:GetLeft()
@@ -69,7 +80,7 @@ function Engine:ReadUipTopLeft(frame)
     if not left or not top or not uipH or uipH <= 0 then
         return nil, nil
     end
-    local s = frame:GetScale() or 1
+    local s = GetUipScale(frame)
     local uipX = left * s
     local uipY = (top * s) - uipH
     return uipX, uipY
@@ -79,7 +90,7 @@ local function GetClampBounds(frame, scale)
     local uipW = UIParent:GetWidth() or 1920
     local uipH = UIParent:GetHeight() or 1080
     local rawW = frame:GetWidth() or 350
-    local scaledW = rawW * scale
+    local scaledW = rawW * GetUipScale(frame) * scale / (frame:GetScale() or 1)
 
     local minX = math.min(0, -scaledW + 120)
     local maxX = math.max(0, uipW - 120)
@@ -475,8 +486,7 @@ function Engine:ApplyToFrame(windowId, frame, desc)
         local clampedX, clampedY = Engine:ClampUipPosition(frame, targetScale, cfg.pos.uipX, cfg.pos.uipY)
         cfg.pos.uipX = clampedX
         cfg.pos.uipY = clampedY
-        frame:ClearAllPoints()
-        frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", clampedX / targetScale, clampedY / targetScale)
+        SetUipTopLeft(frame, clampedX, clampedY)
         state.hasCustomPosApplied = true
     elseif state.hasCustomPosApplied and state.initialPoints then
         frame:ClearAllPoints()
@@ -695,7 +705,7 @@ local isCurrentlySnapped = false
 local lastSnapSoundTime = 0
 
 -- Computes magnetic top-edge / side-by-side snap against other visible windows + Shift 10px grid
-local function ApplyMagneticOrGridSnap(draggedFrame, scale, candX, candY)
+local function ApplyMagneticOrGridSnap(draggedFrame, candX, candY)
     snapLineH:Hide()
     snapLineV:Hide()
 
@@ -709,7 +719,7 @@ local function ApplyMagneticOrGridSnap(draggedFrame, scale, candX, candY)
         return candX, candY
     end
 
-    local thisW = (draggedFrame:GetWidth() or 350) * scale
+    local thisW = (draggedFrame:GetWidth() or 350) * GetUipScale(draggedFrame)
     local snappedX, snappedY = candX, candY
     local guideY, guideX = nil, nil
 
@@ -727,7 +737,7 @@ local function ApplyMagneticOrGridSnap(draggedFrame, scale, candX, candY)
         if other and other ~= draggedFrame and other:IsShown() then
             local oX, oY = Engine:ReadUipTopLeft(other)
             if oX and oY then
-                local oScale = other:GetScale() or 1
+                local oScale = GetUipScale(other)
                 local oW = (other:GetWidth() or 350) * oScale
 
                 -- Top-edge row alignment
@@ -793,8 +803,8 @@ local function AreFramesDocked(frameA, frameB)
         return false
     end
 
-    local aScale = frameA:GetScale() or 1
-    local bScale = frameB:GetScale() or 1
+    local aScale = GetUipScale(frameA)
+    local bScale = GetUipScale(frameB)
     local aW = (frameA:GetWidth() or 350) * aScale
     local aH = (frameA:GetHeight() or 400) * aScale
     local bW = (frameB:GetWidth() or 350) * bScale
@@ -881,7 +891,7 @@ local function OnDragUpdate()
     local scale = frame:GetScale() or 1
     local rawX = activeDrag.startUipX + dX
     local rawY = activeDrag.startUipY + dY
-    local snappedX, snappedY = ApplyMagneticOrGridSnap(frame, scale, rawX, rawY)
+    local snappedX, snappedY = ApplyMagneticOrGridSnap(frame, rawX, rawY)
 
     local isAltDown = IsAltKeyDown()
     local hasDocked = (activeDrag.dockedFrames and #activeDrag.dockedFrames > 0)
@@ -925,8 +935,7 @@ local function OnDragUpdate()
         state.applying = true
         state.hasCustomPosApplied = true
     end
-    frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", newUipX / scale, newUipY / scale)
+    SetUipTopLeft(frame, newUipX, newUipY)
     if state then
         state.applying = false
     end
@@ -950,8 +959,7 @@ local function OnDragUpdate()
                     dState.applying = true
                     dState.hasCustomPosApplied = true
                 end
-                dFrame:ClearAllPoints()
-                dFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", cX / docked.scale, cY / docked.scale)
+                SetUipTopLeft(dFrame, cX, cY)
                 if dState then
                     dState.applying = false
                 end
