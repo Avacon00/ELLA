@@ -9,9 +9,43 @@ on:
 jobs:
   validate:
     name: Validate TOC, Locales & Golden Rulebook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+
+        with:
+          fetch-depth: 0
+
+      - name: Install Luacheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua-check
+
+      - name: Check for new Lua warnings
+        shell: bash
+        run: |
+          baseline="$RUNNER_TEMP/ella-lint-baseline"
+          git worktree add --detach "$baseline" 9a857f772f66b7a4aec0efc407d36a63a59c1b11
+
+          lint_report() {
+            local status=0
+            luacheck API Core Data Libs Locales UI --formatter plain --codes --no-color > "$1" || status=$?
+            # Exit 1 means warnings. Errors and tool failures fail the job.
+            [[ "$status" == 0 || "$status" == 1 ]] || { cat "$1"; return "$status"; }
+          }
+
+          (cd "$baseline" && lint_report "$RUNNER_TEMP/ella-baseline.raw")
+          lint_report "$RUNNER_TEMP/ella-current.raw"
+
+          # Match by file, code and message so moving a line preserves the baseline.
+          normalize() {
+            sed -E 's/:[0-9]+:[0-9]+(-[0-9]+)?: /: /' "$1" | LC_ALL=C sort
+          }
+          normalize "$RUNNER_TEMP/ella-baseline.raw" > "$RUNNER_TEMP/ella-baseline.sorted"
+          normalize "$RUNNER_TEMP/ella-current.raw" > "$RUNNER_TEMP/ella-current.sorted"
+          LC_ALL=C comm -13 "$RUNNER_TEMP/ella-baseline.sorted" "$RUNNER_TEMP/ella-current.sorted" > "$RUNNER_TEMP/ella-new-warnings"
+          cat "$RUNNER_TEMP/ella-new-warnings"
+          test ! -s "$RUNNER_TEMP/ella-new-warnings"
 
       - name: Set up Python 3.12
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
