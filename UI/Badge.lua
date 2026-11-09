@@ -506,6 +506,13 @@ local function UpdateBadgeVisual(windowId, badge)
         badge:SetFrameLevel(baseLevel + 1)
     end
     badge:ClearAllPoints()
+    local targetName = target:GetName() or ""
+    if targetName:match("^DetailsBaseFrame%d+$") then
+        -- The native toolbar straddles the top of the Details base frame.
+        badge:SetPoint("BOTTOMRIGHT", target, "TOPRIGHT", -2, 24)
+        badge:Show()
+        return
+    end
     if type(closeBtn) == "table" and not ns.Guard:IsForbidden(closeBtn) then
         badge:SetPoint("RIGHT", closeBtn, "LEFT", -28, 0)
     elseif desc.hasExplicitBadgeOffset or type(nineSlice) == "table" or type(titleContainer) == "table" then
