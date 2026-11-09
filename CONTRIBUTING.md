@@ -92,7 +92,7 @@ Jeder Commit wird automatisiert gegen diese Regeln geprüft (`python3 tests/vali
 
 ### Teil B – Die 8 Technischen Anti-Taint-Gesetze
 1. **Kampf-Schutz (`InCombatLockdown()`):** Niemals `SetScale`, `SetPoint` oder `ClearAllPoints` während des Kampfes auf `Protected`-Frames aufrufen – immer über `Guard:CanModifyNow()` & `Guard:EnqueueAfterCombat()` leiten.
-2. **Edit-Mode-Quarantäne:** HUD- und Kampf-Frames (`PlayerFrame`, Actionbars, Minimap, Buffs, ObjectiveTracker, `RightManagedFrameContainer`, Chat) sind streng gesperrt (`Guard:ValidateTarget`).
+2. **Edit-Mode-Quarantäne:** HUD- und Kampf-Frames (`PlayerFrame`, Actionbars, Minimap, Buffs, ObjectiveTracker, `RightManagedFrameContainer`, Chat) und ihre Unterframes sind streng gesperrt (`Guard:ValidateTarget`). `UIParent` ist als normaler Vorfahr zulässig, als direktes Ziel gesperrt.
 3. **`UIPanelWindows` bleibt unberührt:** Niemals Felder in `UIPanelWindows` überschreiben oder löschen.
 4. **Null Property-Injektion auf Blizzard-Frames:** Niemals `SomeBlizzardFrame.myProp = ...` schreiben oder Frame-Methoden direkt überschreiben (`hooksecurefunc` + Weak-Table in `Core/Engine.lua` nutzen!).
 5. **Pflicht-Check `IsForbidden()`:** Vor jedem Frame-Zugriff über `Guard:IsForbidden(frame)` absichern.

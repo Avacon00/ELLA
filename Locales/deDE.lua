@@ -95,6 +95,7 @@ L["GUARD_DEFERRED_COMBAT"] = "Geschütztes Fenster '%s' darf im Kampf nicht geä
 L["GUARD_COMBAT_APPLIED"] = "%d vorgemerkte Fenster-Anpassung(en) nach Kampfende übernommen."
 L["GUARD_ERR_FORBIDDEN"] = "Fenster kann nicht verwaltet werden: Von Blizzard geschützt/gesperrt."
 L["GUARD_ERR_EDITMODE"] = "HUD- & Kampfelemente gehören zu Blizzards nativem Edit Mode."
+L["GUARD_ERR_HIERARCHY"] = "Fenster kann nicht verwaltet werden: Seine Elternhierarchie konnte nicht sicher geprüft werden."
 L["GUARD_ERR_UNSAFE"] = "Unbenannte Frames können nicht gespeichert werden; nur globale Fenster sind erlaubt."
 
 -- Welcome Dialog

@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unveröffentlicht
+* **HUD-Hierarchieschutz (#16):** Auch Kinder und Enkel gesperrter HUD-/EditMode-Frames werden abgewiesen. Normale Fenster unter `UIParent` bleiben erlaubt; fehlerhafte, zyklische und zu tiefe Elternketten werden sicher abgefangen.
+* **Rückgabe verknüpfter Fenster (#19):** „Aus“ stellt auch allein veränderte Begleitfenster wieder her. Geschützte Begleitfenster erhalten einen eigenen Combat-Aufschub; native Ausgangswerte und weitere aktive Besitzer bleiben erhalten.
 * **Profilschutz (#15):** „Neu/Kopieren“ weist bereits vorhandene Profilnamen mit einer lokalisierten Meldung zurück, ohne Profil, Checkpoint, aktives Layout oder Undo-Historie zu ersetzen.
 * **Korrekte API-Rückgaben (#4):** `SetWindowEnabled` und `SetWindowBadgeHidden` melden bei unbekannten Fenster-IDs `false, "unknown_window"` statt eines wirkungslosen Erfolgs.
 * **Drag-Deckkraft (#18):** Temporäre Transparenz wird nach dem Ziehen auch für Sticky-Gruppen und bei Abbruch zurückgesetzt. Native AddOn-Deckkraft und aktuelle Fade-Einstellungen bleiben erhalten.
