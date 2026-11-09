@@ -21,7 +21,7 @@ L["DB_MIGRATION_FAILED"] = "Saved data migration failed. Ella starts inactive; y
 
 -- Modes
 L["MODE_SCALE_MOVE"] = "Scale + Move"
-L["MODE_SCALE_ONLY"] = "Scale Only (Blizzard Layout)"
+L["MODE_SCALE_ONLY"] = "Scale Only"
 L["MODE_DISABLED"] = "Disabled (100%)"
 
 -- Categories

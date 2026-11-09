@@ -18,7 +18,7 @@ L["PROJECT_GENERIC"] = "Kompatibler Client"
 
 -- Modes
 L["MODE_SCALE_MOVE"] = "Skalieren + Bewegen"
-L["MODE_SCALE_ONLY"] = "Nur Skalieren (Blizzard-Layout)"
+L["MODE_SCALE_ONLY"] = "Nur Skalieren"
 L["MODE_DISABLED"] = "Deaktiviert (100%)"
 
 -- Categories
