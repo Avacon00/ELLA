@@ -5,21 +5,18 @@ on:
     tags:
       - "v*"
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   package:
-    name: Build, Publish GitHub Release & CurseForge
+    name: Build and publish GitHub release
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
-    env:
-      CF_API_KEY: ${{ secrets.CF_API_KEY }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
       - name: Validate before packaging
         run: python3 tests/validate_addon.py
@@ -28,6 +25,8 @@ jobs:
         run: python3 scripts/build-release-zip.py
 
       - name: Create or Update GitHub Release with AddOn ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${GITHUB_REF_NAME}"
           ZIP_FILE=".release/ELLA-${TAG}-16001.zip"
@@ -37,6 +36,21 @@ jobs:
             gh release create "${TAG}" "${ZIP_FILE}" --title "${TAG}" --generate-notes
           fi
 
-      - name: Package & Upload Addon to CurseForge (when CF_API_KEY is configured)
+
+  curseforge:
+    name: Publish to CurseForge
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Package and upload when configured
         if: ${{ env.CF_API_KEY != '' }}
-        uses: BigWigsMods/packager@v2
+        uses: BigWigsMods/packager@01e8631a69c69d7654c788d152630d5fed9e3812 # v2
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
