@@ -509,7 +509,11 @@ local function UpdateBadgeVisual(windowId, badge)
     local targetName = target:GetName() or ""
     if targetName:match("^DetailsBaseFrame%d+$") then
         -- The native toolbar straddles the top of the Details base frame.
-        badge:SetPoint("BOTTOMRIGHT", target, "TOPRIGHT", -2, 24)
+        badge:SetPoint("BOTTOMLEFT", target, "TOPLEFT", 0, 24)
+        badge:Show()
+        return
+    elseif targetName == "HealKitAnchor" then
+        badge:SetPoint("BOTTOMLEFT", target, "TOPLEFT", 0, 2)
         badge:Show()
         return
     end
