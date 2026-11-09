@@ -161,4 +161,4 @@ function ns:PlaySound(soundType)
     end
 end
 
-local ellaCiProbeUnused = 42
+local ellaCiProbeSyntax = (
