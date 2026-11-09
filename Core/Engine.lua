@@ -501,7 +501,7 @@ end
 function Engine:SetWindowEnabled(windowId, enabled)
     local desc = Registry:GetDescriptor(windowId)
     if not desc then
-        return
+        return false, "unknown_window"
     end
     local cfg = ns:GetWindowConfig(windowId, true)
     if enabled then
@@ -513,6 +513,7 @@ function Engine:SetWindowEnabled(windowId, enabled)
     else
         Engine:SetWindowMode(windowId, ns.MODE_DISABLED)
     end
+    return true
 end
 
 function Engine:ToggleWindowEnabled(windowId)
@@ -529,7 +530,7 @@ end
 function Engine:SetWindowBadgeHidden(windowId, hidden)
     local desc = Registry:GetDescriptor(windowId)
     if not desc then
-        return
+        return false, "unknown_window"
     end
     if ns.Profiles and ns.Profiles.PushUndoSnapshot then
         ns.Profiles:PushUndoSnapshot("badge:" .. windowId)
@@ -537,6 +538,7 @@ function Engine:SetWindowBadgeHidden(windowId, hidden)
     local cfg = ns:GetWindowConfig(windowId, true)
     cfg.hideBadge = (hidden == true)
     ns:Fire("OnWindowConfigChanged", windowId, cfg)
+    return true
 end
 
 function Engine:ToggleWindowBadge(windowId)
@@ -874,8 +876,9 @@ function Engine:StartWindowDrag(windowId, frame, desc)
     end
 
     local origAlpha = (type(frame.GetAlpha) == "function" and frame:GetAlpha()) or 1
-    if ns.db.settings.dragOpacity and type(frame.SetAlpha) == "function" then
-        frame:SetAlpha(math.min(origAlpha, 0.78))
+    local dragAlphaApplied = ns.db.settings.dragOpacity and origAlpha > 0.78 and type(frame.SetAlpha) == "function"
+    if dragAlphaApplied then
+        frame:SetAlpha(0.78)
     end
 
     local dockedCluster = {}
@@ -884,8 +887,9 @@ function Engine:StartWindowDrag(windowId, frame, desc)
         if ns.db.settings.dragOpacity then
             for i = 1, #dockedCluster do
                 local d = dockedCluster[i]
-                if d.frame and type(d.frame.SetAlpha) == "function" then
-                    d.frame:SetAlpha(math.min(d.origAlpha, 0.78))
+                if d.frame and d.origAlpha > 0.78 and type(d.frame.SetAlpha) == "function" then
+                    d.frame:SetAlpha(0.78)
+                    d.dragAlphaApplied = true
                 end
             end
         end
@@ -897,6 +901,7 @@ function Engine:StartWindowDrag(windowId, frame, desc)
         frame = frame,
         desc = desc,
         originalAlpha = origAlpha,
+        dragAlphaApplied = dragAlphaApplied,
         startCursorX = curX,
         startCursorY = curY,
         startUipX = uipX,
@@ -912,6 +917,20 @@ function Engine:StartWindowDrag(windowId, frame, desc)
     dragDriver:SetScript("OnUpdate", OnDragUpdate)
 end
 
+local function RestoreDragAlpha(windowId, frame, desc, originalAlpha, dragAlphaApplied)
+    if not frame or Guard:IsForbidden(frame) then
+        return
+    end
+    -- Temporary drag opacity is independent of persistent Ella alpha ownership.
+    -- Restore it first so a new opacity setting captures the pristine native alpha.
+    if dragAlphaApplied and originalAlpha ~= nil and type(frame.SetAlpha) == "function" then
+        frame:SetAlpha(originalAlpha)
+    end
+    if desc then
+        Engine:ApplyAlphaToFrame(windowId, frame, desc)
+    end
+end
+
 function Engine:StopActiveDrag()
     dragDriver:SetScript("OnUpdate", nil)
     snapLineH:Hide()
@@ -923,11 +942,7 @@ function Engine:StopActiveDrag()
     local finished = activeDrag
     activeDrag = nil
 
-    if finished.frame and finished.desc then
-        Engine:ApplyAlphaToFrame(finished.windowId, finished.frame, finished.desc)
-    elseif finished.frame and finished.originalAlpha and type(finished.frame.SetAlpha) == "function" then
-        finished.frame:SetAlpha(finished.originalAlpha)
-    end
+    RestoreDragAlpha(finished.windowId, finished.frame, finished.desc, finished.originalAlpha, finished.dragAlphaApplied)
 
     local state = frameState[finished.frame]
     if state then
@@ -946,11 +961,7 @@ function Engine:StopActiveDrag()
         local isAltDown = IsAltKeyDown()
         for i = 1, #finished.dockedFrames do
             local docked = finished.dockedFrames[i]
-            if docked.frame and docked.desc then
-                Engine:ApplyAlphaToFrame(docked.windowId, docked.frame, docked.desc)
-            elseif docked.frame and docked.origAlpha and type(docked.frame.SetAlpha) == "function" then
-                docked.frame:SetAlpha(docked.origAlpha)
-            end
+            RestoreDragAlpha(docked.windowId, docked.frame, docked.desc, docked.origAlpha, docked.dragAlphaApplied)
 
             -- Only persist docked positions if not detached with Alt
             if not isAltDown and docked.lastUipX and docked.lastUipY then

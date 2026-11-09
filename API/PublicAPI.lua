@@ -72,13 +72,11 @@ function API:SetWindowAlpha(windowId, alpha, mouseoverFade)
 end
 
 function API:SetWindowEnabled(windowId, enabled)
-    Engine:SetWindowEnabled(windowId, enabled == true)
-    return true
+    return Engine:SetWindowEnabled(windowId, enabled == true)
 end
 
 function API:SetWindowBadgeHidden(windowId, hidden)
-    Engine:SetWindowBadgeHidden(windowId, hidden == true)
-    return true
+    return Engine:SetWindowBadgeHidden(windowId, hidden == true)
 end
 
 function API:GetWindowConfig(windowId)
