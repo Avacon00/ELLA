@@ -8,6 +8,8 @@
 
 [![Download Latest Release](https://img.shields.io/badge/Download-v1.10.0_(ZIP)-ffaa00?logo=github)](https://github.com/Avacon00/ELLA/releases/latest)
 [![CI Validation](https://github.com/Avacon00/ELLA/actions/workflows/lint.yml/badge.svg)](https://github.com/Avacon00/ELLA/actions/workflows/lint.yml)
+Offizieller Zielclient / Official target client: **World of Warcraft: Forever (Camelot)**. Standard/Retail liegt außerhalb des Supportumfangs / is outside the support scope.
+
 ![Interface 16001](https://img.shields.io/badge/WoW_Forever-Interface_16001-00ccff)
 ![Project Camelot](https://img.shields.io/badge/GameType-camelot-ffd100)
 ![Zero Taint](https://img.shields.io/badge/Architecture-Zero_Taint-00ff96)
@@ -239,7 +241,7 @@ Unterstützte Profilformate und Importgrenzen: [Profilimport](docs/PROFILE-IMPOR
 
 ```text
 ELLA/
-├── ELLA.toc                 # Interface: 16001, AllowLoadGameType: camelot, standard
+├── ELLA.toc                 # Interface: 16001, AllowLoadGameType: camelot
 ├── Bindings.xml             # Blizzard Tastenbelegung (Kategorie ADDONS: Boss-Key, Manager, Gitter)
 ├── Media/
 │   └── Icon.tga             # Custom 256x256 Addon-Icon (Addon-Liste, Minimap & UI)
