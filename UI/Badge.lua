@@ -498,13 +498,18 @@ local function UpdateBadgeVisual(windowId, badge)
 
     -- A detached badge for a frameless window should not float over unrelated panels.
     local hasChrome = type(nineSlice) == "table" or type(titleContainer) == "table" or type(closeBtn) == "table"
+    local strata, level
     if hasChrome or desc.hasExplicitBadgeOffset then
-        badge:SetFrameStrata(RANK_TO_STRATA[maxRank] or "HIGH")
-        badge:SetFrameLevel(math.min(topLevel, 9000))
+        strata, level = RANK_TO_STRATA[maxRank] or "HIGH", math.min(topLevel, 9000)
     else
-        badge:SetFrameStrata(target:GetFrameStrata() or "MEDIUM")
-        badge:SetFrameLevel(baseLevel + 1)
+        strata, level = target:GetFrameStrata() or "MEDIUM", baseLevel + 1
     end
+    -- The manager is a DIALOG. Keep detached badges below it while it is open.
+    if ns.ManagerUI and ns.ManagerUI:IsShown() and (STRATA_RANK[strata] or 0) >= STRATA_RANK.DIALOG then
+        strata = "HIGH"
+    end
+    badge:SetFrameStrata(strata)
+    badge:SetFrameLevel(level)
     -- The badge is parented to UIParent, so match the window's effective scale explicitly.
     badge:SetScale(hasChrome and target:GetEffectiveScale() / UIParent:GetEffectiveScale() or 1)
     badge:ClearAllPoints()
