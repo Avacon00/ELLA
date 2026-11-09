@@ -340,7 +340,7 @@ local function OpenExportImportModal()
 
         editBox:SetScript("OnTextChanged", function(self)
             local txt = self:GetText() or ""
-            local isValid, count, names, pName = Profiles:InspectImportString(txt)
+            local isValid, count, names, pName, reason = Profiles:InspectImportString(txt)
             if isValid then
                 local pInfo = pName and string.format(L["UI_EXPORT_DETECTED_PROFILE"], pName) or ""
                 local summaryLine = string.format(L["UI_EXPORT_DETECTED_SUMMARY"], pInfo, count, names)
@@ -352,7 +352,7 @@ local function OpenExportImportModal()
                 m.importBtn:Disable()
                 m.importBtn:SetText(L["UI_BTN_IMPORT"])
             else
-                m.summaryText:SetText("|cffff5555" .. L["UI_EXPORT_SUMMARY_INVALID"] .. "|r")
+                m.summaryText:SetText("|cffff5555" .. Profiles:GetImportErrorMessage(reason) .. "|r")
                 m.importBtn:Disable()
                 m.importBtn:SetText(L["UI_BTN_IMPORT"])
             end
