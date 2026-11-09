@@ -506,13 +506,25 @@ local function UpdateBadgeVisual(windowId, badge)
         badge:SetFrameLevel(baseLevel + 1)
     end
     badge:ClearAllPoints()
-    local detailsTitle = windowId == "COMM_DETAILS" and rawget(target, "titleBar")
-    if type(detailsTitle) == "table" and detailsTitle.GetTop and not ns.Guard:IsForbidden(detailsTitle) and detailsTitle:IsVisible() then
-        local top = detailsTitle:GetTop()
-        local scale = detailsTitle:GetEffectiveScale()
-        local screenTop = UIParent:GetHeight() * UIParent:GetEffectiveScale()
-        if top and top * scale + 20 * UIParent:GetEffectiveScale() <= screenTop then
-            badge:SetPoint("BOTTOMRIGHT", detailsTitle, "TOPRIGHT", -2, 2)
+    local targetName = target:GetName() or ""
+    local toolbar = targetName:match("^DetailsBaseFrame%d+$") and rawget(target, "cabecalho")
+    if type(toolbar) == "table" then
+        -- Details positions its icon buttons independently of the decorative title bar.
+        local anchor = target
+        local top = (target:GetTop() or 0) * target:GetEffectiveScale()
+        for _, key in ipairs({ "modo_selecao", "segmento", "atributo", "report", "reset", "fechar" }) do
+            local button = toolbar[key]
+            if button and not ns.Guard:IsForbidden(button) and button:IsVisible() then
+                local buttonTop = button:GetTop()
+                if buttonTop and buttonTop * button:GetEffectiveScale() > top then
+                    anchor = button
+                    top = buttonTop * button:GetEffectiveScale()
+                end
+            end
+        end
+        local uiScale = UIParent:GetEffectiveScale()
+        if top + 20 * uiScale <= UIParent:GetHeight() * uiScale then
+            badge:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", -2, 2)
             badge:Show()
         else
             badge:Hide()
