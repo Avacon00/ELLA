@@ -506,6 +506,19 @@ local function UpdateBadgeVisual(windowId, badge)
         badge:SetFrameLevel(baseLevel + 1)
     end
     badge:ClearAllPoints()
+    local detailsTitle = windowId == "COMM_DETAILS" and rawget(target, "titleBar")
+    if type(detailsTitle) == "table" and detailsTitle.GetTop and not ns.Guard:IsForbidden(detailsTitle) and detailsTitle:IsVisible() then
+        local top = detailsTitle:GetTop()
+        local scale = detailsTitle:GetEffectiveScale()
+        local screenTop = UIParent:GetHeight() * UIParent:GetEffectiveScale()
+        if top and top * scale + 20 * UIParent:GetEffectiveScale() <= screenTop then
+            badge:SetPoint("BOTTOMRIGHT", detailsTitle, "TOPRIGHT", -2, 2)
+            badge:Show()
+        else
+            badge:Hide()
+        end
+        return
+    end
     if type(closeBtn) == "table" and not ns.Guard:IsForbidden(closeBtn) then
         badge:SetPoint("RIGHT", closeBtn, "LEFT", -28, 0)
     elseif desc.hasExplicitBadgeOffset or type(nineSlice) == "table" or type(titleContainer) == "table" then
