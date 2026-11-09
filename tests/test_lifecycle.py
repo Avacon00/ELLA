@@ -32,7 +32,6 @@ class LifecycleTests(unittest.TestCase):
             frame.left = 100
             frame.top = 900
             frame:SetScale(.75)
-            ns.Registry:RegisterWindow("NESTED", { frame = "Nested" })
             local function close(actual, expected)
                 assert(math.abs(actual - expected) < .001)
             end
@@ -40,6 +39,8 @@ class LifecycleTests(unittest.TestCase):
             close(x, 30)
             close(y, 270 - UIParent:GetHeight())
 
+            -- Binding applies the default scale; measure the native geometry first.
+            ns.Registry:RegisterWindow("NESTED", { frame = "Nested" })
             local cfg = ns:GetWindowConfig("NESTED", true)
             cfg.mode = ns.MODE_SCALE_MOVE
             cfg.pos = { uipX = 180, uipY = -100 }
