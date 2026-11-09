@@ -496,9 +496,27 @@ local function UpdateBadgeVisual(windowId, badge)
     local closeLevel = (type(closeBtn) == "table" and closeBtn.GetFrameLevel and closeBtn:GetFrameLevel()) or 0
     local topLevel = math.max(baseLevel + 550, nineSliceLevel + 25, titleLevel + 25, closeLevel + 15)
 
-    badge:SetFrameStrata(RANK_TO_STRATA[maxRank] or "HIGH")
-    badge:SetFrameLevel(math.min(topLevel, 9000))
+    -- A detached badge for a frameless window should not float over unrelated panels.
+    local hasChrome = type(nineSlice) == "table" or type(titleContainer) == "table" or type(closeBtn) == "table"
+    if hasChrome or desc.hasExplicitBadgeOffset then
+        badge:SetFrameStrata(RANK_TO_STRATA[maxRank] or "HIGH")
+        badge:SetFrameLevel(math.min(topLevel, 9000))
+    else
+        badge:SetFrameStrata(target:GetFrameStrata() or "MEDIUM")
+        badge:SetFrameLevel(baseLevel + 1)
+    end
     badge:ClearAllPoints()
+    local targetName = target:GetName() or ""
+    if targetName:match("^DetailsBaseFrame%d+$") then
+        -- The native toolbar straddles the top of the Details base frame.
+        badge:SetPoint("BOTTOMLEFT", target, "TOPLEFT", 0, 16)
+        badge:Show()
+        return
+    elseif targetName == "HealKitAnchor" then
+        badge:SetPoint("BOTTOMLEFT", target, "TOPLEFT", 0, 0)
+        badge:Show()
+        return
+    end
     if type(closeBtn) == "table" and not ns.Guard:IsForbidden(closeBtn) then
         badge:SetPoint("RIGHT", closeBtn, "LEFT", -28, 0)
     elseif desc.hasExplicitBadgeOffset or type(nineSlice) == "table" or type(titleContainer) == "table" then

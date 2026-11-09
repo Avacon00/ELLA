@@ -279,6 +279,8 @@ ELLA/
 
 ## Third-Party Addon API (`ELLA_API`)
 
+Für nicht geladene Community-AddOns hält ELLA Registrierungsdaten im Lua-Speicher. ELLA erstellt oder verwaltet dabei keine fehlenden Ziel-Frames.
+
 Andere Addon-Autoren können ihre eigenen Fenster mit wenigen Zeilen an **EĹLA** anbinden:
 
 ```lua
@@ -292,6 +294,8 @@ if api then
     })
 end
 ```
+
+Drittanbieter können mit `api:RegisterPreset(id, definition)` Skalierungsvorlagen registrieren. Die ID muss eine nichtleere Zeichenkette sein. Die optionalen Felder `name`, `nameKey`, `desc` und `descKey` sind Zeichenketten. `fallbackScale` und Werte in `scales` müssen endliche Zahlen sein. `scales` ordnet nichtleere Fenster-IDs ihren Skalierungen zu. ELLA kopiert die Eingabedaten und begrenzt die Skalierung beim Anwenden wie gewohnt. Ungültige Eingaben liefern `false, reason` und lassen ein vorhandenes Preset mit gleicher ID erhalten.
 
 Weitere Details und das verbindliche **Goldene Regelwerk** für Pull Requests findest du in [CONTRIBUTING.md](CONTRIBUTING.md).
 

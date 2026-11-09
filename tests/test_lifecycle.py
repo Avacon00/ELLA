@@ -21,6 +21,41 @@ class LifecycleTests(unittest.TestCase):
         lua.execute(SETUP + source)
         self.assertEqual(list(lua.globals().errors.values()), [])
 
+    def test_ctrl_wheel_tracks_entry_switch_and_release_without_idle_updates(self):
+        self.check_lua('''
+            local first = CustomWindow("First", "FIRST")
+            local second = CustomWindow("Second", "SECOND")
+            ns.db.settings.ctrlWheelZoom = true
+            local ctrl = false
+            IsControlKeyDown = function() return ctrl end
+            local driver, catcher
+            for _, frame in ipairs(frames) do
+                if frame.events.MODIFIER_STATE_CHANGED then driver = frame end
+                if frame:GetScript("OnMouseWheel") then catcher = frame end
+            end
+            assert(driver and catcher and not driver:GetScript("OnUpdate"))
+            ctrl = true
+            driver:Run("OnEvent", "MODIFIER_STATE_CHANGED", "LCTRL")
+            assert(not catcher:IsShown())
+            first.mouseover = true
+            driver:Run("OnUpdate", .06)
+            assert(catcher:IsShown() and catcher.allPoints == first)
+            catcher:Run("OnMouseWheel", -1)
+            local firstScale = first:GetScale()
+            assert(firstScale < 1 and second:GetScale() == 1)
+
+            first.mouseover = false
+            second.mouseover = true
+            driver:Run("OnUpdate", .06)
+            assert(catcher.allPoints == second)
+            catcher:Run("OnMouseWheel", -1)
+            assert(first:GetScale() == firstScale and second:GetScale() < 1)
+
+            ctrl = false
+            driver:Run("OnEvent", "MODIFIER_STATE_CHANGED", "LCTRL")
+            assert(not catcher:IsShown() and not driver:GetScript("OnUpdate"))
+        ''')
+
     def test_removed_custom_window_stays_native_on_show_and_setpoint(self):
         self.check_lua('''
             local frame = CustomWindow()
