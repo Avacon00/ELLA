@@ -21,6 +21,36 @@ class LifecycleTests(unittest.TestCase):
         lua.execute(SETUP + source)
         self.assertEqual(list(lua.globals().errors.values()), [])
 
+    def test_nested_frame_uses_ui_parent_units_for_read_and_apply(self):
+        self.check_lua('''
+            UIParent:SetScale(.7)
+            local outer = CreateFrame("Frame", nil, UIParent)
+            outer:SetScale(.8)
+            local inner = CreateFrame("Frame", nil, outer)
+            inner:SetScale(.5)
+            local frame = CreateFrame("Frame", "Nested", inner)
+            frame.left = 100
+            frame.top = 900
+            frame:SetScale(.75)
+            ns.Registry:RegisterWindow("NESTED", { frame = "Nested" })
+            local function close(actual, expected)
+                assert(math.abs(actual - expected) < .001)
+            end
+            local x, y = ns.Engine:ReadUipTopLeft(frame)
+            close(x, 30)
+            close(y, 270 - UIParent:GetHeight())
+
+            local cfg = ns:GetWindowConfig("NESTED", true)
+            cfg.mode = ns.MODE_SCALE_MOVE
+            cfg.pos = { uipX = 180, uipY = -100 }
+            assert(ns.Engine:SetWindowScale("NESTED", 1))
+            local point, relative, relativePoint, offsetX, offsetY = frame:GetPoint(1)
+            assert(point == "TOPLEFT" and relative == UIParent and relativePoint == "TOPLEFT")
+            close(offsetX, 450)
+            close(offsetY, -250)
+            assert(frame:GetParent() == inner)
+        ''')
+
     def test_removed_custom_window_stays_native_on_show_and_setpoint(self):
         self.check_lua('''
             local frame = CustomWindow()
