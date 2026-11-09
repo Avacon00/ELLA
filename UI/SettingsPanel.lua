@@ -2007,7 +2007,11 @@ local function EnsureManagerFrame()
         ApplyManagerResponsiveLayout(self)
     end)
 
+    f:HookScript("OnShow", function()
+        BadgeUI:RefreshAll()
+    end)
     f:SetScript("OnHide", function()
+        BadgeUI:RefreshAll()
         DisarmAllConfirmButtons()
         if exportModal and exportModal:IsShown() then
             exportModal:Hide()
