@@ -15,6 +15,7 @@ ns.STEP_COARSE = 0.05
 ns.STEP_FINE = 0.01
 ns.MIN_ALPHA = 0.30
 ns.MAX_ALPHA = 1.00
+ns.MAX_POSITION = 1000000
 
 -- Window Modes
 ns.MODE_SCALE_MOVE = "SCALE_AND_MOVE"
@@ -82,64 +83,18 @@ local DEFAULT_SETTINGS = {
     enableSounds = true,
 }
 
+local databaseWarningShown = false
 function ns:InitDatabase()
-    if type(_G.ELLADB) ~= "table" then
-        _G.ELLADB = {}
-    end
-    local db = _G.ELLADB
-
-    if type(db.settings) ~= "table" then
-        db.settings = {}
-    end
-    for k, v in pairs(DEFAULT_SETTINGS) do
-        if db.settings[k] == nil then
-            db.settings[k] = v
-        end
-    end
-    if db.settings.managerHeight and db.settings.managerHeight < 620 then
-        db.settings.managerHeight = 620
-    end
-    if not db.settings.widthMigratedV110 then
-        if db.settings.managerWidth and db.settings.managerWidth < 760 then
-            db.settings.managerWidth = 760
-        end
-        db.settings.widthMigratedV110 = true
-    end
-
-    -- Schema v2: Named Profiles (seamless migration from v1 db.windows)
-    if type(db.profiles) ~= "table" then
-        db.profiles = {}
-        if type(db.windows) == "table" and next(db.windows) ~= nil then
-            db.profiles["Default"] = { windows = db.windows }
-        else
-            db.profiles["Default"] = { windows = {} }
-        end
-        db.profiles["Laptop / Deck"] = { windows = {} }
-    end
-
-    if type(db.profiles["Default"]) ~= "table" then
-        db.profiles["Default"] = { windows = {} }
-    end
-    if type(db.profiles["Default"].windows) ~= "table" then
-        db.profiles["Default"].windows = {}
-    end
-
-    if type(db.activeProfile) ~= "string" or not db.profiles[db.activeProfile] then
-        db.activeProfile = "Default"
-    end
-
-    db.schemaVersion = 2
-    db.windows = db.profiles[db.activeProfile].windows
-
-    if type(db.customWindows) ~= "table" then
-        db.customWindows = {}
-    end
-
-    if type(db.charProfiles) ~= "table" then
-        db.charProfiles = {}
-    end
-
+    local db, status = ns.Database:Initialize(_G.ELLADB, DEFAULT_SETTINGS)
+    if status.persist then _G.ELLADB = db end
     ns.db = db
+    ns.databaseStatus = status
+    if status.code == "recovered" then
+        ns:Print(string.format(ns.L["DB_RECOVERED"], status.repairs))
+    elseif not status.persist and not databaseWarningShown then
+        databaseWarningShown = true
+        ns:Print(ns.L[status.code == "unsupported_schema" and "DB_UNSUPPORTED_SCHEMA" or "DB_MIGRATION_FAILED"])
+    end
     return db
 end
 

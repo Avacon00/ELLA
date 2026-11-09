@@ -10,6 +10,9 @@ local L = ns.L
 L["ADDON_TITLE"] = "Ella"
 L["ADDON_SUBTITLE"] = "Easy Layout & Location Assistant für WoW: Forever"
 L["LOADED_MSG"] = "v%s geladen (%s). Tippe |cffffd100/ella|r zum Konfigurieren."
+L["DB_RECOVERED"] = "%d gespeicherte Werte repariert; die Originale bleiben in ELLADB.recovery erhalten."
+L["DB_UNSUPPORTED_SCHEMA"] = "Gespeicherte Daten benötigen eine neuere Ella-Version. Ella startet inaktiv; deine gespeicherten Daten bleiben unverändert."
+L["DB_MIGRATION_FAILED"] = "Migration fehlgeschlagen. Ella startet inaktiv; deine gespeicherten Daten bleiben unverändert."
 L["PROJECT_FOREVER"] = "WoW: Forever (Camelot)"
 L["PROJECT_GENERIC"] = "Kompatibler Client"
 

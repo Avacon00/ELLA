@@ -232,6 +232,8 @@ python3 scripts/build-release-zip.py
 
 ---
 
+Details zu Schema, Migrationen und Reparatursicherungen: [SavedVariables](docs/SAVEDVARIABLES.md).
+
 ## Projektstruktur / Architecture
 
 ```text
@@ -247,7 +249,8 @@ ELLA/
 │   ├── enUS.lua             # Englische Lokalisierung (Fallback)
 │   └── deDE.lua             # Deutsche Lokalisierung (100% Parität & echte Umlaute)
 ├── Core/
-│   ├── Init.lua             # Namespace, Sound-Engine, SavedVariables Schema v2 (ELLADB)
+│   ├── Init.lua             # Namespace, Sound-Engine, SavedVariables-Initialisierung
+│   ├── Database.lua         # Schema v2, versionierte Migrationen und Wiederherstellung
 │   ├── Guard.lua            # Anti-Taint-Wächter, EditMode-Blacklist & Combat-Queue
 │   ├── Registry.lua         # Deklarative Fenster- & Preset-Registrierung + LoD-Loader
 │   ├── Engine.lua           # Cursor-Pivot-Zoom, Magnetic-Snap, Sticky-Docking & Boss-Key

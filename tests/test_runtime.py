@@ -12,12 +12,12 @@ from lupa.lua51 import LuaRuntime
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULES = (
-    "Locales/enUS.lua", "Locales/deDE.lua", "Core/Init.lua", "Core/Guard.lua",
+    "Locales/enUS.lua", "Locales/deDE.lua", "Core/Init.lua", "Core/Database.lua", "Core/Guard.lua",
     "Core/Registry.lua", "Core/Engine.lua", "Core/Profiles.lua", "API/PublicAPI.lua",
 )
 
 
-def new_runtime(locale="enUS"):
+def new_runtime(locale="enUS", saved_variables=None):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.globals().clientLocale = locale
     lua.execute((ROOT / "tests/wow_stub.lua").read_text(encoding="utf-8"))
@@ -25,6 +25,8 @@ def new_runtime(locale="enUS"):
     compile_lua = lua.eval("function(source, name) return assert(loadstring(source, name)) end")
     for file in MODULES:
         compile_lua((ROOT / file).read_text(encoding="utf-8"), "@" + file)("ELLA", lua.globals().ns)
+    if saved_variables is not None:
+        lua.execute(saved_variables)
     lua.execute("ns:InitDatabase(); ns.Profiles:Init(); ns.Registry:EnableBindingAndScan()")
     return lua
 

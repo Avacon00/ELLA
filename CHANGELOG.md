@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unveröffentlicht
+* **SavedVariables-Migration und Wiederherstellung (#13):** Versionierte Migrationen laufen auf einer Kopie. Beschädigte Einstellungen, Profile und Checkpoints werden vor dem Zugriff repariert; Originalwerte bleiben in `ELLADB.recovery`. Neuere unbekannte Schemas oder fehlgeschlagene Migrationen überschreiben keine gespeicherten Daten.
 * **Fenster-Lebenszyklus (#17):** Entfernte Fenster verlieren sofort ihre aktiven Hooks, Drag-/Fade-Zustände und ausstehenden Bindungen. Ella stellt eigene Änderungen auch nach Kampfende wieder her; erneutes Registrieren desselben Frames verwendet die neue Konfiguration ohne zusätzliche Hook-Dispatcher.
 * **HUD-Hierarchieschutz (#16):** Auch Kinder und Enkel gesperrter HUD-/EditMode-Frames werden abgewiesen. Normale Fenster unter `UIParent` bleiben erlaubt; fehlerhafte, zyklische und zu tiefe Elternketten werden sicher abgefangen.
 * **Rückgabe verknüpfter Fenster (#19):** „Aus“ stellt auch allein veränderte Begleitfenster wieder her. Geschützte Begleitfenster erhalten einen eigenen Combat-Aufschub; native Ausgangswerte und weitere aktive Besitzer bleiben erhalten.
