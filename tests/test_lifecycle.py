@@ -84,6 +84,41 @@ class LifecycleTests(unittest.TestCase):
             assert(x==100 and y==-180)
         ''')
 
+    def test_nested_frame_uses_ui_parent_units_for_read_and_apply(self):
+        self.check_lua('''
+            UIParent:SetScale(.7)
+            local outer = CreateFrame("Frame", nil, UIParent)
+            outer:SetScale(.8)
+            local inner = CreateFrame("Frame", nil, outer)
+            inner:SetScale(.5)
+            local frame = CreateFrame("Frame", "Nested", inner)
+            frame.left = 100
+            frame.top = 900
+            frame:SetScale(.75)
+            local function close(actual, expected)
+                assert(math.abs(actual - expected) < .001)
+            end
+            local x, y = ns.Engine:ReadUipTopLeft(frame)
+            close(x, 30)
+            close(y, 270 - UIParent:GetHeight())
+
+            -- Binding applies the default scale; measure the native geometry first.
+            ns.Registry:RegisterWindow("NESTED", { frame = "Nested" })
+            local cfg = ns:GetWindowConfig("NESTED", true)
+            cfg.mode = ns.MODE_SCALE_MOVE
+            cfg.pos = { uipX = 180, uipY = -100 }
+            assert(ns.Engine:SetWindowScale("NESTED", 1))
+            local point, relative, relativePoint, offsetX, offsetY = frame:GetPoint(1)
+            assert(point == "TOPLEFT" and relative == UIParent and relativePoint == "TOPLEFT")
+            close(offsetX, 450)
+            close(offsetY, -250)
+            assert(frame:GetParent() == inner)
+
+            ns.db.settings.clampToScreen = true
+            local clampedX = ns.Engine:ClampUipPosition(frame, 1, -300, -100)
+            close(clampedX, -20)
+        ''')
+
     def test_pending_addon_binding_is_removed(self):
         self.check_lua('''
             ns.Registry:RegisterWindow("LATE",{frame="LateFrame",addon="LateAddon"})
