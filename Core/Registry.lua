@@ -320,15 +320,48 @@ function Registry:IterateWindows()
 end
 
 -- Preset registration (open to third-party extensions)
+local function IsFiniteScale(value)
+    return type(value) == "number" and value > -math.huge and value < math.huge
+end
+
 function Registry:RegisterPreset(presetId, presetDef)
-    if type(presetId) ~= "string" or type(presetDef) ~= "table" then
-        return false
+    if type(presetId) ~= "string" or presetId == "" then
+        return false, "invalid_id"
     end
+    if type(presetDef) ~= "table" then
+        return false, "invalid_definition"
+    end
+
+    local preset = { id = presetId }
+    for _, field in ipairs({ "name", "nameKey", "desc", "descKey" }) do
+        local value = presetDef[field]
+        if value ~= nil and type(value) ~= "string" then
+            return false, "invalid_" .. field
+        end
+        preset[field] = value
+    end
+    if presetDef.fallbackScale ~= nil and not IsFiniteScale(presetDef.fallbackScale) then
+        return false, "invalid_fallback_scale"
+    end
+    preset.fallbackScale = presetDef.fallbackScale
+
+    if presetDef.scales ~= nil then
+        if type(presetDef.scales) ~= "table" then
+            return false, "invalid_scales"
+        end
+        preset.scales = {}
+        for windowId, scale in pairs(presetDef.scales) do
+            if type(windowId) ~= "string" or windowId == "" or not IsFiniteScale(scale) then
+                return false, "invalid_scales"
+            end
+            preset.scales[windowId] = scale
+        end
+    end
+
     if not Registry.presets[presetId] then
         Registry.presetOrder[#Registry.presetOrder + 1] = presetId
     end
-    presetDef.id = presetId
-    Registry.presets[presetId] = presetDef
+    Registry.presets[presetId] = preset
     return true
 end
 

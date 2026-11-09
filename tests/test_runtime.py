@@ -50,6 +50,34 @@ class RuntimeTests(unittest.TestCase):
                 count += 1
         self.assertGreater(count, 0)
 
+    def test_preset_copies_caller_metadata_and_window_scales(self):
+        self.check_lua('''
+            local input = { name = "External", fallbackScale = .9, scales = { WINDOW = .8 } }
+            RegisterTestWindow("WINDOW")
+            assert(ELLA_API:RegisterPreset("EXTERNAL", input))
+            assert(input.id == nil)
+            input.name = "Changed"
+            input.fallbackScale = .6
+            input.scales.WINDOW = 1.2
+            local stored = ns.Registry:GetPreset("EXTERNAL")
+            assert(stored.id == "EXTERNAL" and stored.name == "External" and stored.fallbackScale == .9)
+            assert(ns.Profiles:ApplyPreset("EXTERNAL"))
+            assert(ns:GetWindowConfig("WINDOW", false).scale == .8)
+        ''')
+
+    def test_preset_invalid_replacement_preserves_previous_registration(self):
+        self.check_lua('''
+            assert(ELLA_API:RegisterPreset("EXTERNAL", { fallbackScale = .9 }))
+            local stored = ns.Registry:GetPreset("EXTERNAL")
+            local count = #ns.Registry.presetOrder
+            local ok, reason = ELLA_API:RegisterPreset("EXTERNAL", { scales = { WINDOW = 0/0 } })
+            assert(ok == false and reason == "invalid_scales")
+            ok, reason = ELLA_API:RegisterPreset("NEW", { fallbackScale = math.huge })
+            assert(ok == false and reason == "invalid_fallback_scale")
+            assert(ns.Registry:GetPreset("EXTERNAL") == stored and ns.Registry:GetPreset("NEW") == nil)
+            assert(#ns.Registry.presetOrder == count)
+        ''')
+
     def test_profile_collision_preserves_target_active_profile_checkpoint_and_undo(self):
         self.check_lua('''
             RegisterTestWindow("WINDOW")

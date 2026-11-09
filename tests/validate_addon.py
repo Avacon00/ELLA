@@ -168,8 +168,8 @@ def validate_toc() -> tuple[list[pathlib.Path], str]:
 
     if meta.get("Interface") != "16001":
         raise ValidationError(f"Expected '## Interface: 16001', got '{meta.get('Interface')}'")
-    if "camelot" not in meta.get("AllowLoadGameType", ""):
-        raise ValidationError("TOC must include 'camelot' in '## AllowLoadGameType'")
+    if meta.get("AllowLoadGameType") != "camelot":
+        raise ValidationError("Expected '## AllowLoadGameType: camelot' for the Forever client")
     if meta.get("SavedVariables") != "ELLADB":
         raise ValidationError("TOC must declare '## SavedVariables: ELLADB'")
     if meta.get("IconTexture") == r"Interface\AddOns\ELLA\Media\Icon":
