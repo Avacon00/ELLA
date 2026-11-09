@@ -15,6 +15,9 @@ L["ADDON_SUBTITLE"] = "Easy Layout & Location Assistant for WoW: Forever"
 L["LOADED_MSG"] = "v%s loaded (%s). Type |cffffd100/ella|r to configure windows."
 L["PROJECT_FOREVER"] = "WoW: Forever (Camelot)"
 L["PROJECT_GENERIC"] = "Compatible Client"
+L["DB_RECOVERED"] = "Repaired %d saved values; originals are preserved in ELLADB.recovery."
+L["DB_UNSUPPORTED_SCHEMA"] = "Saved data requires a newer Ella version. Ella starts inactive; your saved data stays unchanged."
+L["DB_MIGRATION_FAILED"] = "Saved data migration failed. Ella starts inactive; your saved data stays unchanged."
 
 -- Modes
 L["MODE_SCALE_MOVE"] = "Scale + Move"

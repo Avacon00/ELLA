@@ -23,6 +23,7 @@ Locales\deDE.lua
 
 # Core Engine & Anti-Taint Architecture
 Core\Init.lua
+Core\Database.lua
 Core\Guard.lua
 Core\Registry.lua
 Core\Engine.lua
