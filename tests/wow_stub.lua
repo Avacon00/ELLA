@@ -37,6 +37,7 @@ function CreateFrame(_, name, parent)
         name = name,
         parent = parent,
         scale = 1,
+        scaleWrites = 0,
         alpha = 1,
         alphaWrites = 0,
         width = 350,
@@ -64,7 +65,10 @@ function Frame:GetScale() return self.scale end
 function Frame:GetEffectiveScale()
     return self.scale * (self.parent and self.parent:GetEffectiveScale() or 1)
 end
-function Frame:SetScale(value) self.scale = value end
+function Frame:SetScale(value)
+    self.scale = value
+    self.scaleWrites = self.scaleWrites + 1
+end
 function Frame:GetAlpha() return self.alpha end
 function Frame:SetAlpha(value)
     self.alpha = value

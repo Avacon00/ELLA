@@ -3,6 +3,7 @@ local AddonName, ns = ...
 local L = ns.L
 local Guard = {}
 ns.Guard = Guard
+local MAX_HIERARCHY_DEPTH = 64
 
 -- Golden Rule #2: Strict Edit Mode & HUD Blacklist
 -- None of these frames may ever be scaled, moved, or picked by Ella.
@@ -137,18 +138,48 @@ function Guard:IsProtectedHierarchy(frame)
     return false
 end
 
--- Validates whether a candidate frame is allowed to be managed at all
+local function ReadParent(frame)
+    return frame:GetParent()
+end
+
+-- Validate the full hierarchy; UIParent is permitted as an ancestor, never as a target.
 function Guard:ValidateTarget(frame)
     if Guard:IsForbidden(frame) then
         return false, L["GUARD_ERR_FORBIDDEN"]
     end
-    if Guard:IsEditModeFrame(frame) then
-        return false, L["GUARD_ERR_EDITMODE"]
-    end
     if type(frame.SetScale) ~= "function" or type(frame.SetPoint) ~= "function" then
         return false, L["GUARD_ERR_FORBIDDEN"]
     end
-    return true, nil
+
+    local cursor = frame
+    local visited = {}
+    for _ = 1, MAX_HIERARCHY_DEPTH do
+        if Guard:IsForbidden(cursor) then
+            return false, L["GUARD_ERR_FORBIDDEN"]
+        end
+        if visited[cursor] then
+            return false, L["GUARD_ERR_HIERARCHY"]
+        end
+        visited[cursor] = true
+
+        local editOk, isEditMode = pcall(Guard.IsEditModeFrame, Guard, cursor)
+        if not editOk then
+            return false, L["GUARD_ERR_HIERARCHY"]
+        end
+        if isEditMode then
+            return false, L["GUARD_ERR_EDITMODE"]
+        end
+
+        local parentOk, parent = pcall(ReadParent, cursor)
+        if not parentOk then
+            return false, L["GUARD_ERR_HIERARCHY"]
+        end
+        if parent == nil or parent == _G.UIParent then
+            return true, nil
+        end
+        cursor = parent
+    end
+    return false, L["GUARD_ERR_HIERARCHY"]
 end
 
 -- Golden Rule #1: Never mutate protected frames during InCombatLockdown()

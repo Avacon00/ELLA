@@ -10,6 +10,10 @@ ns.Engine = Engine
 -- NEVER write properties directly onto Blizzard frames!
 local frameState = setmetatable({}, { __mode = "k" })
 
+-- Companion ownership is separate from a frame's own primary-window settings.
+local linkedFrameStates = setmetatable({}, { __mode = "k" })
+local linkedApplyOrder = 0
+
 -- Golden Rule #8: Event & Drag driver has OnUpdate == nil at rest (0.00 ms idle CPU).
 local eventFrame = CreateFrame("Frame")
 local dragDriver = CreateFrame("Frame")
@@ -113,55 +117,132 @@ function Engine:GetEffectiveWindowScale(windowId, desc)
     return savedScale, savedScale, false
 end
 
--- Syncs scale onto optional companion sub-frames (e.g. QuestLogPopupDetailFrame, Orders panel)
-local function SyncLinkedFrames(windowId, desc, targetScale, isDisabling)
+local function HasLinkedScaleChanges(desc)
+    for _, state in pairs(linkedFrameStates[desc] or {}) do
+        if state.modified then
+            return true
+        end
+    end
+    return false
+end
+
+local function FindLinkedScaleOwner(sub, excludedDesc, activeOnly)
+    -- Shared companions keep the most recently applied remaining owner's scale.
+    local bestDesc, bestState
+    for owner, states in pairs(linkedFrameStates) do
+        local state = states[sub]
+        if owner ~= excludedDesc and state and state.modified and Registry:GetDescriptor(owner.id) == owner then
+            local isActive = Engine:GetEffectiveWindowMode(owner.id, owner) ~= ns.MODE_DISABLED
+            if (not activeOnly or isActive) and (not bestState or state.order > bestState.order) then
+                bestDesc, bestState = owner, state
+            end
+        end
+    end
+    return bestDesc, bestState
+end
+
+local SyncLinkedFrames
+
+local function ApplyLinkedScale(windowId, desc, sub, state)
+    if Registry:GetDescriptor(windowId) ~= desc or state.applying or Guard:IsForbidden(sub) then
+        return
+    end
+
+    local isDisabling = Engine:GetEffectiveWindowMode(windowId, desc) == ns.MODE_DISABLED
+    if isDisabling and not state.modified then
+        return
+    end
+    local nextOwner = isDisabling and FindLinkedScaleOwner(sub, desc, true) or nil
+    local restoreOwner = nextOwner or (isDisabling and state.primaryOwner)
+    local canModify, reason = Guard:CanModifyNow(sub, desc.protected or (restoreOwner and restoreOwner.protected))
+    if not canModify then
+        if reason == "DEFERRED_COMBAT" then
+            -- Reevaluate the whole companion group and current config after combat.
+            Guard:EnqueueAfterCombat("linked:" .. windowId, Registry:GetDisplayLabel(desc), function()
+                SyncLinkedFrames(windowId, desc)
+            end)
+        end
+        return
+    end
+
+    local current = sub:GetScale() or 1
+    local target = isDisabling and (state.initialScale or 1) or Engine:GetEffectiveWindowScale(windowId, desc)
+    if nextOwner then
+        target = Engine:GetEffectiveWindowScale(nextOwner.id, nextOwner)
+    elseif isDisabling and state.primaryOwner then
+        local primary = state.primaryOwner
+        if Registry:GetDescriptor(primary.id) == primary and Engine:GetEffectiveWindowMode(primary.id, primary) ~= ns.MODE_DISABLED then
+            target = Engine:GetEffectiveWindowScale(primary.id, primary)
+        else
+            target = state.primaryNativeScale or target
+        end
+    end
+    if not isDisabling then
+        local _, otherState = FindLinkedScaleOwner(sub, desc, false)
+        if state.modified or otherState or math.abs(current - target) > 0.001 then
+            if not state.modified then
+                state.initialScale = otherState and otherState.initialScale or current
+                -- A companion can also be a primary window with its own native snapshot.
+                local primary = frameState[sub]
+                if otherState then
+                    state.primaryOwner = otherState.primaryOwner
+                    state.primaryNativeScale = otherState.primaryNativeScale
+                elseif primary and primary.attached and Registry:GetDescriptor(primary.windowId) == primary.desc then
+                    state.primaryOwner = primary.desc
+                    state.primaryNativeScale = primary.initialScale or current
+                else
+                    state.primaryOwner = nil
+                    state.primaryNativeScale = nil
+                end
+            end
+            state.modified = true
+            linkedApplyOrder = linkedApplyOrder + 1
+            state.order = linkedApplyOrder
+        end
+    end
+    if math.abs(current - target) > 0.001 then
+        state.applying = true
+        sub:SetScale(target)
+        state.applying = false
+    end
+    if isDisabling then
+        state.modified = false
+    end
+end
+
+-- Sync or restore companions, including ones whose main frame never needed a change.
+SyncLinkedFrames = function(windowId, desc)
+    if Registry:GetDescriptor(windowId) ~= desc then
+        return
+    end
+    local states = linkedFrameStates[desc]
+    if Engine:GetEffectiveWindowMode(windowId, desc) == ns.MODE_DISABLED then
+        for sub, state in pairs(states or {}) do
+            ApplyLinkedScale(windowId, desc, sub, state)
+        end
+        return
+    end
     if type(desc.linkedFrames) ~= "table" then
         return
+    end
+    if not states then
+        states = setmetatable({}, { __mode = "k" })
+        linkedFrameStates[desc] = states
     end
     for i = 1, #desc.linkedFrames do
         local sub = Registry:ResolveFramePath(desc.linkedFrames[i])
         if sub and sub ~= desc.boundFrame and not Guard:IsForbidden(sub) then
-            local subState = frameState[sub]
-            if not subState or not subState.linkedHooked then
-                subState = subState or {}
-                subState.linkedHooked = true
-                frameState[sub] = subState
+            local state = states[sub]
+            if not state then
+                state = {}
+                states[sub] = state
                 if type(sub.HookScript) == "function" then
                     sub:HookScript("OnShow", function(sFrame)
-                        local sMode = Engine:GetEffectiveWindowMode(windowId, desc)
-                        if sMode == ns.MODE_DISABLED then
-                            return
-                        end
-                        local sTarget = Engine:GetEffectiveWindowScale(windowId, desc)
-                        if Guard:CanModifyNow(sFrame, desc.protected) then
-                            local st = frameState[sFrame]
-                            if st and st.initialScale == nil then
-                                st.initialScale = sFrame:GetScale() or 1
-                            end
-                            local c = sFrame:GetScale() or 1
-                            if math.abs(c - sTarget) > 0.001 then
-                                sFrame:SetScale(sTarget)
-                                if st then st.hasEllaScaled = true end
-                            end
-                        end
+                        ApplyLinkedScale(windowId, desc, sFrame, state)
                     end)
                 end
             end
-            if isDisabling then
-                if subState.hasEllaScaled and Guard:CanModifyNow(sub, desc.protected) then
-                    sub:SetScale(subState.initialScale or 1)
-                    subState.hasEllaScaled = false
-                end
-            elseif Guard:CanModifyNow(sub, desc.protected) then
-                if subState.initialScale == nil then
-                    subState.initialScale = sub:GetScale() or 1
-                end
-                local cur = sub:GetScale() or 1
-                if math.abs(cur - targetScale) > 0.001 then
-                    sub:SetScale(targetScale)
-                    subState.hasEllaScaled = true
-                end
-            end
+            ApplyLinkedScale(windowId, desc, sub, state)
         end
     end
 end
@@ -274,7 +355,7 @@ function Engine:ApplyToFrame(windowId, frame, desc)
     -- touch NOTHING (zero SetScale, zero SetAlpha, zero SetPoint) so third-party
     -- AddOns retain complete ownership of their native position, scale, and opacity!
     if mode == ns.MODE_DISABLED then
-        if not state.hasEllaScaled and not state.hasEllaAlpha and not state.hasCustomPosApplied then
+        if not state.hasEllaScaled and not state.hasEllaAlpha and not state.hasCustomPosApplied and not HasLinkedScaleChanges(desc) then
             ns:Fire("OnWindowApplied", windowId, frame, frame:GetScale() or 1, mode)
             return
         end
@@ -295,7 +376,7 @@ function Engine:ApplyToFrame(windowId, frame, desc)
             frame:SetScale(origScale)
             state.hasEllaScaled = false
         end
-        SyncLinkedFrames(windowId, desc, state.initialScale or 1.0, true)
+        SyncLinkedFrames(windowId, desc)
         Engine:ApplyAlphaToFrame(windowId, frame, desc)
         if state.hasCustomPosApplied and state.initialPoints then
             frame:ClearAllPoints()
@@ -348,7 +429,7 @@ function Engine:ApplyToFrame(windowId, frame, desc)
     elseif math.abs(targetScale - (state.initialScale or 1.0)) > 0.001 then
         state.hasEllaScaled = true
     end
-    SyncLinkedFrames(windowId, desc, targetScale, false)
+    SyncLinkedFrames(windowId, desc)
     Engine:ApplyAlphaToFrame(windowId, frame, desc)
 
     if mode == ns.MODE_SCALE_MOVE and cfg and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then

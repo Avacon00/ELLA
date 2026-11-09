@@ -98,6 +98,7 @@ L["GUARD_DEFERRED_COMBAT"] = "Protected window '%s' cannot be modified in combat
 L["GUARD_COMBAT_APPLIED"] = "Applied %d queued window adjustment(s) after combat."
 L["GUARD_ERR_FORBIDDEN"] = "Cannot manage this frame: restricted/forbidden by Blizzard."
 L["GUARD_ERR_EDITMODE"] = "HUD & combat frames belong to Blizzard's native Edit Mode."
+L["GUARD_ERR_HIERARCHY"] = "Cannot manage this frame: its parent hierarchy could not be safely verified."
 L["GUARD_ERR_UNSAFE"] = "Cannot pick an unnamed frame; only global named windows can be saved across sessions."
 
 -- Welcome Dialog
