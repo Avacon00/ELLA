@@ -166,7 +166,9 @@ local function ApplyLinkedScale(windowId, desc, sub, state)
         return
     end
     local nextOwner = isDisabling and FindLinkedScaleOwner(sub, desc, true) or nil
-    local restoreOwner = nextOwner or (isDisabling and state.primaryOwner)
+    local primary = isDisabling and CurrentState(sub) or nil
+    local primaryOwner = primary and primary.desc or state.primaryOwner
+    local restoreOwner = nextOwner or (isDisabling and primaryOwner)
     local canModify, reason = Guard:CanModifyNow(sub, desc.protected or (restoreOwner and restoreOwner.protected))
     if not canModify then
         if reason == "DEFERRED_COMBAT" then
@@ -182,12 +184,12 @@ local function ApplyLinkedScale(windowId, desc, sub, state)
     local target = isDisabling and (state.initialScale or 1) or Engine:GetEffectiveWindowScale(windowId, desc)
     if nextOwner then
         target = Engine:GetEffectiveWindowScale(nextOwner.id, nextOwner)
-    elseif isDisabling and state.primaryOwner then
-        local primary = state.primaryOwner
-        if Registry:GetDescriptor(primary.id) == primary and Engine:GetEffectiveWindowMode(primary.id, primary) ~= ns.MODE_DISABLED then
-            target = Engine:GetEffectiveWindowScale(primary.id, primary)
+    elseif isDisabling and primaryOwner then
+        if Registry:GetDescriptor(primaryOwner.id) == primaryOwner
+            and Engine:GetEffectiveWindowMode(primaryOwner.id, primaryOwner) ~= ns.MODE_DISABLED then
+            target = Engine:GetEffectiveWindowScale(primaryOwner.id, primaryOwner)
         else
-            target = state.primaryNativeScale or target
+            target = (primary and primary.initialScale) or state.primaryNativeScale or target
         end
     end
     if not isDisabling then
@@ -196,13 +198,13 @@ local function ApplyLinkedScale(windowId, desc, sub, state)
             if not state.modified then
                 state.initialScale = otherState and otherState.initialScale or current
                 -- A companion can also be a primary window with its own native snapshot.
-                local primary = frameState[sub]
+                local capturedPrimary = frameState[sub]
                 if otherState then
                     state.primaryOwner = otherState.primaryOwner
                     state.primaryNativeScale = otherState.primaryNativeScale
-                elseif primary and primary.attached and Registry:GetDescriptor(primary.windowId) == primary.desc then
-                    state.primaryOwner = primary.desc
-                    state.primaryNativeScale = primary.initialScale or current
+                elseif capturedPrimary and capturedPrimary.attached and Registry:GetDescriptor(capturedPrimary.windowId) == capturedPrimary.desc then
+                    state.primaryOwner = capturedPrimary.desc
+                    state.primaryNativeScale = capturedPrimary.initialScale or current
                 else
                     state.primaryOwner = nil
                     state.primaryNativeScale = nil
@@ -408,7 +410,8 @@ function Engine:ApplyToFrame(windowId, frame, desc)
 
         state.applying = true
         if state.hasEllaScaled then
-            local origScale = state.initialScale or 1.0
+            local linkedOwner = FindLinkedScaleOwner(frame, desc, true)
+            local origScale = linkedOwner and Engine:GetEffectiveWindowScale(linkedOwner.id, linkedOwner) or state.initialScale or 1
             frame:SetScale(origScale)
             state.hasEllaScaled = false
         end
@@ -1216,7 +1219,10 @@ function Engine:AttachWindow(windowId, frame, desc)
         if not RestoreDetachedFrame(frame, previous) then return false end
     end
 
-    frameState[frame] = { attached = true, windowId = windowId, desc = desc }
+    -- A frame first bound as a primary may already be scaled by a companion owner.
+    local _, linkedState = FindLinkedScaleOwner(frame, desc, false)
+    local nativeScale = linkedState and (linkedState.primaryNativeScale or linkedState.initialScale)
+    frameState[frame] = { attached = true, windowId = windowId, desc = desc, initialScale = nativeScale }
     local hooks = frameHooks[frame]
     if not hooks then
         hooks = {}

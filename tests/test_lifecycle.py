@@ -273,6 +273,81 @@ class LifecycleTests(unittest.TestCase):
             assert(count==0)
         ''')
 
+    def test_linked_restore_uses_replacement_primary_descriptor(self):
+        self.check_lua('''
+            local child=CustomWindow("Child","PRIMARY")
+            ns.Engine:SetWindowScale("PRIMARY",.8)
+            CreateFrame("Frame","Main",UIParent)
+            ns.Registry:RegisterWindow("LINKED",{frame="Main",linkedFrames={"Child"}})
+            ns.Engine:SetWindowScale("LINKED",.7)
+            ns.Registry:UnregisterWindow("PRIMARY")
+            ns.Registry:RegisterWindow("NEW_PRIMARY",{frame="Child"})
+            ns.Engine:SetWindowScale("NEW_PRIMARY",.9)
+            ns.Engine:SetWindowEnabled("LINKED",false)
+            assert(child:GetScale()==.9)
+            ns.Registry:UnregisterWindow("NEW_PRIMARY")
+            assert(child:GetScale()==1)
+        ''')
+
+    def test_primary_bound_after_companion_inherits_true_native_snapshot(self):
+        self.check_lua('''
+            local child=CreateFrame("Frame","Child",UIParent);child.scale=.6
+            CreateFrame("Frame","Main",UIParent)
+            ns.Registry:RegisterWindow("LINKED",{frame="Main",linkedFrames={"Child"}})
+            ns.Engine:SetWindowScale("LINKED",.8)
+            ns.Registry:RegisterWindow("PRIMARY",{frame="Child"})
+            ns.Engine:SetWindowScale("PRIMARY",.9)
+            ns.Engine:SetWindowEnabled("LINKED",false)
+            assert(child:GetScale()==.9)
+            ns.Registry:UnregisterWindow("PRIMARY")
+            assert(child:GetScale()==.6)
+        ''')
+
+    def test_primary_disable_preserves_active_linked_owner_until_both_disable(self):
+        self.check_lua('''
+            local child=CreateFrame("Frame","Child",UIParent);child.scale=.6
+            CreateFrame("Frame","Main",UIParent)
+            ns.Registry:RegisterWindow("LINKED",{frame="Main",linkedFrames={"Child"}})
+            ns.Engine:SetWindowScale("LINKED",.8)
+            ns.Registry:RegisterWindow("PRIMARY",{frame="Child"})
+            ns.Engine:SetWindowScale("PRIMARY",.9)
+            ns.Engine:SetWindowEnabled("PRIMARY",false)
+            assert(child:GetScale()==.8)
+            ns.Engine:SetWindowEnabled("LINKED",false)
+            assert(child:GetScale()==.6)
+        ''')
+
+    def test_linked_restore_respects_new_primary_protected_hint(self):
+        self.check_lua('''
+            local child=CustomWindow("Child","PRIMARY")
+            CreateFrame("Frame","Main",UIParent)
+            ns.Registry:RegisterWindow("LINKED",{frame="Main",linkedFrames={"Child"}})
+            ns.Engine:SetWindowScale("LINKED",.7)
+            ns.Registry:UnregisterWindow("PRIMARY")
+            ns.Registry:RegisterWindow("NEW_PRIMARY",{frame="Child",protected=true})
+            ns.Engine:SetWindowScale("NEW_PRIMARY",.9)
+            ns.Engine:SetWindowScale("LINKED",.7)
+            local writes=child.scaleWrites
+            combat=true;ns.Engine:SetWindowEnabled("LINKED",false)
+            assert(child:GetScale()==.7 and child.scaleWrites==writes and ns.Guard:HasQueuedTasks())
+            combat=false;ns.Guard:FlushCombatQueue()
+            assert(child:GetScale()==.9)
+        ''')
+
+    def test_primary_removed_before_companion_still_restores_true_native_scale(self):
+        self.check_lua('''
+            local child=CreateFrame("Frame","Child",UIParent);child.scale=.6
+            CreateFrame("Frame","Main",UIParent)
+            ns.Registry:RegisterWindow("LINKED",{frame="Main",linkedFrames={"Child"}})
+            ns.Engine:SetWindowScale("LINKED",.8)
+            ns.Registry:RegisterWindow("PRIMARY",{frame="Child"})
+            ns.Engine:SetWindowScale("PRIMARY",.9)
+            ns.Registry:UnregisterWindow("PRIMARY")
+            assert(child:GetScale()==.8)
+            ns.Engine:SetWindowEnabled("LINKED",false)
+            assert(child:GetScale()==.6)
+        ''')
+
 
 if __name__ == "__main__":
     unittest.main()
