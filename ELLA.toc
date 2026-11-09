@@ -6,7 +6,7 @@
 ## Author: Avacon00
 ## Version: 1.10.0
 ## SavedVariables: ELLADB
-## AllowLoadGameType: camelot, standard
+## AllowLoadGameType: camelot
 ## IconTexture: Interface\AddOns\ELLA\Media\Icon
 ## Category-enUS: User Interface
 ## Category-deDE: Benutzerinterface
