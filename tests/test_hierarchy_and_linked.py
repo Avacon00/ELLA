@@ -392,15 +392,17 @@ class LinkedFrameTests(unittest.TestCase):
             assert(child:GetScale() == .6)
         ''')
 
-    def test_deferred_linked_work_does_not_touch_an_unregistered_descriptor(self):
+    def test_deferred_linked_work_restores_native_scale_after_unregister(self):
         self.check_lua('''
             local main, child = LinkedPair({childProtected = true})
             combat = true; ns.Engine:SetWindowEnabled("WINDOW", false)
             assert(ns.Guard:HasQueuedTasks())
             ns.Registry:UnregisterWindow("WINDOW")
-            local writes = child.scaleWrites
             combat = false; ns.Guard:FlushCombatQueue()
-            assert(child.scaleWrites == writes and not ns.Guard:HasQueuedTasks())
+            assert(child:GetScale() == .6 and not ns.Guard:HasQueuedTasks())
+            child:SetScale(.9); local writes = child.scaleWrites
+            child:Hide(); child:Show()
+            assert(child:GetScale() == .9 and child.scaleWrites == writes)
         ''')
 
 

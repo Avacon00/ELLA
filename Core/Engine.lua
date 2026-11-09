@@ -9,9 +9,21 @@ ns.Engine = Engine
 -- Golden Rule #4: Private Weak-Key table for per-frame runtime state.
 -- NEVER write properties directly onto Blizzard frames!
 local frameState = setmetatable({}, { __mode = "k" })
+local frameHooks = setmetatable({}, { __mode = "k" })
+local dragRegions = setmetatable({}, { __mode = "k" })
+
+local function CurrentState(frame)
+    local state = frameState[frame]
+    if state and state.attached and not state.retired
+        and Registry:GetDescriptor(state.windowId) == state.desc and state.desc.boundFrame == frame then
+        return state
+    end
+    return nil
+end
 
 -- Companion ownership is separate from a frame's own primary-window settings.
 local linkedFrameStates = setmetatable({}, { __mode = "k" })
+local linkedFrameHooks = setmetatable({}, { __mode = "k" })
 local linkedApplyOrder = 0
 
 -- Golden Rule #8: Event & Drag driver has OnUpdate == nil at rest (0.00 ms idle CPU).
@@ -131,8 +143,9 @@ local function FindLinkedScaleOwner(sub, excludedDesc, activeOnly)
     local bestDesc, bestState
     for owner, states in pairs(linkedFrameStates) do
         local state = states[sub]
-        if owner ~= excludedDesc and state and state.modified and Registry:GetDescriptor(owner.id) == owner then
-            local isActive = Engine:GetEffectiveWindowMode(owner.id, owner) ~= ns.MODE_DISABLED
+        local isRegistered = Registry:GetDescriptor(owner.id) == owner
+        if owner ~= excludedDesc and state and state.modified and (isRegistered or (not activeOnly and owner.retired)) then
+            local isActive = isRegistered and Engine:GetEffectiveWindowMode(owner.id, owner) ~= ns.MODE_DISABLED
             if (not activeOnly or isActive) and (not bestState or state.order > bestState.order) then
                 bestDesc, bestState = owner, state
             end
@@ -144,11 +157,11 @@ end
 local SyncLinkedFrames
 
 local function ApplyLinkedScale(windowId, desc, sub, state)
-    if Registry:GetDescriptor(windowId) ~= desc or state.applying or Guard:IsForbidden(sub) then
+    if (Registry:GetDescriptor(windowId) ~= desc and not desc.retired) or state.applying or Guard:IsForbidden(sub) then
         return
     end
 
-    local isDisabling = Engine:GetEffectiveWindowMode(windowId, desc) == ns.MODE_DISABLED
+    local isDisabling = desc.retired or Engine:GetEffectiveWindowMode(windowId, desc) == ns.MODE_DISABLED
     if isDisabling and not state.modified then
         return
     end
@@ -158,7 +171,7 @@ local function ApplyLinkedScale(windowId, desc, sub, state)
     if not canModify then
         if reason == "DEFERRED_COMBAT" then
             -- Reevaluate the whole companion group and current config after combat.
-            Guard:EnqueueAfterCombat("linked:" .. windowId, Registry:GetDisplayLabel(desc), function()
+            Guard:EnqueueAfterCombat("linked:" .. desc.generation, Registry:GetDisplayLabel(desc), function()
                 SyncLinkedFrames(windowId, desc)
             end)
         end
@@ -212,11 +225,11 @@ end
 
 -- Sync or restore companions, including ones whose main frame never needed a change.
 SyncLinkedFrames = function(windowId, desc)
-    if Registry:GetDescriptor(windowId) ~= desc then
+    if Registry:GetDescriptor(windowId) ~= desc and not desc.retired then
         return
     end
     local states = linkedFrameStates[desc]
-    if Engine:GetEffectiveWindowMode(windowId, desc) == ns.MODE_DISABLED then
+    if desc.retired or Engine:GetEffectiveWindowMode(windowId, desc) == ns.MODE_DISABLED then
         for sub, state in pairs(states or {}) do
             ApplyLinkedScale(windowId, desc, sub, state)
         end
@@ -236,9 +249,22 @@ SyncLinkedFrames = function(windowId, desc)
             if not state then
                 state = {}
                 states[sub] = state
-                if type(sub.HookScript) == "function" then
+                if type(sub.HookScript) == "function" and not linkedFrameHooks[sub] then
+                    linkedFrameHooks[sub] = true
                     sub:HookScript("OnShow", function(sFrame)
-                        ApplyLinkedScale(windowId, desc, sFrame, state)
+                        local owners = {}
+                        for owner, snapshots in pairs(linkedFrameStates) do
+                            local snapshot = snapshots[sFrame]
+                            if snapshot then owners[#owners + 1] = { desc = owner, state = snapshot } end
+                        end
+                        table.sort(owners, function(a, b)
+                            local aOrder, bOrder = a.state.order or 0, b.state.order or 0
+                            if aOrder == bOrder then return a.desc.generation < b.desc.generation end
+                            return aOrder < bOrder
+                        end)
+                        for _, owner in ipairs(owners) do
+                            ApplyLinkedScale(owner.desc.id, owner.desc, sFrame, owner.state)
+                        end
                     end)
                 end
             end
@@ -248,25 +274,32 @@ SyncLinkedFrames = function(windowId, desc)
 end
 
 local function HookFrameFade(frame, windowId, desc)
-    local state = frameState[frame]
-    if not state or state.fadeHooked then
+    local state = CurrentState(frame)
+    local hooks = frameHooks[frame]
+    if not state or not hooks or hooks.fadeWatcher then
         return
     end
-    state.fadeHooked = true
 
     local fadeWatcher = CreateFrame("Frame")
+    hooks.fadeWatcher = fadeWatcher
     fadeWatcher:Hide()
     fadeWatcher:SetScript("OnUpdate", function(self)
+        local current = CurrentState(frame)
+        if not current then
+            self:Hide()
+            return
+        end
+        local currentId, currentDesc = current.windowId, current.desc
         if not frame:IsShown() or not frame:IsMouseOver() then
             self:Hide()
             if activeDrag and activeDrag.frame == frame then
                 return
             end
-            local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+            local mode = Engine:GetEffectiveWindowMode(currentId, currentDesc)
             if mode == ns.MODE_DISABLED then
                 return
             end
-            local cfg = ns:GetWindowConfig(windowId, false)
+            local cfg = ns:GetWindowConfig(currentId, false)
             local a = (cfg and cfg.alpha) or 1.0
             if type(frame.SetAlpha) == "function" then
                 frame:SetAlpha(a)
@@ -276,11 +309,13 @@ local function HookFrameFade(frame, windowId, desc)
 
     if type(frame.HookScript) == "function" then
         frame:HookScript("OnEnter", function(f)
-            local mode = Engine:GetEffectiveWindowMode(windowId, desc)
+            local current = CurrentState(f)
+            if not current then return end
+            local mode = Engine:GetEffectiveWindowMode(current.windowId, current.desc)
             if mode == ns.MODE_DISABLED then
                 return
             end
-            local cfg = ns:GetWindowConfig(windowId, false)
+            local cfg = ns:GetWindowConfig(current.windowId, false)
             if cfg and cfg.mouseoverFade and not (activeDrag and activeDrag.frame == f) then
                 if type(f.SetAlpha) == "function" then
                     f:SetAlpha(1.0)
@@ -298,7 +333,8 @@ function Engine:ApplyAlphaToFrame(windowId, frame, desc)
     if not frame or Guard:IsForbidden(frame) then
         return
     end
-    local state = frameState[frame]
+    local state = CurrentState(frame)
+    if not state or state.desc ~= desc or state.windowId ~= windowId then return end
     local mode = Engine:GetEffectiveWindowMode(windowId, desc)
     if mode == ns.MODE_DISABLED then
         if state and state.hasEllaAlpha and type(frame.SetAlpha) == "function" then
@@ -342,8 +378,8 @@ end
 
 -- Applies scale and (when in SCALE_AND_MOVE mode with saved pos) scale-compensated anchor
 function Engine:ApplyToFrame(windowId, frame, desc)
-    local state = frameState[frame]
-    if not state or state.applying then
+    local state = CurrentState(frame)
+    if not state or state.desc ~= desc or state.windowId ~= windowId or state.applying then
         return
     end
 
@@ -523,6 +559,7 @@ function Engine:SetWindowScale(windowId, requestedScale, pivotAroundCursor)
 end
 
 function Engine:StepWindowScale(windowId, deltaTicks, isFineStep, pivotAroundCursor)
+    if not Registry:GetDescriptor(windowId) then return false end
     local cfg = ns:GetWindowConfig(windowId, true)
     local step = isFineStep and ns.STEP_FINE or ns.STEP_COARSE
     local current = cfg.scale or ns.DEFAULT_SCALE
@@ -926,6 +963,8 @@ function Engine:StartWindowDrag(windowId, frame, desc)
     if not ns.db or not ns.db.settings.enabled then
         return
     end
+    local binding = CurrentState(frame)
+    if not binding or binding.windowId ~= windowId or binding.desc ~= desc then return end
     local cfg = ns:GetWindowConfig(windowId, true)
     if cfg.mode ~= ns.MODE_SCALE_MOVE or cfg.locked then
         return
@@ -1002,6 +1041,18 @@ local function RestoreDragAlpha(windowId, frame, desc, originalAlpha, dragAlphaA
     if not frame or Guard:IsForbidden(frame) then
         return
     end
+    local canModify, reason = Guard:CanModifyNow(frame, desc and desc.protected)
+    if not canModify then
+        if reason == "DEFERRED_COMBAT" and desc then
+            Guard:EnqueueAfterCombat("drag-alpha:" .. desc.generation, Registry:GetDisplayLabel(desc), function()
+                local current = CurrentState(frame)
+                if current and current.desc == desc then
+                    RestoreDragAlpha(windowId, frame, desc, originalAlpha, dragAlphaApplied)
+                end
+            end)
+        end
+        return
+    end
     -- Temporary drag opacity is independent of persistent Ella alpha ownership.
     -- Restore it first so a new opacity setting captures the pristine native alpha.
     if dragAlphaApplied and originalAlpha ~= nil and type(frame.SetAlpha) == "function" then
@@ -1030,12 +1081,12 @@ function Engine:StopActiveDrag()
         state.isDragging = false
     end
 
-    local cfg = ns:GetWindowConfig(finished.windowId, true)
-    cfg.pos = {
-        uipX = finished.lastUipX,
-        uipY = finished.lastUipY,
-    }
-    ns:Fire("OnWindowConfigChanged", finished.windowId, cfg)
+    local current = CurrentState(finished.frame)
+    if current and current.desc == finished.desc then
+        local cfg = ns:GetWindowConfig(finished.windowId, true)
+        cfg.pos = { uipX = finished.lastUipX, uipY = finished.lastUipY }
+        ns:Fire("OnWindowConfigChanged", finished.windowId, cfg)
+    end
 
     -- Handle docked frames from sticky dragging
     if finished.dockedFrames and #finished.dockedFrames > 0 then
@@ -1045,7 +1096,8 @@ function Engine:StopActiveDrag()
             RestoreDragAlpha(docked.windowId, docked.frame, docked.desc, docked.origAlpha, docked.dragAlphaApplied)
 
             -- Only persist docked positions if not detached with Alt
-            if not isAltDown and docked.lastUipX and docked.lastUipY then
+            local dockedState = CurrentState(docked.frame)
+            if not isAltDown and docked.lastUipX and docked.lastUipY and dockedState and dockedState.desc == docked.desc then
                 local dCfg = ns:GetWindowConfig(docked.windowId, true)
                 dCfg.pos = {
                     uipX = docked.lastUipX,
@@ -1062,71 +1114,145 @@ local function HookDragRegion(region, windowId, rootFrame, desc)
     if not region or Guard:IsForbidden(region) or type(region.HookScript) ~= "function" then
         return
     end
-    local rState = frameState[region]
-    if rState and rState.dragHooked then
+    local binding = dragRegions[region]
+    if binding then
+        binding.windowId, binding.rootFrame, binding.desc = windowId, rootFrame, desc
         return
     end
-    frameState[region] = rState or {}
-    frameState[region].dragHooked = true
+    binding = { windowId = windowId, rootFrame = rootFrame, desc = desc }
+    dragRegions[region] = binding
 
     region:HookScript("OnMouseDown", function(_, button)
+        local current = CurrentState(binding.rootFrame)
+        if not current or current.desc ~= binding.desc then return end
         if button == "LeftButton" and not IsControlKeyDown() then
-            Engine:StartWindowDrag(windowId, rootFrame, desc)
+            Engine:StartWindowDrag(binding.windowId, binding.rootFrame, binding.desc)
         elseif button == "RightButton" and IsControlKeyDown() then
-            Engine:ResetWindow(windowId, IsShiftKeyDown())
+            Engine:ResetWindow(binding.windowId, IsShiftKeyDown())
         end
     end)
 
     region:HookScript("OnMouseUp", function(_, button)
-        if button == "LeftButton" then
+        local current = CurrentState(binding.rootFrame)
+        if button == "LeftButton" and current and current.desc == binding.desc then
             Engine:StopActiveDrag()
         end
     end)
 end
 
+local RestoreDetachedFrame
+RestoreDetachedFrame = function(frame, state)
+    if frameState[frame] ~= state or not state.retired then return false end
+    if not state.hasEllaScaled and not state.hasEllaAlpha and not state.hasCustomPosApplied and state.dragRestoreAlpha == nil then
+        return true
+    end
+    local canModify, reason = Guard:CanModifyNow(frame, state.desc.protected)
+    if not canModify then
+        if reason == "DEFERRED_COMBAT" then
+            Guard:EnqueueAfterCombat("detach:" .. state.desc.generation, Registry:GetDisplayLabel(state.desc), function()
+                if RestoreDetachedFrame(frame, state) then Registry:ScanUnboundWindows() end
+            end)
+        end
+        return false
+    end
+    state.applying = true
+    if state.hasEllaScaled then
+        local linkedOwner = FindLinkedScaleOwner(frame, state.desc, true)
+        local scale = linkedOwner and Engine:GetEffectiveWindowScale(linkedOwner.id, linkedOwner) or state.initialScale or 1
+        frame:SetScale(scale)
+        state.hasEllaScaled = false
+    end
+    local alpha = state.hasEllaAlpha and (state.initialAlpha or 1) or state.dragRestoreAlpha
+    if alpha ~= nil and type(frame.SetAlpha) == "function" then frame:SetAlpha(alpha) end
+    state.hasEllaAlpha, state.dragRestoreAlpha = false, nil
+    if state.hasCustomPosApplied and state.initialPoints then
+        frame:ClearAllPoints()
+        for i = 1, #state.initialPoints do
+            local p = state.initialPoints[i]
+            frame:SetPoint(p[1], p[2], p[3], p[4], p[5])
+        end
+    end
+    state.hasCustomPosApplied = false
+    state.applying = false
+    return true
+end
+
+function Engine:DetachWindow(windowId, frame, desc)
+    local state = frame and frameState[frame]
+    if state and state.desc == desc then
+        state.retired = true
+        local hooks = frameHooks[frame]
+        if hooks and hooks.fadeWatcher then hooks.fadeWatcher:Hide() end
+        if activeDrag then
+            local stopping = activeDrag.frame == frame
+            if stopping and activeDrag.dragAlphaApplied then state.dragRestoreAlpha = activeDrag.originalAlpha end
+            for _, docked in ipairs(activeDrag.dockedFrames or {}) do
+                if docked.frame == frame then
+                    stopping = true
+                    if docked.dragAlphaApplied then state.dragRestoreAlpha = docked.origAlpha end
+                end
+            end
+            if stopping then Engine:StopActiveDrag() end
+        end
+        RestoreDetachedFrame(frame, state)
+    end
+    SyncLinkedFrames(windowId, desc)
+    if ctrlWheelCatcher.targetWindowId == windowId then
+        ctrlWheelCatcher.targetWindowId = nil
+        ctrlWheelCatcher:Hide()
+    end
+end
+
 -- Attaches non-invasive hooks to a Blizzard or third-party window
 function Engine:AttachWindow(windowId, frame, desc)
     if Guard:IsForbidden(frame) then
-        return
+        return false
     end
-    local state = frameState[frame]
-    if state and state.attached then
-        return
+    local previous = frameState[frame]
+    if previous and previous.attached then
+        if not previous.retired then
+            return previous.desc == desc and previous.windowId == windowId
+        end
+        if not RestoreDetachedFrame(frame, previous) then return false end
     end
 
-    state = state or {}
-    state.attached = true
-    state.windowId = windowId
-    state.desc = desc
-    frameState[frame] = state
+    frameState[frame] = { attached = true, windowId = windowId, desc = desc }
+    local hooks = frameHooks[frame]
+    if not hooks then
+        hooks = {}
+        frameHooks[frame] = hooks
 
-    if type(frame.HookScript) == "function" then
-        frame:HookScript("OnShow", function(f)
-            Engine:ApplyToFrame(windowId, f, desc)
-            ns:Fire("OnManagedFrameShown", windowId, f, desc)
-        end)
-        frame:HookScript("OnHide", function(f)
-            if activeDrag and activeDrag.frame == f then
-                Engine:StopActiveDrag()
+        if type(frame.HookScript) == "function" then
+            frame:HookScript("OnShow", function(f)
+                local current = CurrentState(f)
+                if current then
+                    Engine:ApplyToFrame(current.windowId, f, current.desc)
+                    ns:Fire("OnManagedFrameShown", current.windowId, f, current.desc)
+                else
+                    local retired = frameState[f]
+                    if retired and retired.retired and RestoreDetachedFrame(f, retired) then Registry:ScanUnboundWindows() end
+                end
+            end)
+            frame:HookScript("OnHide", function(f)
+                if hooks.fadeWatcher then hooks.fadeWatcher:Hide() end
+                local current = CurrentState(f)
+                if not current then return end
+                if activeDrag and activeDrag.frame == f then Engine:StopActiveDrag() end
+                ns:Fire("OnManagedFrameHidden", current.windowId, f, current.desc)
+            end)
+        end
+
+        hooksecurefunc(frame, "SetPoint", function(f)
+            local current = CurrentState(f)
+            if not current or current.applying or current.isDragging then return end
+            if not ns.db or not ns.db.settings.enabled then return end
+            local effMode = Engine:GetEffectiveWindowMode(current.windowId, current.desc)
+            local cfg = ns:GetWindowConfig(current.windowId, false)
+            if effMode == ns.MODE_SCALE_MOVE and cfg and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
+                Engine:ApplyToFrame(current.windowId, f, current.desc)
             end
-            ns:Fire("OnManagedFrameHidden", windowId, f, desc)
         end)
     end
-
-    hooksecurefunc(frame, "SetPoint", function(f)
-        local st = frameState[f]
-        if not st or st.applying or st.isDragging then
-            return
-        end
-        if not ns.db or not ns.db.settings.enabled then
-            return
-        end
-        local effMode = Engine:GetEffectiveWindowMode(windowId, desc)
-        local cfg = ns:GetWindowConfig(windowId, false)
-        if effMode == ns.MODE_SCALE_MOVE and cfg and cfg.pos and cfg.pos.uipX and cfg.pos.uipY then
-            Engine:ApplyToFrame(windowId, f, desc)
-        end
-    end)
 
     HookDragRegion(frame, windowId, frame, desc)
     if type(rawget(frame, "TitleContainer")) == "table" then
@@ -1145,6 +1271,7 @@ function Engine:AttachWindow(windowId, frame, desc)
         Engine:ApplyToFrame(windowId, frame, desc)
         ns:Fire("OnManagedFrameShown", windowId, frame, desc)
     end
+    return true
 end
 
 function Engine:ReapplyAllShown()
