@@ -126,6 +126,51 @@ function Engine:GetEffectiveWindowMode(windowId, desc)
         or (ns.db and ns.db.settings and ns.db.settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE)
 end
 
+function Engine:BuildDiagnosticsReport()
+    local version, build, _, interface
+    if _G.GetBuildInfo then
+        version, build, _, interface = _G.GetBuildInfo()
+    end
+    local lines = {
+        "ella_diagnostics=1",
+        "addon_version=" .. tostring(ns.Version or "unknown"),
+        "client_version=" .. tostring(version or "unknown"),
+        "client_build=" .. tostring(build or "unknown"),
+        "client_interface=" .. tostring(interface or "unknown"),
+        "client_type=" .. (ns.IsForeverClient and "camelot" or "other"),
+        "locale=" .. tostring(_G.GetLocale and _G.GetLocale() or "unknown"),
+        string.format("ui_parent=%.0fx%.0f scale=%.3f", UIParent:GetWidth() or 0, UIParent:GetHeight() or 0,
+            UIParent:GetEffectiveScale() or 1),
+        "combat_pending=" .. tostring(Guard:HasQueuedTasks()),
+        "drag_active=" .. tostring(activeDrag ~= nil),
+    }
+
+    local db = type(ns.db) == "table" and ns.db or {}
+    local settings = type(db.settings) == "table" and db.settings or {}
+    local windows = type(db.windows) == "table" and db.windows or {}
+    local count = 0
+    for id, desc in Registry:IterateWindows() do
+        count = count + 1
+        local cfg = type(windows[id]) == "table" and windows[id] or {}
+        local mode = cfg.mode or desc.defaultMode
+        if not settings.enabled then
+            mode = ns.MODE_DISABLED
+        elseif mode ~= ns.MODE_DISABLED and mode ~= ns.MODE_SCALE_ONLY and mode ~= ns.MODE_SCALE_MOVE then
+            mode = settings.defaultScaleOnly and ns.MODE_SCALE_ONLY or ns.MODE_SCALE_MOVE
+        end
+        local frame = desc.boundFrame
+        local state = "missing"
+        if frame then
+            local allowed, reason = Guard:CanModifyNow(frame, desc.protected)
+            state = allowed and "bound" or (reason == "DEFERRED_COMBAT" and "combat_deferred" or "blocked")
+        end
+        -- Extension IDs, frame names, and labels can contain player-provided text.
+        lines[#lines + 1] = string.format("window_%d state=%s mode=%s", count, state, mode)
+    end
+    lines[#lines + 1] = "window_count=" .. count
+    return table.concat(lines, "\n")
+end
+
 function Engine:GetEffectiveWindowScale(windowId, desc)
     desc = desc or Registry:GetDescriptor(windowId)
     local cfg = ns:GetWindowConfig(windowId, false)

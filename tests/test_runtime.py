@@ -37,6 +37,24 @@ class RuntimeTests(unittest.TestCase):
         lua.execute(source)
         self.assertEqual(list(lua.globals().errors.values()), [], "Suppressed callback error")
 
+    def test_diagnostics_report_is_redacted_read_only_and_tolerates_invalid_window_data(self):
+        self.check_lua('''
+            local frame = RegisterTestWindow("PRIVATE_WINDOW")
+            ns.Registry:RegisterWindow("PRIVATE_MISSING", { frame = "PrivateFrameName", addon = "PrivateAddon" })
+            ns.db.activeProfile = "PrivateProfile"
+            local windows = ns.db.windows
+            windows.PRIVATE_WINDOW = true
+            local before = frame.scaleWrites
+            local undo = ns.Profiles:CanUndo()
+            local report = ns.Engine:BuildDiagnosticsReport()
+            assert(report:find("ella_diagnostics=1", 1, true))
+            assert(report:find("state=bound", 1, true))
+            assert(report:find("state=missing", 1, true))
+            assert(not report:lower():find("private", 1, true))
+            assert(ns.db.windows == windows and windows.PRIVATE_WINDOW == true and ns.db.activeProfile == "PrivateProfile")
+            assert(frame.scaleWrites == before and ns.Profiles:CanUndo() == undo)
+        ''')
+
     def test_all_toc_lua_files_compile_with_lua51(self):
         lua = LuaRuntime()
         self.assertEqual(lua.eval("_VERSION"), "Lua 5.1")
