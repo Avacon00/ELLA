@@ -1,6 +1,11 @@
 name: Package & Release (GitHub + CurseForge)
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/release.yml"
+      - ".pkgmeta"
   push:
     tags:
       - "v*"
@@ -8,7 +13,23 @@ on:
 permissions: {}
 
 jobs:
+  verify-packager:
+    if: github.event_name == 'pull_request'
+    name: Verify packager without publishing
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: BigWigsMods/packager@01e8631a69c69d7654c788d152630d5fed9e3812 # v2
+        with:
+          args: -d
+
   package:
+    if: github.event_name == 'push'
     name: Build and publish GitHub release
     permissions:
       contents: write
