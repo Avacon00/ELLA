@@ -686,105 +686,125 @@ function Profiles:ExportString()
     return table.concat(parts, ";")
 end
 
-function Profiles:InspectImportString(raw)
-    if type(raw) ~= "string" then
-        return false, 0, "", nil
+local MAX_IMPORT_BYTES = 65536
+local MAX_IMPORT_ENTRIES = 1024
+local IMPORT_ERRORS = {
+    too_large = "UI_IMPORT_TOO_LARGE",
+    too_many_entries = "UI_IMPORT_TOO_MANY",
+    invalid_number = "UI_IMPORT_NUMBER",
+    invalid_position = "UI_IMPORT_POSITION",
+    duplicate_window = "UI_IMPORT_DUPLICATE",
+    no_known_windows = "UI_IMPORT_NO_WINDOWS",
+}
+
+function Profiles:GetImportErrorMessage(code)
+    return L[IMPORT_ERRORS[code] or "UI_IMPORT_ERROR"]
+end
+
+local function ParseNumber(text, unsignedInteger)
+    if type(text) ~= "string" then return nil end
+    if unsignedInteger then
+        if not string.match(text, "^%d+$") then return nil end
+    elseif not string.match(text, "^%-?%d+%.?%d*$") and not string.match(text, "^%-?%.%d+$") then
+        return nil
     end
+    local number = tonumber(text)
+    if not number or number ~= number or number == math.huge or number == -math.huge then return nil end
+    return number
+end
+
+-- Shared by preview and application. No config creation, events or undo writes here.
+local function ParseImport(raw)
+    if type(raw) ~= "string" then return nil, "invalid_type" end
+    if #raw > MAX_IMPORT_BYTES then return nil, "too_large" end
     local trimmed = string.match(raw, "^%s*(.-)%s*$")
-    if not trimmed or trimmed == "" then
-        return false, 0, "", nil
+    local separator = string.find(trimmed, ";", 1, true)
+    local header = separator and string.sub(trimmed, 1, separator - 1) or trimmed
+    local profileName = string.match(header, "^!ELLA:v2:([^;:]+)$") or string.match(header, "^ELLA2:([^;:]+)$")
+    if header ~= "ELLA1" and header ~= "FSCALE1" and header ~= "ELLA2" and header ~= "!ELLA:v2" and not profileName then
+        return nil, "invalid_header"
     end
-    local isV2 = string.match(trimmed, "^!ELLA:v2") or string.match(trimmed, "^ELLA2")
-    local isV1 = string.match(trimmed, "^ELLA1") or string.match(trimmed, "^FSCALE1")
-    if not isV2 and not isV1 then
-        return false, 0, "", nil
+    if profileName then
+        profileName = SanitizeProfileName(profileName)
+        if not profileName or string.find(profileName, "%c") then return nil, "invalid_header" end
     end
+    if not separator then return nil, "no_known_windows" end
 
-    local profileName = nil
-    if isV2 then
-        profileName = string.match(trimmed, "^!ELLA:v2:([^;:]+)") or string.match(trimmed, "^ELLA2:([^;:]+)")
-    end
-
-    local count = 0
-    local names = {}
-    for token in string.gmatch(trimmed, "[^;]+") do
-        if not string.match(token, "^!ELLA") and not string.match(token, "^ELLA") and not string.match(token, "^FSCALE") then
-            local winId, payload = string.match(token, "^([%w_%-]+)=(.+)$")
-            if winId and payload and Registry:GetDescriptor(winId) then
-                local sStr, mStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?),?([01]?)$")
-                if sStr and mStr then
-                    count = count + 1
-                    if #names < 4 then
-                        local desc = Registry:GetDescriptor(winId)
-                        names[#names + 1] = Registry:GetDisplayLabel(desc)
-                    end
-                end
+    local result = { entries = {}, profileName = profileName }
+    local seen, count = {}, 0
+    for token in string.gmatch(string.sub(trimmed, separator + 1) .. ";", "(.-);") do
+        count = count + 1
+        if count > MAX_IMPORT_ENTRIES then return nil, "too_many_entries" end
+        local id, payload = string.match(token, "^([%w_%.%-]+)=(.*)$")
+        if not id or string.find(payload, "=", 1, true) then return nil, "invalid_entry" end
+        if seen[id] then return nil, "duplicate_window" end
+        seen[id] = true
+        local fields = {}
+        for field in string.gmatch(payload .. ",", "(.-),") do
+            fields[#fields + 1] = field
+            if #fields > 8 then return nil, "invalid_entry" end
+        end
+        if #fields < 5 or not SHORT_TO_MODE[fields[2]] or (fields[3] ~= "0" and fields[3] ~= "1") then
+            return nil, "invalid_entry"
+        end
+        local scale = ParseNumber(fields[1], true)
+        if not scale then return nil, "invalid_number" end
+        local entry = { id = id, scale = Engine:ClampScale(scale / 100), mode = SHORT_TO_MODE[fields[2]], locked = fields[3] == "1" }
+        if fields[4] ~= "" or fields[5] ~= "" then
+            local x, y = ParseNumber(fields[4]), ParseNumber(fields[5])
+            if not x or not y or math.abs(x) > ns.MAX_POSITION or math.abs(y) > ns.MAX_POSITION then
+                return nil, "invalid_position"
+            end
+            entry.pos = { uipX = x, uipY = y }
+        end
+        if fields[6] and fields[6] ~= "" then
+            local alpha = ParseNumber(fields[6], true)
+            if not alpha then return nil, "invalid_number" end
+            entry.alpha = math.min(ns.MAX_ALPHA, math.max(ns.MIN_ALPHA, alpha / 100))
+        end
+        for index = 7, 8 do
+            local value = fields[index]
+            if value and value ~= "" then
+                if value ~= "0" and value ~= "1" then return nil, "invalid_entry" end
+                entry[index == 7 and "mouseoverFade" or "hideBadge"] = value == "1"
             end
         end
+        -- Valid unknown IDs may belong to another client/addon; never create them.
+        if Registry:GetDescriptor(id) then result.entries[#result.entries + 1] = entry end
     end
+    if #result.entries == 0 then return nil, "no_known_windows" end
+    return result
+end
 
-    local nameSummary = table.concat(names, ", ")
-    if count > #names then
-        nameSummary = nameSummary .. string.format(L["UI_EXPORT_MORE_WINDOWS"], count - #names)
+function Profiles:InspectImportString(raw)
+    local parsed, reason = ParseImport(raw)
+    if not parsed then return false, 0, "", nil, reason end
+    local names = {}
+    for i = 1, math.min(4, #parsed.entries) do
+        names[i] = Registry:GetDisplayLabel(Registry:GetDescriptor(parsed.entries[i].id))
     end
-
-    return (count > 0), count, nameSummary, profileName
+    local summary = table.concat(names, ", ")
+    if #parsed.entries > #names then
+        summary = summary .. string.format(L["UI_EXPORT_MORE_WINDOWS"], #parsed.entries - #names)
+    end
+    return true, #parsed.entries, summary, parsed.profileName
 end
 
 function Profiles:ImportString(raw)
-    if type(raw) ~= "string" then
-        return false, L["UI_IMPORT_ERROR"]
-    end
-    local trimmed = string.match(raw, "^%s*(.-)%s*$")
-    if not trimmed or (not string.match(trimmed, "^!ELLA") and not string.match(trimmed, "^ELLA[12]") and not string.match(trimmed, "^FSCALE1")) then
-        return false, L["UI_IMPORT_ERROR"]
-    end
-
-    if Profiles.PushUndoSnapshot then
-        Profiles:PushUndoSnapshot("import")
-    end
-
-    local importedCount = 0
-    for token in string.gmatch(trimmed, "[^;]+") do
-        if not string.match(token, "^!ELLA") and not string.match(token, "^ELLA") and not string.match(token, "^FSCALE") then
-            local winId, payload = string.match(token, "^([%w_%-]+)=(.+)$")
-            if winId and payload and Registry:GetDescriptor(winId) then
-                local sStr, mStr, lStr, xStr, yStr, aStr, fStr, hbStr = string.match(payload, "^(%d+),([MSD]),([01]),([%-%.%d]*),([%-%.%d]*),?(%d*),?([01]?),?([01]?)$")
-                if sStr and mStr then
-                    local cfg = ns:GetWindowConfig(winId, true)
-                    cfg.scale = Engine:ClampScale((tonumber(sStr) or 100) / 100)
-                    cfg.mode = SHORT_TO_MODE[mStr] or ns.MODE_SCALE_MOVE
-                    cfg.locked = (lStr == "1")
-                    local nx, ny = tonumber(xStr), tonumber(yStr)
-                    if nx and ny then
-                        cfg.pos = { uipX = nx, uipY = ny }
-                    else
-                        cfg.pos = nil
-                    end
-                    if aStr and aStr ~= "" then
-                        local numA = tonumber(aStr)
-                        if numA then
-                            cfg.alpha = math.min(ns.MAX_ALPHA, math.max(ns.MIN_ALPHA, numA / 100))
-                        end
-                    end
-                    if fStr and fStr ~= "" then
-                        cfg.mouseoverFade = (fStr == "1")
-                    end
-                    if hbStr and hbStr ~= "" then
-                        cfg.hideBadge = (hbStr == "1")
-                    end
-                    importedCount = importedCount + 1
-                end
-            end
+    local parsed, reason = ParseImport(raw)
+    if not parsed then return false, Profiles:GetImportErrorMessage(reason), reason end
+    if not ns.db then ns:InitDatabase() end
+    Profiles:PushUndoSnapshot("import")
+    lastUndoTag = nil -- Each accepted import remains a separate undo step.
+    for _, entry in ipairs(parsed.entries) do
+        local cfg = ns:GetWindowConfig(entry.id, true)
+        cfg.scale, cfg.mode, cfg.locked, cfg.pos = entry.scale, entry.mode, entry.locked, entry.pos
+        for _, key in ipairs({ "alpha", "mouseoverFade", "hideBadge" }) do
+            if entry[key] ~= nil then cfg[key] = entry[key] end
         end
     end
-
-    if importedCount == 0 then
-        return false, L["UI_IMPORT_ERROR"]
-    end
-
     ns.db.settings.activePreset = nil
     Engine:ReapplyAllShown()
-    ns:Fire("OnProfileImported", importedCount)
-    return true, string.format(L["UI_IMPORT_SUCCESS"], importedCount)
+    ns:Fire("OnProfileImported", #parsed.entries)
+    return true, string.format(L["UI_IMPORT_SUCCESS"], #parsed.entries)
 end

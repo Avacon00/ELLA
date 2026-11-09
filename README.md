@@ -233,6 +233,7 @@ python3 scripts/build-release-zip.py
 ---
 
 Details zu Schema, Migrationen und Reparatursicherungen: [SavedVariables](docs/SAVEDVARIABLES.md).
+Unterstützte Profilformate und Importgrenzen: [Profilimport](docs/PROFILE-IMPORT.md).
 
 ## Projektstruktur / Architecture
 

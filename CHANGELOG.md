@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unveröffentlicht
+* **Atomarer Profilimport (#6):** Vorschau und Import verwenden denselben Parser mit 64-KiB-/1024-Einträge-Grenze. Fehlerhafte Zahlen, Positionen außerhalb von ±1.000.000 und doppelte IDs werden vor jeder Änderung abgewiesen; ältere gültige Formate bleiben importierbar. Fehler erhalten verständliche Hinweise, erfolgreiche Importe jeweils einen eigenen Undo-Schritt.
 * **SavedVariables-Migration und Wiederherstellung (#13):** Versionierte Migrationen laufen auf einer Kopie. Beschädigte Einstellungen, Profile und Checkpoints werden vor dem Zugriff repariert; Originalwerte bleiben in `ELLADB.recovery`. Neuere unbekannte Schemas oder fehlgeschlagene Migrationen überschreiben keine gespeicherten Daten.
 * **Fenster-Lebenszyklus (#17):** Entfernte Fenster verlieren sofort ihre aktiven Hooks, Drag-/Fade-Zustände und ausstehenden Bindungen. Ella stellt eigene Änderungen auch nach Kampfende wieder her; erneutes Registrieren desselben Frames verwendet die neue Konfiguration ohne zusätzliche Hook-Dispatcher.
 * **HUD-Hierarchieschutz (#16):** Auch Kinder und Enkel gesperrter HUD-/EditMode-Frames werden abgewiesen. Normale Fenster unter `UIParent` bleiben erlaubt; fehlerhafte, zyklische und zu tiefe Elternketten werden sicher abgefangen.
