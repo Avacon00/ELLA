@@ -505,6 +505,8 @@ local function UpdateBadgeVisual(windowId, badge)
         badge:SetFrameStrata(target:GetFrameStrata() or "MEDIUM")
         badge:SetFrameLevel(baseLevel + 1)
     end
+    -- The badge is parented to UIParent, so match the window's effective scale explicitly.
+    badge:SetScale(hasChrome and target:GetEffectiveScale() / UIParent:GetEffectiveScale() or 1)
     badge:ClearAllPoints()
     local targetName = target:GetName() or ""
     if targetName:match("^DetailsBaseFrame%d+$") then
@@ -518,7 +520,9 @@ local function UpdateBadgeVisual(windowId, badge)
         return
     end
     if type(closeBtn) == "table" and not ns.Guard:IsForbidden(closeBtn) then
-        badge:SetPoint("RIGHT", closeBtn, "LEFT", -28, 0)
+        -- Leave room for the spellbook's expand button next to Close.
+        local offset = windowId == "SPELLBOOK" and -36 or -28
+        badge:SetPoint("RIGHT", closeBtn, "LEFT", offset, 0)
     elseif desc.hasExplicitBadgeOffset or type(nineSlice) == "table" or type(titleContainer) == "table" then
         badge:SetPoint("TOPRIGHT", target, "TOPRIGHT", desc.badgeOffsetX or -28, desc.badgeOffsetY or -5)
     else
