@@ -247,7 +247,7 @@ end
 -- ============================================================================
 -- Export / Import Modal (with ScrollFrame so text never overlaps buttons!)
 -- ============================================================================
-local function OpenExportImportModal()
+local function OpenExportImportModal(report)
     if not exportModal then
         local m = CreateFrame("Frame", "EllaExportModal", UIParent, BACKDROP_TEMPLATE)
         m:SetSize(520, 290)
@@ -262,7 +262,7 @@ local function OpenExportImportModal()
         title:SetPoint("TOPLEFT", 14, -12)
         title:SetPoint("TOPRIGHT", -32, -12)
         title:SetJustifyH("LEFT")
-        title:SetText(L["UI_EXPORT_TITLE"])
+        m.title = title
 
         local topClose = CreateFrame("Button", nil, m, "UIPanelCloseButton")
         topClose:SetSize(22, 22)
@@ -339,6 +339,7 @@ local function OpenExportImportModal()
         end)
 
         editBox:SetScript("OnTextChanged", function(self)
+            if m.diagnostics then return end
             local txt = self:GetText() or ""
             local isValid, count, names, pName, reason = Profiles:InspectImportString(txt)
             if isValid then
@@ -361,8 +362,12 @@ local function OpenExportImportModal()
         exportModal = m
     end
 
-    local exportStr = Profiles:ExportString()
-    exportModal.editBox:SetText(exportStr)
+    exportModal.diagnostics = report ~= nil
+    exportModal.title:SetText(L[report and "UI_DIAGNOSTICS_TITLE" or "UI_EXPORT_TITLE"])
+    exportModal.importBtn:SetShown(report == nil)
+    exportModal.importBtn:Disable()
+    exportModal.summaryText:SetText(report and L["UI_DIAGNOSTICS_HINT"] or "")
+    exportModal.editBox:SetText(report or Profiles:ExportString())
     exportModal:Show()
     exportModal.editBox:HighlightText()
     exportModal.editBox:SetFocus()
@@ -2296,6 +2301,8 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         Profiles:RevertToSavedProfile()
     elseif cmd == "save" then
         Profiles:SaveActiveProfileSnapshot(false)
+    elseif cmd == "debug" then
+        OpenExportImportModal(Engine:BuildDiagnosticsReport())
     elseif cmd == "test" or cmd == "selftest" then
         if ns.RunSelfTest then
             ns:RunSelfTest()
@@ -2314,6 +2321,7 @@ _G.SlashCmdList["ELLA"] = function(rawMsg)
         ns:Print(L["SLASH_HELP_PROFILE"])
         ns:Print(L["SLASH_HELP_UNDO"])
         ns:Print(L["SLASH_HELP_TEST"])
+        ns:Print(L["SLASH_HELP_DEBUG"])
         ns:Print(L["SLASH_HELP_RESET"])
     else
         ManagerUI:Toggle()

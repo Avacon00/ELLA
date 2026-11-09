@@ -412,3 +412,7 @@ _G["BINDING_HEADER_ELLA"] = L["BINDING_HEADER_ELLA"]
 _G["BINDING_NAME_ELLA_BOSSKEY"] = L["BINDING_NAME_ELLA_BOSSKEY"]
 _G["BINDING_NAME_ELLA_TOGGLE_MANAGER"] = L["BINDING_NAME_ELLA_TOGGLE_MANAGER"]
 _G["BINDING_NAME_ELLA_TOGGLE_GRID"] = L["BINDING_NAME_ELLA_TOGGLE_GRID"]
+
+L["UI_DIAGNOSTICS_TITLE"] = "ELLA-Diagnose"
+L["UI_DIAGNOSTICS_HINT"] = "Prüfe den Bericht vor dem Kopieren. Fensternummern entsprechen der Registrierungsreihenfolge."
+L["SLASH_HELP_DEBUG"] = "/ella debug - Kopierbaren Diagnosebericht anzeigen."
