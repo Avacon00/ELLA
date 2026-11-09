@@ -130,7 +130,7 @@ Jeder Commit wird automatisiert gegen diese Regeln geprüft (`python3 tests/vali
 5. **Pflicht-Check `IsForbidden()`:** Vor jedem Frame-Zugriff über `Guard:IsForbidden(frame)` absichern.
 6. **Null globale Leaks:** Jede `.lua`-Datei startet mit `local AddonName, ns = ...`. Nur dokumentierte Globals (`ELLA_API`, `Ella`, `ELLADB`, `BINDING_*`) sind erlaubt.
 7. **Sicherheitsgrenzen:** Skalierung strikt auf `[0.50, 1.50]` und Deckkraft auf `[0.30, 1.00]` begrenzt + Bildschirm-Clamping + `/ella reset` Notausgang.
-8. **0,00 ms Ruhe-CPU:** Keine dauerhaften `OnUpdate`-Schleifen! `OnUpdate` darf ausschließlich während eines aktiven Maus-Ziehens, aktiven Mouseover-Fade-Hovers oder aktiven Frame-Pickers laufen.
+8. **0,00 ms Ruhe-CPU:** Keine dauerhaften `OnUpdate`-Schleifen! `OnUpdate` darf ausschließlich während eines aktiven Maus-Ziehens, aktiven Mouseover-Fade-Hovers oder aktiven Frame-Pickers laufen. Die Strg-Mausrad-Zielsuche darf während gedrückter Strg-Taste bei aktivierter Funktion mit maximal 20 Prüfungen pro Sekunde laufen.
 
 ---
 
