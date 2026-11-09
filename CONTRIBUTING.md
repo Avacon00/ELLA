@@ -29,6 +29,17 @@ Vor dem Erstellen eines Pull Requests bitte einmal den lokalen Validator starten
 python3 tests/validate_addon.py
 ```
 
+Die Lua-Verhaltenstests führen Originalmodule unter Lua 5.1 aus. Einmalig eine
+Python-Umgebung außerhalb des Checkouts anlegen (damit sie nicht im Release-ZIP landet):
+```bash
+python3 -m venv /tmp/ella-tests-venv
+/tmp/ella-tests-venv/bin/python -m pip install -r tests/requirements.txt
+/tmp/ella-tests-venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
+```
+Die CI führt diese Tests einschließlich echter Lua-5.1-Syntaxprüfung aus.
+Frame-Doubles prüfen die Programmlogik; Rendering, Fokus, Combat-Lockdown und
+Taint müssen zusätzlich im tatsächlichen WoW-Client abgenommen werden.
+
 ---
 
 ## 2. Drittanbieter-API (`ELLA_API` / `_G.Ella` / `LibStub`)
@@ -59,6 +70,8 @@ Unterstützte Methoden auf `ELLA_API` (sowie Alias `_G.Ella` und `LibStub("ELLA-
 * `ELLA_API:ApplyPreset(presetId)` – Wendet ein registriertes Preset (`"STANDARD_100"`, `"CLASSIC_80"`, `"WQHD_85"`, `"LAPTOP_72"`, ...) an.
 * `ELLA_API:SetWindowScale(windowId, scale)` – Setzt die Skalierung (`0.50` – `1.50`) eines Fensters.
 * `ELLA_API:SetWindowAlpha(windowId, alpha, mouseoverFade)` – Setzt Deckkraft (`0.30` – `1.00`) und optionales Mouseover-Fade eines Fensters.
+* `ELLA_API:SetWindowEnabled(windowId, enabled)` – Aktiviert/deaktiviert die Verwaltung. Liefert `true`, wenn die Konfiguration angenommen wurde, oder `false, "unknown_window"` bei unbekannter ID. Geschützte Frame-Änderungen können bis nach dem Kampf warten.
+* `ELLA_API:SetWindowBadgeHidden(windowId, hidden)` – Blendet das Fenster-Badge aus/ein. Liefert `true` oder bei unbekannter ID `false, "unknown_window"`.
 * `ELLA_API:GetWindowConfig(windowId)` – Liest eine sichere Kopie der aktuellen Fenstereinstellungen (`scale`, `mode`, `locked`, `alpha`, `mouseoverFade`, `uipX`, `uipY`).
 * `ELLA_API:ToggleManager()` – Öffnet oder schließt den Ella-Fenstermanager (`/ella`).
 * `ELLA_API:ToggleBossKey()` – Führt den Boss-Key (Panik-Schließen / Wiederherstellen) aus.

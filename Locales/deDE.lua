@@ -139,6 +139,7 @@ L["UI_PROFILE_PROMPT"] = "Profilnamen eingeben (speichert dein aktuelles Fenster
 L["UI_PROFILE_CREATE_BTN"] = "Profil speichern"
 L["UI_PROFILE_SWITCHED"] = "Aktives Profil gewechselt zu: |cff00ff96%s|r."
 L["UI_PROFILE_CREATED"] = "Profil |cff00ff96%s|r gespeichert und aktiviert."
+L["UI_PROFILE_EXISTS"] = "Profil |cffff8080%s|r existiert bereits. Bitte wähle einen anderen Namen."
 L["UI_PROFILE_SAVED"] = "Aktuelles Fenster-Layout als Checkpoint im Profil |cff00ff96%s|r gespeichert."
 L["UI_PROFILE_REVERTED"] = "Alle Fenster auf den gespeicherten Checkpoint von Profil |cff00ff96%s|r zurückgesetzt."
 L["UI_UNDO_APPLIED"] = "Letzte Fenster-Änderung rückgängig gemacht."

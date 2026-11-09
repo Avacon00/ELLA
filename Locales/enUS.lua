@@ -142,6 +142,7 @@ L["UI_PROFILE_PROMPT"] = "Enter a profile name (saves your current window layout
 L["UI_PROFILE_CREATE_BTN"] = "Save Profile"
 L["UI_PROFILE_SWITCHED"] = "Switched active profile to |cff00ff96%s|r."
 L["UI_PROFILE_CREATED"] = "Saved and activated profile |cff00ff96%s|r."
+L["UI_PROFILE_EXISTS"] = "Profile |cffff8080%s|r already exists. Please choose a different name."
 L["UI_PROFILE_SAVED"] = "Saved current window layout checkpoint to profile |cff00ff96%s|r."
 L["UI_PROFILE_REVERTED"] = "Restored all windows to the saved checkpoint of profile |cff00ff96%s|r."
 L["UI_UNDO_APPLIED"] = "Undid last window change."

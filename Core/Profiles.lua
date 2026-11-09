@@ -402,6 +402,12 @@ function Profiles:CreateOrCopyProfile(newName, copyFromCurrent)
         ns:InitDatabase()
     end
 
+    -- Reject collisions before replacing a checkpoint, switching profiles or clearing undo.
+    if ns.db.profiles[clean] ~= nil then
+        ns:Print(string.format(L["UI_PROFILE_EXISTS"], clean))
+        return false, "profile_exists"
+    end
+
     local sourceWindows = copyFromCurrent and ns.db.windows or nil
     ns.db.profiles[clean] = {
         windows = DeepCopyWindows(sourceWindows),

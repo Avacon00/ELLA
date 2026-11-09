@@ -1,5 +1,11 @@
 # Changelog
 
+## Unveröffentlicht
+* **Profilschutz (#15):** „Neu/Kopieren“ weist bereits vorhandene Profilnamen mit einer lokalisierten Meldung zurück, ohne Profil, Checkpoint, aktives Layout oder Undo-Historie zu ersetzen.
+* **Korrekte API-Rückgaben (#4):** `SetWindowEnabled` und `SetWindowBadgeHidden` melden bei unbekannten Fenster-IDs `false, "unknown_window"` statt eines wirkungslosen Erfolgs.
+* **Drag-Deckkraft (#18):** Temporäre Transparenz wird nach dem Ziehen auch für Sticky-Gruppen und bei Abbruch zurückgesetzt. Native AddOn-Deckkraft und aktuelle Fade-Einstellungen bleiben erhalten.
+* **Regressionstests:** Lua-5.1-Syntax- und Verhaltenstests für Profilschutz, API-Rückgaben und Drag-Deckkraft sind lokal und in der PR-/Push-CI ausführbar.
+
 ## v1.10.0 – Drittanbieter-AddOn-Steuerung (Ein/Aus), Individuelles `%`-Badge & Tutorial/Picker-Isolation
 * **Dedizierter Ein/Aus-Schalter (`[• Aktiv]` / `[Aus]`) & 100 % Hands-Off nach `/reload` (`Core/Engine.lua`, `UI/SettingsPanel.lua`, `Core/Profiles.lua`, `Data/Frames_Forever.lua`):**
   * **1-Klick-Aktivierung pro AddOn/Fenster:** Jede Zeile im `/ella`-Manager besitzt nun einen direkten Schalter **`[• Aktiv]` / `[Aus]`** (merkt sich beim Ausschalten automatisch den vorherigen Modus *Skalieren + Bewegen* bzw. *Nur Skalieren*). Selbst aufgenommene Custom-Fenster lassen sich zudem per `Shift + Rechtsklick` auf diesen Schalter wieder vollständig aus Ella entfernen.
