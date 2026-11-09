@@ -419,3 +419,7 @@ _G["BINDING_NAME_ELLA_TOGGLE_GRID"] = L["BINDING_NAME_ELLA_TOGGLE_GRID"]
 L["UI_DIAGNOSTICS_TITLE"] = "ELLA diagnostics"
 L["UI_DIAGNOSTICS_HINT"] = "Review the report before copying. Custom window names are replaced by numbers."
 L["SLASH_HELP_DEBUG"] = "/ella debug - Preview a copyable diagnostics report."
+
+L["UI_HEALKIT_RECOMMENDED_MODE"] = "For positioning: choose Scale Only"
+L["UI_HEALKIT_NATIVE_POSITION"] = "Position saved by HealKit"
+L["UI_HEALKIT_POSITION_TIP"] = "HealKit saves its own position. Click until Scale Only is selected. Then move HealKit in Edit Mode or right-click its minimap icon to show its move bar."

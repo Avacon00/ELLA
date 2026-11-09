@@ -809,6 +809,10 @@ local function GetOrCreateRow(parent, index)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:AddLine(row.winTitle or "", 1, 0.82, 0)
             GameTooltip:AddLine(L["UI_ROW_MODE_TIP"], 0.9, 0.9, 0.9, true)
+            if row.isHealKitAnchor then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine(L["UI_HEALKIT_POSITION_TIP"], 1, 0.86, 0.48, true)
+            end
             GameTooltip:Show()
         end
     end)
@@ -1036,6 +1040,7 @@ function ManagerUI:RefreshList()
         row.windowId = windowId
         row.winTitle = item.winTitle
         row.isCustom = (desc.isCustom == true)
+        row.isHealKitAnchor = desc.frame == "HealKitAnchor" or desc.resolvedFrameName == "HealKitAnchor"
         row:ClearAllPoints()
         row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -((visibleIdx - 1) * 36))
         row:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -((visibleIdx - 1) * 36))
@@ -1077,6 +1082,11 @@ function ManagerUI:RefreshList()
         else
             row.statusDot:SetText("|cff666677•|r")
             row.catLabel:SetText(catPrefix .. " • " .. L["UI_STATUS_LOD"])
+        end
+
+        if row.isHealKitAnchor then
+            local hint = mode == ns.MODE_SCALE_MOVE and "UI_HEALKIT_RECOMMENDED_MODE" or "UI_HEALKIT_NATIVE_POSITION"
+            row.catLabel:SetText(L[hint])
         end
 
         row.label:SetText(item.winTitle)
