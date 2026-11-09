@@ -416,3 +416,8 @@ _G["BINDING_NAME_ELLA_TOGGLE_GRID"] = L["BINDING_NAME_ELLA_TOGGLE_GRID"]
 L["UI_DIAGNOSTICS_TITLE"] = "ELLA-Diagnose"
 L["UI_DIAGNOSTICS_HINT"] = "Prüfe den Bericht vor dem Kopieren. Eigene Fensternamen werden durch Nummern ersetzt."
 L["SLASH_HELP_DEBUG"] = "/ella debug - Kopierbaren Diagnosebericht anzeigen."
+
+L["UI_HEALKIT_RECOMMENDED_MODE"] = "Zum Verschieben: Nur Skalieren wählen"
+L["UI_HEALKIT_NATIVE_POSITION"] = "HealKit speichert die Position"
+L["UI_HEALKIT_POSITION_TIP"] = "Wähle Nur Skalieren. HealKit speichert die Position."
+L["UI_HEALKIT_MOVE_TIP"] = "Verschiebe HealKit im Bearbeitungsmodus oder öffne die Verschiebeleiste per Rechtsklick auf das HealKit-Minimap-Symbol."
