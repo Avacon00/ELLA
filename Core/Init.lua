@@ -160,3 +160,5 @@ function ns:PlaySound(soundType)
         pcall(_G.PlaySound, soundId, "SFX")
     end
 end
+
+local ellaCiProbeUnused = 42
