@@ -21,6 +21,34 @@ class LifecycleTests(unittest.TestCase):
         lua.execute(SETUP + source)
         self.assertEqual(list(lua.globals().errors.values()), [])
 
+    def test_removed_custom_window_stays_native_on_show_and_setpoint(self):
+        self.check_lua('''
+            local frame = CustomWindow()
+            ns.Engine:SetWindowScale("CUSTOM", .8)
+            ns.Engine:SetWindowAlpha("CUSTOM", .5, false)
+            assert(ns.Profiles:RemoveCustomWindow("CUSTOM"))
+            assert(frame:GetScale()==1 and frame:GetAlpha()==1)
+            frame:SetScale(1.2); frame:SetAlpha(.9)
+            local writes=frame.scaleWrites
+            frame:Hide(); frame:Show()
+            frame:ClearAllPoints(); frame:SetPoint("CENTER",UIParent,"CENTER",20,30)
+            assert(frame:GetScale()==1.2 and frame:GetAlpha()==.9 and frame.scaleWrites==writes)
+            assert(frame:GetPoint(1)=="CENTER")
+            assert(ns:GetWindowConfig("CUSTOM",false)==nil)
+        ''')
+
+    def test_unregister_restores_original_scale_alpha_and_anchors(self):
+        self.check_lua('''
+            local frame = CustomWindow()
+            ns.Engine:SetWindowScale("CUSTOM",.8)
+            ns.Engine:SetWindowAlpha("CUSTOM",.4,false)
+            assert(ns.Registry:UnregisterWindow("CUSTOM"))
+            assert(frame:GetScale()==1 and frame:GetAlpha()==1)
+            local point,relative,relativePoint,x,y=frame:GetPoint(1)
+            assert(point=="TOPLEFT" and relative==UIParent and relativePoint=="TOPLEFT")
+            assert(x==100 and y==-180)
+        ''')
+
     def test_nested_frame_uses_ui_parent_units_for_read_and_apply(self):
         self.check_lua('''
             UIParent:SetScale(.7)
@@ -50,34 +78,10 @@ class LifecycleTests(unittest.TestCase):
             close(offsetX, 450)
             close(offsetY, -250)
             assert(frame:GetParent() == inner)
-        ''')
 
-    def test_removed_custom_window_stays_native_on_show_and_setpoint(self):
-        self.check_lua('''
-            local frame = CustomWindow()
-            ns.Engine:SetWindowScale("CUSTOM", .8)
-            ns.Engine:SetWindowAlpha("CUSTOM", .5, false)
-            assert(ns.Profiles:RemoveCustomWindow("CUSTOM"))
-            assert(frame:GetScale()==1 and frame:GetAlpha()==1)
-            frame:SetScale(1.2); frame:SetAlpha(.9)
-            local writes=frame.scaleWrites
-            frame:Hide(); frame:Show()
-            frame:ClearAllPoints(); frame:SetPoint("CENTER",UIParent,"CENTER",20,30)
-            assert(frame:GetScale()==1.2 and frame:GetAlpha()==.9 and frame.scaleWrites==writes)
-            assert(frame:GetPoint(1)=="CENTER")
-            assert(ns:GetWindowConfig("CUSTOM",false)==nil)
-        ''')
-
-    def test_unregister_restores_original_scale_alpha_and_anchors(self):
-        self.check_lua('''
-            local frame = CustomWindow()
-            ns.Engine:SetWindowScale("CUSTOM",.8)
-            ns.Engine:SetWindowAlpha("CUSTOM",.4,false)
-            assert(ns.Registry:UnregisterWindow("CUSTOM"))
-            assert(frame:GetScale()==1 and frame:GetAlpha()==1)
-            local point,relative,relativePoint,x,y=frame:GetPoint(1)
-            assert(point=="TOPLEFT" and relative==UIParent and relativePoint=="TOPLEFT")
-            assert(x==100 and y==-180)
+            ns.db.settings.clampToScreen = true
+            local clampedX = ns.Engine:ClampUipPosition(frame, 1, -300, -100)
+            close(clampedX, -20)
         ''')
 
     def test_pending_addon_binding_is_removed(self):
